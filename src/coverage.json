@@ -1,93 +1,84 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T20:09:08.581Z",
+  "generatedAt": "2026-02-07T21:01:58.165Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 6,
-    "implemented": 2,
+    "total": 4,
+    "implemented": 3,
     "items": [
       {
-        "id": "REQ-1",
-        "summary": "Implement backend support for bank payout methods so an authenticated user can create and list their payout methods (bank name, account name, account number) with persistent storage.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Implement backend support for send-to-bank (withdrawal requests): allow an authenticated user to create a withdrawal request that references an existing payout method, and allow the user to list their own withdrawal requests.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
         "id": "REQ-3",
-        "summary": "Implement backend admin capabilities for send-to-bank processing: allow admins to list all pending withdrawal requests and mark a withdrawal as 'paid' or 'rejected', recording processedAt and processedBy.",
+        "summary": "Implement a fully functioning Internet Computer backend data layer (Motoko, single-actor) to persist all app data currently stubbed in the frontend, using the authenticated caller Principal as the user identity.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-4",
-        "summary": "Wire the existing Withdrawals UI to real backend data by updating React Query hooks for payout methods and withdrawals to call backend methods (instead of placeholder implementations), including proper loading and error states.",
+        "summary": "Wire the frontend React Query hooks to the real backend methods so that core flows no longer throw \"Backend method not implemented\" or return placeholder values.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
-          "frontend/src/pages/admin/AdminWithdrawalsPage.tsx"
+          "frontend/src/components/profile/ProfileSetupModal.tsx",
+          "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
+          "frontend/src/pages/admin/AdminKycReviewPage.tsx"
         ],
         "matchedFiles": [
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
-          "frontend/src/pages/admin/AdminWithdrawalsPage.tsx"
+          "frontend/src/components/profile/ProfileSetupModal.tsx",
+          "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
+          "frontend/src/pages/admin/AdminKycReviewPage.tsx"
         ]
       },
       {
         "id": "REQ-5",
-        "summary": "Add a 'Send to bank' step to the crypto wallet experience by adding a new quick action that opens a bottom-sheet flow for creating a withdrawal request (select currency, enter amount, choose or add payout method, review, confirm).",
+        "summary": "Update authentication UX copy to reflect the supported authentication method (Internet Identity) and prevent the UI from implying Google Sign-In or email/password support.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
-          "frontend/src/components/crypto/CryptoQuickActions.tsx",
-          "frontend/src/pages/services/CryptoWalletPage.tsx"
+          "frontend/src/components/auth/LoginCard.tsx",
+          "frontend/src/components/layout/AppShell.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
-          "frontend/src/components/crypto/CryptoQuickActions.tsx",
-          "frontend/src/pages/services/CryptoWalletPage.tsx"
+          "frontend/src/components/auth/LoginCard.tsx",
+          "frontend/src/components/layout/AppShell.tsx"
         ]
       },
       {
         "id": "REQ-6",
-        "summary": "Add conditional state migration support if needed for existing deployed canisters when introducing new stable state for payout methods and withdrawal requests.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "summary": "Add a short in-app note (English) explaining that third-party authentication providers (Google/email-password) and Firebase are not used in this deployment, and that identity is managed via Internet Identity + canister storage.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/auth/LoginCard.tsx",
+          "frontend/src/pages/SettingsPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/auth/LoginCard.tsx",
+          "frontend/src/pages/SettingsPage.tsx"
+        ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/crypto/CryptoQuickActions.tsx",
-    "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+    "frontend/src/components/auth/LoginCard.tsx",
+    "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/components/profile/ProfileSetupModal.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/lib/utils.ts",
-    "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
-    "frontend/src/pages/services/CryptoWalletPage.tsx",
-    "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+    "frontend/src/pages/SettingsPage.tsx",
+    "frontend/src/pages/admin/AdminKycReviewPage.tsx",
+    "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

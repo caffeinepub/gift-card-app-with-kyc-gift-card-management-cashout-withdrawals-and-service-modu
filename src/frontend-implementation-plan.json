@@ -1,59 +1,79 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Send-to-bank flow wired to backend payout methods and withdrawals",
+  "title": "Frontend wiring for Internet Identity auth UX + real canister-backed data hooks",
   "requirements": [
     {
       "id": "REQ-4",
-      "summary": "Replace placeholder React Query hooks with real backend calls for payout methods and withdrawals, including loading/error handling in the existing Withdrawals UI.",
+      "summary": "Replace stubbed React Query hooks with real backend actor calls for profiles, gift cards, tags, KYC, and admin KYC flows.",
       "acceptanceCriteria": [
-        "Withdrawals page 'Payout Methods' tab can add a payout method and the new method appears in the list without a full reload",
-        "Withdrawals page 'Request' tab loads payout methods from the backend and can submit a withdrawal request successfully",
-        "Withdrawals page 'History' tab loads withdrawal requests from the backend and displays status/timestamps correctly",
-        "Errors from backend calls are surfaced via existing toast patterns and do not crash the page"
+        "frontend/src/hooks/useQueries.ts is updated so queries/mutations for user profile, gift cards, gift card tags, KYC, and admin KYC use real backend actor calls",
+        "Profile setup modal successfully creates a profile and then the dashboard loads without repeatedly prompting for setup",
+        "Gift card list/add/detail/status update and tag editing flows read/write persisted backend data and reflect updates after mutations (via React Query invalidation)",
+        "KYC submission and status viewing persist and reload from backend data",
+        "Admin pages load data from backend and can update statuses successfully when the caller is an admin"
       ],
       "file_operations": [
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Update payout-method and withdrawal React Query hooks to call backend actor methods (listUserPayoutMethods, createPayoutMethod, listUserWithdrawals, createWithdrawalRequest) instead of placeholders; map backend types to the app UI types where needed (e.g., bigint IDs/timestamps), and ensure errors propagate for toast handling. Use the authorization component’s frontend guidance to keep queries disabled until an authenticated actor is available; verify the component's usage instructions before implementing."
+          "description": "Replace all placeholder returns/\"Backend method not implemented\" throws with real backend actor calls for: get/save caller profile, gift card CRUD + status updates, gift card tag read/write, KYC create/list, and admin KYC list/update; ensure React Query keys and invalidations correctly refresh list/detail/tag queries after mutations; handle authorization traps gracefully in query/mutation error paths (e.g., surface readable errors in UI consumers). Use the authorization component expectations (cache clearing + authenticated access) where relevant. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+          "path": "frontend/src/components/profile/ProfileSetupModal.tsx",
           "operation": "modify",
-          "description": "Ensure Withdrawals page correctly reflects hook loading/error states for payout methods and withdrawals (skeletons/disabled controls already present), and align displayed fields (timestamps/status) with the mapped backend data returned by the updated hooks; keep toast-based error surfacing consistent with existing patterns and do not crash on failures."
+          "description": "Update profile setup flow to persist the Internet Identity-backed profile via the real profile mutation hook (e.g., save caller profile) and ensure the modal closes on success, triggering the dashboard to load without repeatedly re-opening. Keep the UI aligned to the backend-supported profile fields. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
+          "path": "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
           "operation": "modify",
-          "description": "Adjust admin withdrawals UI field usage to match the updated hook return shape produced from backend data mapping (e.g., owner vs user naming and timestamp fields), preserving existing AdminRouteGuard behavior and toast-based error handling."
+          "description": "Remove the local mock ExternalBlob and use the blob-storage ExternalBlob provided by the generated backend bindings for optional image handling; ensure upload progress wiring remains functional and the resulting image reference is passed through the real add gift card mutation. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/admin/AdminKycReviewPage.tsx",
+          "operation": "modify",
+          "description": "Implement the admin KYC review UI to actually query user KYC records by principal and allow admin status updates using the real admin KYC hooks; display loading/empty/error states and ensure successful updates invalidate/admin-refresh the relevant queries. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-5",
-      "summary": "Add a new 'Send to bank' crypto wallet quick action that opens a multi-step bottom-sheet flow to create a withdrawal request using backend payout methods.",
+      "summary": "Update authentication UX copy to state Internet Identity-only login and ensure sign-out clears identity and cached app data.",
       "acceptanceCriteria": [
-        "Crypto wallet page shows a new quick action labeled 'Send to bank'",
-        "Tapping 'Send to bank' opens a bottom sheet with a multi-step flow: input amount/currency, select payout method (and add one if none), review, confirm",
-        "On confirm, the app calls the backend to create a withdrawal request and shows a success toast",
-        "After success, the flow closes and the user can see the new request in Withdrawals > History"
+        "Login screen text is in English and clearly states sign-in uses Internet Identity",
+        "Any references to Google Sign-In or email/password authentication are removed from user-facing UI text",
+        "Sign-out continues to clear identity and relevant cached queries so the app returns to the login screen"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
-          "operation": "create",
-          "description": "Create a new bottom-sheet (using the existing shadcn-ui Sheet component) implementing the multi-step 'Send to bank' flow: amount/currency entry, payout method selection (with inline add payout method), review, and confirm; on confirm call the existing withdrawal mutation hook and surface success/error via toasts. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/components/auth/LoginCard.tsx",
+          "operation": "modify",
+          "description": "Audit and update login screen copy so it explicitly reflects Internet Identity authentication (and does not imply Google Sign-In or email/password). Keep the messaging English and user-facing. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/crypto/CryptoQuickActions.tsx",
+          "path": "frontend/src/components/layout/AppShell.tsx",
           "operation": "modify",
-          "description": "Add a new quick action button labeled 'Send to bank' and a corresponding callback prop (e.g., onSendToBankClick), keeping the existing actions intact and ensuring the layout accommodates the additional action."
+          "description": "Ensure the sign-out action calls Internet Identity logout/clear and also clears React Query cached data (e.g., queryClient.clear()) so the UI reliably returns to the login screen and does not display stale authenticated data. Follow the authorization component guidance on cache clearing after logout. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Add a non-blocking in-app informational note clarifying there is no Firebase/Google/email-password auth, and data is stored on-canister with Internet Identity.",
+      "acceptanceCriteria": [
+        "A concise informational message is displayed in a sensible location (e.g., login screen footer or settings) stating authentication uses Internet Identity and data is stored on-canister",
+        "The message is purely informational and does not block login or app usage"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/auth/LoginCard.tsx",
+          "operation": "modify",
+          "description": "Add a short, non-blocking informational note near the login footer clarifying that this deployment does not use Firebase or third-party auth providers (Google/email-password) and that identity is managed via Internet Identity with on-canister storage. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/services/CryptoWalletPage.tsx",
+          "path": "frontend/src/pages/SettingsPage.tsx",
           "operation": "modify",
-          "description": "Wire the new 'Send to bank' quick action to open/close the SendToBankSheet, manage its open state alongside other action sheets, and render the new sheet component so it is reachable from the wallet experience."
+          "description": "Add an informational settings section reiterating Internet Identity authentication and on-canister data storage, explicitly stating Firebase and Google/email-password auth are not used; ensure it is purely informational and does not block usage. Verify the component's usage instructions before implementing."
         }
       ]
     }

@@ -14,14 +14,13 @@ interface ProfileSetupModalProps {
 
 export default function ProfileSetupModal({ open, onOpenChange }: ProfileSetupModalProps) {
   const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
   const createProfile = useCreateUserProfile();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !username.trim()) {
-      toast.error('Please fill in all fields');
+    if (!name.trim()) {
+      toast.error('Please enter your name');
       return;
     }
 
@@ -30,7 +29,7 @@ export default function ProfileSetupModal({ open, onOpenChange }: ProfileSetupMo
         id: `user-${Date.now()}`,
         email: null,
         name: name.trim(),
-        username: username.trim(),
+        username: name.trim().toLowerCase().replace(/\s+/g, ''),
         avatar: {
           url: null,
           publicId: null,
@@ -70,23 +69,14 @@ export default function ProfileSetupModal({ open, onOpenChange }: ProfileSetupMo
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">Your Name</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
+              placeholder="Enter your name"
               disabled={createProfile.isPending}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="johndoe"
-              disabled={createProfile.isPending}
+              autoFocus
             />
           </div>
           <div className="flex gap-2">

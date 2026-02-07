@@ -1,7 +1,8 @@
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '../ui/alert';
+import { Loader2, Info } from 'lucide-react';
 
 export default function LoginCard() {
   const { login, loginStatus } = useInternetIdentity();
@@ -22,7 +23,7 @@ export default function LoginCard() {
           <div>
             <CardTitle className="text-3xl font-bold">GiftVault</CardTitle>
             <CardDescription className="text-base mt-2">
-              Securely manage, sell, and withdraw from your gift cards
+              Secure gift card management powered by the Internet Computer
             </CardDescription>
           </div>
         </CardHeader>
@@ -30,7 +31,7 @@ export default function LoginCard() {
           <Button
             onClick={login}
             disabled={isLoggingIn}
-            className="w-full h-12 text-base font-medium"
+            className="w-full h-12 text-base"
             size="lg"
           >
             {isLoggingIn ? (
@@ -39,12 +40,22 @@ export default function LoginCard() {
                 Connecting...
               </>
             ) : (
-              'Sign In'
+              'Sign in with Internet Identity'
             )}
           </Button>
-          <p className="text-xs text-center text-muted-foreground">
-            Secure authentication powered by Internet Identity
-          </p>
+
+          <Alert className="bg-muted/50 border-muted">
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              This app uses <strong>Internet Identity</strong> for secure, decentralized authentication. 
+              Your data is stored on-chain on the Internet Computer blockchain.
+            </AlertDescription>
+          </Alert>
+
+          <div className="text-center text-xs text-muted-foreground pt-2">
+            <p>No Firebase, Google Sign-In, or email/password authentication.</p>
+            <p className="mt-1">All data is stored on-canister with Internet Identity.</p>
+          </div>
         </CardContent>
       </Card>
     </div>

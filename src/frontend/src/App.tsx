@@ -11,6 +11,7 @@ import GiftCardsListPage from './pages/giftcards/GiftCardsListPage';
 import GiftCardDetailPage from './pages/giftcards/GiftCardDetailPage';
 import AddGiftCardPage from './pages/giftcards/AddGiftCardPage';
 import SellGiftCardPage from './pages/giftcards/SellGiftCardPage';
+import HottestCardsPage from './pages/giftcards/HottestCardsPage';
 import WithdrawalsPage from './pages/withdrawals/WithdrawalsPage';
 import AdminKycReviewPage from './pages/admin/AdminKycReviewPage';
 import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage';
@@ -22,6 +23,8 @@ import CryptoWalletPage from './pages/services/CryptoWalletPage';
 import ElectricityPage from './pages/services/ElectricityPage';
 import WifiInternetPage from './pages/services/WifiInternetPage';
 import CableTvBillsPage from './pages/services/CableTvBillsPage';
+import SettingsPage from './pages/SettingsPage';
+import HistoryPage from './pages/HistoryPage';
 
 function Layout() {
   const { identity } = useInternetIdentity();
@@ -95,6 +98,12 @@ const addGiftCardRoute = createRoute({
   component: AddGiftCardPage,
 });
 
+const hottestCardsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/gift-cards/hottest',
+  component: HottestCardsPage,
+});
+
 const giftCardDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/gift-cards/$id',
@@ -111,6 +120,18 @@ const withdrawalsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/withdrawals',
   component: WithdrawalsPage,
+});
+
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/settings',
+  component: SettingsPage,
+});
+
+const historyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/history',
+  component: HistoryPage,
 });
 
 const adminKycRoute = createRoute({
@@ -178,9 +199,12 @@ const routeTree = rootRoute.addChildren([
   kycRoute,
   giftCardsRoute,
   addGiftCardRoute,
+  hottestCardsRoute,
   giftCardDetailRoute,
   sellGiftCardRoute,
   withdrawalsRoute,
+  settingsRoute,
+  historyRoute,
   adminKycRoute,
   adminWithdrawalsRoute,
   airtimeRoute,

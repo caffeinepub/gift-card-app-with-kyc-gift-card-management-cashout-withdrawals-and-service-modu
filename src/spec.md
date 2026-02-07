@@ -1,14 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Add a complete “send to bank” withdrawal flow backed by persistent payout methods and withdrawal requests, and connect existing withdrawals UI to real backend data.
+**Goal:** Replace any Firebase/placeholder auth and data stubs with Internet Identity authentication and a real, persistent Motoko backend data layer, then wire the frontend to those backend methods.
 
 **Planned changes:**
-- Add backend Candid methods and stable storage for authenticated users to create and list their bank payout methods (bank name, account name, account number), with validation and stable unique IDs.
-- Add backend Candid methods and stable storage for authenticated users to create and list their withdrawal requests (amount, currency, payoutMethodId) with default `pending` status and `createdAt` timestamps.
-- Add backend admin-only methods to list all pending withdrawals and mark withdrawals as `paid` or `rejected`, recording `processedAt` and `processedBy`.
-- Update Withdrawals React Query hooks to call the new backend methods for payout methods and withdrawals, including loading/error states and toast-based error handling.
-- Add a new “Send to bank” quick action in the crypto wallet that opens a bottom-sheet multi-step flow (amount/currency, choose/add payout method, review, confirm) and creates a withdrawal on confirm.
-- Add conditional state migration support only if needed to safely introduce new stable state without trapping on upgrade.
+- Implement stable, upgrade-safe Motoko persistence (single actor) for user profiles, gift cards, gift card tags/labels, and KYC records (alongside existing payouts/withdrawals), keyed by the authenticated caller Principal.
+- Enforce authorization rules in the backend: user-scoped methods only read/write the caller’s own data; admin-only methods require admin privileges and trap with clear English errors when unauthorized.
+- Update React Query hooks to call real backend actor methods for profile, gift cards, tags, KYC, and admin KYC; ensure mutations invalidate/refetch so UI reflects persisted updates.
+- Update authentication UX copy to clearly state Internet Identity is used; remove any UI text implying Google Sign-In or email/password support; ensure sign-out clears identity and cached queries.
+- Add a short, non-blocking in-app informational note stating Firebase/third-party auth providers are not used and data is stored on-canister with Internet Identity.
 
-**User-visible outcome:** Users can add bank payout methods, request send-to-bank withdrawals, and see withdrawal history/status in the Withdrawals screens; they can also start the flow from the crypto wallet via a new “Send to bank” quick action, while admins can process pending withdrawals as paid or rejected.
+**User-visible outcome:** Users can sign in with Internet Identity, complete profile setup once, and then reliably create/view/update gift cards, tags, and KYC with data persisting across sessions; admins can view and update admin KYC flows when authorized.

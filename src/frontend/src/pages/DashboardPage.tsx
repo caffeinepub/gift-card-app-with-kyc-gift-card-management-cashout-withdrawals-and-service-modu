@@ -54,7 +54,7 @@ export default function DashboardPage() {
       id: 'hottest-cards', 
       label: 'Hottest Cards', 
       icon: Flame, 
-      comingSoon: true,
+      route: '/gift-cards/hottest',
       color: 'oklch(0.65 0.2 30)'
     },
     { 

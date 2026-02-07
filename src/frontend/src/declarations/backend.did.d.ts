@@ -20,6 +20,7 @@ export interface PayoutMethod {
 }
 export type PayoutMethodId = bigint;
 export type Time = bigint;
+export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
@@ -71,11 +72,14 @@ export interface _SERVICE {
     [PayoutMethodId, bigint],
     WithdrawalRequestId
   >,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'listPendingWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
   'listUserPayoutMethods' : ActorMethod<[], Array<PayoutMethod>>,
   'listUserWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'updateWithdrawalStatus' : ActorMethod<
     [WithdrawalRequestId, WithdrawalStatus],
     undefined

@@ -13,19 +13,6 @@ import SelectGiftCardCategoryPicker from '../../components/giftcards/SelectGiftC
 import NGNRateInlineSummary from '../../components/giftcards/NGNRateInlineSummary';
 import { computeNGNRateTier } from './addGiftCardNGNRate';
 
-// Mock ExternalBlob for type compatibility
-class ExternalBlob {
-  constructor(private data: Uint8Array) {}
-  static fromBytes(bytes: Uint8Array): ExternalBlob {
-    return new ExternalBlob(bytes);
-  }
-  withUploadProgress(callback: (percentage: number) => void): ExternalBlob {
-    // Mock progress
-    setTimeout(() => callback(100), 100);
-    return this;
-  }
-}
-
 export default function AddGiftCardPage() {
   const navigate = useNavigate();
   const addGiftCard = useAddGiftCard();
@@ -83,9 +70,10 @@ export default function AddGiftCardPage() {
       if (imageFile) {
         const arrayBuffer = await imageFile.arrayBuffer();
         const bytes = new Uint8Array(arrayBuffer);
-        imageBlob = ExternalBlob.fromBytes(bytes).withUploadProgress((percentage) => {
-          setUploadProgress(percentage);
-        });
+        // Use real ExternalBlob from backend when blob-storage is available
+        // For now, pass the bytes directly
+        imageBlob = bytes;
+        setUploadProgress(100);
       }
 
       const currencyObj: Currency = 
@@ -105,8 +93,12 @@ export default function AddGiftCardPage() {
 
       toast.success('Gift card added successfully!');
       navigate({ to: '/gift-cards' });
-    } catch (error) {
-      toast.error('Failed to add gift card');
+    } catch (error: any) {
+      if (error.message === 'Backend method not implemented') {
+        toast.error('Gift card storage is not yet implemented in the backend');
+      } else {
+        toast.error('Failed to add gift card');
+      }
       console.error(error);
     }
   };

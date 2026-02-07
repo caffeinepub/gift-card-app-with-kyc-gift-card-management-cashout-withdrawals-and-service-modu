@@ -24,13 +24,13 @@ export default function MobileBottomNavDock() {
       id: 'history', 
       label: 'History', 
       icon: Clock, 
-      comingSoon: true,
+      route: '/history',
     },
     { 
       id: 'settings', 
       label: 'Settings', 
       icon: Settings, 
-      comingSoon: true,
+      route: '/settings',
     },
   ];
 
@@ -46,22 +46,17 @@ export default function MobileBottomNavDock() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPath === item.route;
-            const isClickable = !item.comingSoon && item.route;
 
             return (
               <button
                 key={item.id}
                 onClick={() => {
-                  if (isClickable) {
-                    navigate({ to: item.route });
-                  }
+                  navigate({ to: item.route });
                 }}
-                disabled={item.comingSoon}
                 className={cn(
                   'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all',
                   isActive && 'bg-white/10',
-                  isClickable && 'hover:bg-white/5 active:scale-95',
-                  item.comingSoon && 'opacity-40 cursor-not-allowed'
+                  'hover:bg-white/5 active:scale-95'
                 )}
               >
                 <Icon 
@@ -78,9 +73,6 @@ export default function MobileBottomNavDock() {
                 >
                   {item.label}
                 </span>
-                {item.comingSoon && (
-                  <span className="text-[8px] text-white/50">Soon</span>
-                )}
               </button>
             );
           })}

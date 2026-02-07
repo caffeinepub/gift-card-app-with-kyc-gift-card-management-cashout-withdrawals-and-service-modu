@@ -7,6 +7,14 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
+export interface PayoutMethod {
+    id: PayoutMethodId;
+    created: Time;
+    owner: Principal;
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+}
 export type Time = bigint;
 export type WithdrawalRequestId = bigint;
 export type PayoutMethodId = bigint;
@@ -20,13 +28,8 @@ export interface WithdrawalRequest {
     processedBy?: Principal;
     amount: bigint;
 }
-export interface PayoutMethod {
-    id: PayoutMethodId;
-    created: Time;
-    owner: Principal;
-    bankName: string;
-    accountName: string;
-    accountNumber: string;
+export interface UserProfile {
+    name: string;
 }
 export enum UserRole {
     admin = "admin",
@@ -42,10 +45,13 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createPayoutMethod(bankName: string, accountNumber: string, accountName: string): Promise<PayoutMethodId>;
     createWithdrawalRequest(payoutMethodId: PayoutMethodId, amount: bigint): Promise<WithdrawalRequestId>;
+    getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     listPendingWithdrawals(): Promise<Array<WithdrawalRequest>>;
     listUserPayoutMethods(): Promise<Array<PayoutMethod>>;
     listUserWithdrawals(): Promise<Array<WithdrawalRequest>>;
+    saveCallerUserProfile(profile: UserProfile): Promise<void>;
     updateWithdrawalStatus(requestId: WithdrawalRequestId, status: WithdrawalStatus): Promise<void>;
 }

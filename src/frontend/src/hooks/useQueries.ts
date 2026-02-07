@@ -12,7 +12,7 @@ import type {
   Currency,
   Avatar,
 } from '../types/app-types';
-import type { PayoutMethod as BackendPayoutMethod, WithdrawalRequest as BackendWithdrawalRequest, WithdrawalStatus as BackendWithdrawalStatus } from '../backend';
+import type { PayoutMethod as BackendPayoutMethod, WithdrawalRequest as BackendWithdrawalRequest, WithdrawalStatus as BackendWithdrawalStatus, UserProfile as BackendUserProfile } from '../backend';
 import { Principal } from '@dfinity/principal';
 
 // Note: ExternalBlob is still imported from backend as it's part of blob-storage
@@ -39,8 +39,29 @@ export function useGetCallerUserProfile() {
     queryKey: ['currentUserProfile'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      // Backend method doesn't exist, return null for now
-      return null;
+      const backendProfile = await actor.getCallerUserProfile();
+      if (!backendProfile) return null;
+      
+      // Map backend UserProfile (just name) to frontend UserProfile
+      const now = BigInt(Date.now() * 1000000);
+      return {
+        id: 'caller',
+        email: null,
+        name: backendProfile.name,
+        username: backendProfile.name.toLowerCase().replace(/\s+/g, ''),
+        avatar: {
+          url: null,
+          publicId: null,
+          imgData: null,
+          auto: true,
+          style: null,
+        },
+        country: 'US',
+        wallets: null,
+        isPremium: false,
+        createdAt: now,
+        updatedAt1: null,
+      };
     },
     enabled: !!actor && !actorFetching,
     retry: false,
@@ -60,8 +81,10 @@ export function useSaveCallerUserProfile() {
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend method doesn't exist
-      throw new Error('Backend method not implemented');
+      const backendProfile: BackendUserProfile = {
+        name: profile.name,
+      };
+      await actor.saveCallerUserProfile(backendProfile);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
@@ -83,8 +106,10 @@ export function useCreateUserProfile() {
       country: string;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend method doesn't exist
-      throw new Error('Backend method not implemented');
+      const backendProfile: BackendUserProfile = {
+        name: params.name,
+      };
+      await actor.saveCallerUserProfile(backendProfile);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });

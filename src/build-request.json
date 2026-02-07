@@ -1,129 +1,93 @@
 {
   "kind": "build_request",
-  "title": "Add send-to-bank flow backed by payout methods and withdrawals",
+  "title": "Replace Firebase auth/data request with Internet Identity authentication and full Motoko data persistence",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Implement backend support for bank payout methods so an authenticated user can create and list their payout methods (bank name, account name, account number) with persistent storage.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "User: Yes"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend exposes Candid methods to create a payout method and list the caller’s payout methods",
-        "Payout methods are stored per-caller and persist across canister upgrades",
-        "Creating a payout method validates required fields and returns a stable unique ID",
-        "Unauthorized callers cannot create/list payout methods without being authenticated"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Implement backend support for send-to-bank (withdrawal requests): allow an authenticated user to create a withdrawal request that references an existing payout method, and allow the user to list their own withdrawal requests.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "User: Yes"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend exposes Candid methods to create a withdrawal request (amount, currency, payoutMethodId) and list the caller’s withdrawal requests",
-        "Withdrawal requests default to status 'pending' and include createdAt timestamps",
-        "Creating a withdrawal request fails with a clear error if the referenced payout method does not exist or does not belong to the caller",
-        "Withdrawal requests persist across canister upgrades"
-      ]
-    },
-    {
       "id": "REQ-3",
-      "text": "Implement backend admin capabilities for send-to-bank processing: allow admins to list all pending withdrawal requests and mark a withdrawal as 'paid' or 'rejected', recording processedAt and processedBy.",
+      "text": "Implement a fully functioning Internet Computer backend data layer (Motoko, single-actor) to persist all app data currently stubbed in the frontend, using the authenticated caller Principal as the user identity.",
       "target": "backend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "User: Yes"
+          "create a fully functioning backend ... and to store all of the data"
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes Candid methods for admins to list pending withdrawals and update a withdrawal’s status to 'paid' or 'rejected'",
-        "Non-admin callers are denied access to admin withdrawal methods",
-        "When a withdrawal is processed, processedAt and processedBy are set and status changes are reflected in subsequent queries"
+        "backend/main.mo exposes stable, persistent CRUD methods for: user profiles, gift cards, gift card tags/labels, and KYC records (in addition to existing payouts/withdrawals)",
+        "All user-scoped query/mutation methods enforce that callers can only read/write their own records (keyed by caller Principal)",
+        "Admin-only methods (e.g., KYC review / withdrawal processing) require admin privileges via the existing access control mixin, and unauthorized calls trap with clear English error messages",
+        "Data is preserved across canister upgrades (add backend/migration.mo if required by existing persisted state)"
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Wire the existing Withdrawals UI to real backend data by updating React Query hooks for payout methods and withdrawals to call backend methods (instead of placeholder implementations), including proper loading and error states.",
+      "text": "Wire the frontend React Query hooks to the real backend methods so that core flows no longer throw \"Backend method not implemented\" or return placeholder values.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "User: Yes"
+          "create everything functioning for me"
         ]
       },
       "acceptanceCriteria": [
-        "Withdrawals page 'Payout Methods' tab can add a payout method and the new method appears in the list without a full reload",
-        "Withdrawals page 'Request' tab loads payout methods from the backend and can submit a withdrawal request successfully",
-        "Withdrawals page 'History' tab loads withdrawal requests from the backend and displays status/timestamps correctly",
-        "Errors from backend calls are surfaced via existing toast patterns and do not crash the page"
+        "frontend/src/hooks/useQueries.ts is updated so queries/mutations for user profile, gift cards, gift card tags, KYC, and admin KYC use real backend actor calls",
+        "Profile setup modal successfully creates a profile and then the dashboard loads without repeatedly prompting for setup",
+        "Gift card list/add/detail/status update and tag editing flows read/write persisted backend data and reflect updates after mutations (via React Query invalidation)",
+        "KYC submission and status viewing persist and reload from backend data",
+        "Admin pages load data from backend and can update statuses successfully when the caller is an admin"
       ]
     },
     {
       "id": "REQ-5",
-      "text": "Add a 'Send to bank' step to the crypto wallet experience by adding a new quick action that opens a bottom-sheet flow for creating a withdrawal request (select currency, enter amount, choose or add payout method, review, confirm).",
+      "text": "Update authentication UX copy to reflect the supported authentication method (Internet Identity) and prevent the UI from implying Google Sign-In or email/password support.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "User: Yes"
+          "authenticated either through a Google sign in or with a email and password"
         ]
       },
       "acceptanceCriteria": [
-        "Crypto wallet page shows a new quick action labeled 'Send to bank'",
-        "Tapping 'Send to bank' opens a bottom sheet with a multi-step flow: input amount/currency, select payout method (and add one if none), review, confirm",
-        "On confirm, the app calls the backend to create a withdrawal request and shows a success toast",
-        "After success, the flow closes and the user can see the new request in Withdrawals > History"
+        "Login screen text is in English and clearly states sign-in uses Internet Identity",
+        "Any references to Google Sign-In or email/password authentication are removed from user-facing UI text",
+        "Sign-out continues to clear identity and relevant cached queries so the app returns to the login screen"
       ]
     },
     {
       "id": "REQ-6",
-      "text": "Add conditional state migration support if needed for existing deployed canisters when introducing new stable state for payout methods and withdrawal requests.",
-      "target": "backend",
+      "text": "Add a short in-app note (English) explaining that third-party authentication providers (Google/email-password) and Firebase are not used in this deployment, and that identity is managed via Internet Identity + canister storage.",
+      "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "User: Yes"
+          "use a fire base ... Google sign in ... email and password"
         ]
       },
       "acceptanceCriteria": [
-        "If existing stable state must be upgraded, a migration file is added/updated according to the project’s conditional migration policy",
-        "Upgrading from the previous deployed version does not trap and preserves existing authorization/blob-storage state"
+        "A concise informational message is displayed in a sensible location (e.g., login screen footer or settings) stating authentication uses Internet Identity and data is stored on-canister",
+        "The message is purely informational and does not block login or app usage"
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; add backend/migration.mo only if required for upgrade safety",
-    "Do not edit files under frontend/src/components/ui or any paths listed as immutable in SYSTEM_CONTEXT",
-    "Use English for all user-facing UI text"
+    "Do not integrate Firebase (including Firebase MCP) or any external database/service for authentication or data storage.",
+    "Do not implement Google Sign-In or email/password authentication; only Internet Identity authentication is supported.",
+    "Backend must remain a single Motoko actor in backend/main.mo; add backend/migration.mo only if needed to preserve existing state across upgrade.",
+    "Do not edit files in frontend immutablePaths (e.g., frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui)."
   ],
   "nonGoals": [
-    "Integrating with real banking rails, bank verification APIs, or external payment processors",
-    "Real-time status updates (no WebSockets/push notifications)",
-    "Third-party authentication providers (Internet Identity only)"
+    "Adding any third-party authentication provider integration (Google OAuth, Firebase Auth, email/password).",
+    "Adding real-time features (WebSockets/push).",
+    "Integrating external hosted databases or cloud services."
   ],
   "imageRequirements": {
     "required": [],

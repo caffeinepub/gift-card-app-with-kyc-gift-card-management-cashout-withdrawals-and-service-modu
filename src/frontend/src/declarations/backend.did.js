@@ -26,6 +26,7 @@ export const UserRole = IDL.Variant({
 });
 export const PayoutMethodId = IDL.Nat;
 export const WithdrawalRequestId = IDL.Nat;
+export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const WithdrawalStatus = IDL.Variant({
   'pending' : IDL.Null,
   'paid' : IDL.Null,
@@ -90,11 +91,18 @@ export const idlService = IDL.Service({
       [WithdrawalRequestId],
       [],
     ),
+  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(UserProfile)],
+      ['query'],
+    ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'listPendingWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], []),
   'listUserPayoutMethods' : IDL.Func([], [IDL.Vec(PayoutMethod)], ['query']),
   'listUserWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], ['query']),
+  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'updateWithdrawalStatus' : IDL.Func(
       [WithdrawalRequestId, WithdrawalStatus],
       [],
@@ -123,6 +131,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PayoutMethodId = IDL.Nat;
   const WithdrawalRequestId = IDL.Nat;
+  const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const WithdrawalStatus = IDL.Variant({
     'pending' : IDL.Null,
     'paid' : IDL.Null,
@@ -187,7 +196,13 @@ export const idlFactory = ({ IDL }) => {
         [WithdrawalRequestId],
         [],
       ),
+    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(UserProfile)],
+        ['query'],
+      ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'listPendingWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], []),
     'listUserPayoutMethods' : IDL.Func([], [IDL.Vec(PayoutMethod)], ['query']),
@@ -196,6 +211,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(WithdrawalRequest)],
         ['query'],
       ),
+    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'updateWithdrawalStatus' : IDL.Func(
         [WithdrawalRequestId, WithdrawalStatus],
         [],

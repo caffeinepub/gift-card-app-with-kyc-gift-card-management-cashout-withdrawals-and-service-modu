@@ -7,10 +7,9 @@ import Time "mo:core/Time";
 import MixinStorage "blob-storage/Mixin";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-import Migration "migration";
 
 // Apply migration logic on upgrade via with syntax.
-(with migration = Migration.run)
+
 actor {
   // Types
   public type PayoutMethodId = Nat;
@@ -43,17 +42,44 @@ actor {
     processedAt : ?Time.Time;
   };
 
+  public type UserProfile = {
+    name : Text;
+  };
+
   // State for tracking methods and requests
   var _nextPayoutMethodId : PayoutMethodId = 0;
   var _nextWithdrawalRequestId : WithdrawalRequestId = 0;
 
   let payoutMethods = Map.empty<PayoutMethodId, PayoutMethod>();
   let withdrawalRequests = Map.empty<WithdrawalRequestId, WithdrawalRequest>();
+  let userProfiles = Map.empty<Principal, UserProfile>();
 
   // Initialize the access control and storage state
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
   include MixinStorage();
+
+  // User Profile Management
+  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access profiles");
+    };
+    userProfiles.get(caller);
+  };
+
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    userProfiles.get(user);
+  };
+
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+    userProfiles.add(caller, profile);
+  };
 
   // Payout Method
   public shared ({ caller }) func createPayoutMethod(bankName : Text, accountNumber : Text, accountName : Text) : async PayoutMethodId {
