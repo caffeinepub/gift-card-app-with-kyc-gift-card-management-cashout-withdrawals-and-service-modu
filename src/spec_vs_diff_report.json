@@ -1,108 +1,26 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T21:01:58.162Z",
-  "summary": "Diff implements Internet Identity-focused login copy and adds real backend wiring for user profiles plus payout/withdrawal flows, but does not implement the required Motoko persistence and frontend wiring for gift cards, gift card tags/labels, and KYC/admin KYC. Several unrelated UI/features were added/expanded (crypto wallet, betting page, brand catalog, styling).",
+  "generatedAt": "2026-02-07T21:22:02.791Z",
+  "summary": "Implemented a reusable searchable bank dropdown (NigerianBankSelect) backed by a centralized Nigerian banks config module, and wired it into both SendToBankSheet and WithdrawalsPage (at least via imports). However, the provided bank list does not appear to be a full Nigerian bank list (several commonly recognized banks are missing).",
   "missing_requirements": [
     {
-      "id": "REQ-3",
-      "requirement": "backend/main.mo exposes stable, persistent CRUD methods for user profiles, gift cards, gift card tags/labels, and KYC records (in addition to existing payouts/withdrawals).",
-      "reason": "The backend diff only shows UserProfile (name only) plus payout methods/withdrawals. No gift card, tag/label, or KYC record types/CRUD methods are evident, and state is shown as non-stable `let ... = Map.empty(...)` which does not demonstrate upgrade persistence.",
+      "id": "REQ-1",
+      "requirement": "Add a full Nigerian bank list (maintained static list) in the frontend to be used as selectable options source for payout-method creation.",
+      "reason": "A static list exists, but it does not appear to be a full Nigerian bank list as requested by the BuildRequest title/intent; several widely known Nigerian banks are absent from the exported array (e.g., Jaiz Bank).",
       "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Admin-only methods (e.g., KYC review / withdrawal processing) require admin privileges via the existing access control mixin, and unauthorized calls trap with clear English error messages.",
-      "reason": "While access control checks exist for user profile and payout/withdrawal user actions, the diff does not show any admin-only KYC review methods or admin withdrawal-processing methods required by the acceptance criteria.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Data is preserved across canister upgrades (add backend/migration.mo if required by existing persisted state).",
-      "reason": "No `backend/migration.mo` was added, and the shown state uses non-stable variables (`var _next...`, `let payoutMethods = Map.empty...`), which does not evidence stable upgrade-safe persistence.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "frontend/src/hooks/useQueries.ts is updated so queries/mutations for user profile, gift cards, gift card tags, KYC, and admin KYC use real backend actor calls.",
-      "reason": "User profile hooks are wired to `getCallerUserProfile`/`saveCallerUserProfile`, but gift cards are explicitly stubbed to return empty arrays and comments indicate the backend method doesn't exist; admin KYC page still handles 'Backend method not implemented' and the summary notes gift card/KYC/tag methods remain stubbed.",
-      "evidence": [
-        "frontend/src/hooks/useQueries.ts",
-        "frontend-file-summaries.txt",
-        "frontend/src/pages/admin/AdminKycReviewPage.tsx"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "Gift card list/add/detail/status update and tag editing flows read/write persisted backend data and reflect updates after mutations (via React Query invalidation).",
-      "reason": "Gift card hooks are not implemented (returns placeholders), and AddGiftCardPage shows handling for 'backend not implemented' rather than persisting via actor calls.",
-      "evidence": [
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
-        "frontend-file-summaries.txt"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "KYC submission and status viewing persist and reload from backend data; Admin pages load data from backend and can update statuses successfully when the caller is an admin.",
-      "reason": "AdminKycReviewPage includes explicit handling for 'Backend method not implemented', indicating the admin KYC backend wiring is not complete; no backend KYC persistence is shown.",
-      "evidence": [
-        "frontend/src/pages/admin/AdminKycReviewPage.tsx",
-        "frontend-file-summaries.txt",
-        "backend/main.mo"
+        "frontend/src/config/nigerianBanks.ts"
       ]
     }
   ],
-  "hallucinated_features": [
-    {
-      "description": "Implemented/expanded a 'Crypto Wallet' dashboard page and related flows.",
-      "reason": "Not requested by REQ-3/4/5/6; unrelated to replacing Firebase with Internet Identity + Motoko persistence for profiles/gift cards/KYC.",
-      "evidence": [
-        "frontend-file-summaries.txt (frontend/src/pages/services/CryptoWalletPage.tsx)",
-        "frontend/src/components/layout/AppShell.tsx"
-      ]
-    },
-    {
-      "description": "Added/expanded a betting top-up page with local transaction logging.",
-      "reason": "Not requested in the BuildRequest; outside the specified scope.",
-      "evidence": [
-        "frontend-file-summaries.txt (frontend/src/pages/services/BettingPage.tsx)"
-      ]
-    },
-    {
-      "description": "Added a comprehensive gift card brand catalog and brand picker UI components.",
-      "reason": "Not explicitly requested by the BuildRequest (which focuses on persistence/wiring for existing flows rather than adding new catalogs/components).",
-      "evidence": [
-        "frontend-file-summaries.txt (frontend/src/config/giftCardBrandCatalog.ts)",
-        "frontend-file-summaries.txt (frontend/src/components/giftcards/SelectGiftCardCategoryPicker.tsx)",
-        "frontend-file-summaries.txt (frontend/src/components/giftcards/GiftCardBrandRow.tsx)"
-      ]
-    },
-    {
-      "description": "Added/updated global CSS design tokens and theming (purple/blue scheme, safe-area utility).",
-      "reason": "Not requested by REQ-3/4/5/6.",
-      "evidence": [
-        "frontend-file-summaries.txt (frontend/src/index.css)"
-      ]
-    }
-  ],
-  "confidence": 0.72,
+  "hallucinated_features": [],
+  "confidence": 0.62,
   "changed_files": [
-    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/auth/LoginCard.tsx",
-    "frontend/src/components/layout/AppShell.tsx",
-    "frontend/src/components/profile/ProfileSetupModal.tsx",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/SettingsPage.tsx",
-    "frontend/src/pages/admin/AdminKycReviewPage.tsx",
-    "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
+    "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+    "frontend/src/components/payout/NigerianBankSelect.tsx",
+    "frontend/src/config/nigerianBanks.ts",
+    "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
     "project_state.json"
   ]
 }

@@ -1,34 +1,34 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Improve the app by adding a fully functioning Firebase backend with user authentication (Google Sign-In and email/password) and Firebase-based data storage via Firebase MCP.",
+  "summary": "New project",
   "architectural_notes": [
-    "Use Firebase as the backend platform (Auth + data storage) leveraging Firebase MCP access."
+    "Withdrawal flow should include a selectable list of all Nigerian banks (kept up to date via a reliable data source/API)."
   ],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-wire-the-frontend-react-query-hooks-to-the-real-backend-methods-so-that-core-flows-no-longer-throw-backend-method-not-implemented-or-return-placeholder-values",
-      "title": "Wire the frontend React Query hooks to the real backend methods so that core flows no longer throw \"Backend method not implemented\" or return placeholder values.",
+      "id": "feature-create-a-maintained-static-list-of-nigerian-banks-in-the-frontend-and-use-it-as-the-selectable-options-source-for-payout-method-creation",
+      "title": "Create a maintained static list of Nigerian banks in the frontend and use it as the selectable options source for payout-method creation.",
       "reqIds": [
-        "REQ-4"
+        "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-authentication-ux-copy-to-reflect-the-supported-authentication-method-internet-identity-and-prevent-the-ui-from-implying-google-sign-in-or-email-password-support",
-      "title": "Update authentication UX copy to reflect the supported authentication method (Internet Identity) and prevent the UI from implying Google Sign-In or email/password support.",
+      "id": "feature-update-the-payout-method-creation-ui-in-the-send-to-bank-sheet-to-select-a-nigerian-bank-from-a-dropdown-with-search-instead-of-free-text-entry-while-still-storing-the-selected-bank-name-in-the-existing-payout-method-fields",
+      "title": "Update the payout-method creation UI in the \"Send to Bank\" sheet to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while still storing the selected bank name in the existing payout method fields.",
       "reqIds": [
-        "REQ-5"
+        "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-short-in-app-note-english-explaining-that-third-party-authentication-providers-google-email-password-and-firebase-are-not-used-in-this-deployment-and-that-identity-is-managed-via-internet-identity-canister-storage",
-      "title": "Add a short in-app note (English) explaining that third-party authentication providers (Google/email-password) and Firebase are not used in this deployment, and that identity is managed via Internet Identity + canister storage.",
+      "id": "feature-update-the-payout-method-creation-ui-on-the-withdrawals-page-to-select-a-nigerian-bank-from-a-dropdown-with-search-instead-of-free-text-entry-while-preserving-the-existing-backend-payload-shape-bankname-accountname-accountnumber",
+      "title": "Update the payout-method creation UI on the Withdrawals page to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while preserving the existing backend payload shape (bankName/accountName/accountNumber).",
       "reqIds": [
-        "REQ-6"
+        "REQ-3"
       ],
       "version": 1
     }
@@ -36,26 +36,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Implement Firebase backend with user authentication (Google Sign-In and email/password)",
+      "summary": "Add support for withdrawals to Nigerian bank accounts by making all Nigerian banks available for user selection",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Set up Firebase data storage for app data (using Firebase MCP access)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Implement a fully functioning Internet Computer backend data layer (Motoko, single-actor) to persist all app data currently stubbed in the frontend, using the authenticated caller Principal as the user identity.",
-      "reqIds": [
-        "REQ-3"
-      ],
       "status": "pending"
     }
   ],
-  "projectName": "Replace Firebase auth/data request with Internet Identity authentication and full Motoko data persistence",
+  "projectName": "Add full Nigerian bank list for bank-withdrawal payout method selection",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

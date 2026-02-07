@@ -1,79 +1,57 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Frontend wiring for Internet Identity auth UX + real canister-backed data hooks",
+  "title": "Add searchable Nigerian bank dropdowns for payout method creation",
   "requirements": [
     {
-      "id": "REQ-4",
-      "summary": "Replace stubbed React Query hooks with real backend actor calls for profiles, gift cards, tags, KYC, and admin KYC flows.",
+      "id": "REQ-1",
+      "summary": "Add a single maintained Nigerian banks static list module and reuse it as the source of truth for payout-method creation UIs.",
       "acceptanceCriteria": [
-        "frontend/src/hooks/useQueries.ts is updated so queries/mutations for user profile, gift cards, gift card tags, KYC, and admin KYC use real backend actor calls",
-        "Profile setup modal successfully creates a profile and then the dashboard loads without repeatedly prompting for setup",
-        "Gift card list/add/detail/status update and tag editing flows read/write persisted backend data and reflect updates after mutations (via React Query invalidation)",
-        "KYC submission and status viewing persist and reload from backend data",
-        "Admin pages load data from backend and can update statuses successfully when the caller is an admin"
+        "A new frontend config/module exists that exports an array of Nigerian bank names (strings) suitable for use in UI Select components.",
+        "The list is used by all payout-method creation UIs (not duplicated inline in components)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Replace all placeholder returns/\"Backend method not implemented\" throws with real backend actor calls for: get/save caller profile, gift card CRUD + status updates, gift card tag read/write, KYC create/list, and admin KYC list/update; ensure React Query keys and invalidations correctly refresh list/detail/tag queries after mutations; handle authorization traps gracefully in query/mutation error paths (e.g., surface readable errors in UI consumers). Use the authorization component expectations (cache clearing + authenticated access) where relevant. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/config/nigerianBanks.ts",
+          "operation": "create",
+          "description": "Create a maintained static export (e.g., a const array of strings) containing Nigerian bank names, plus optional lightweight helpers (e.g., case-insensitive filter) for searchable selection."
         },
         {
-          "path": "frontend/src/components/profile/ProfileSetupModal.tsx",
-          "operation": "modify",
-          "description": "Update profile setup flow to persist the Internet Identity-backed profile via the real profile mutation hook (e.g., save caller profile) and ensure the modal closes on success, triggering the dashboard to load without repeatedly re-opening. Keep the UI aligned to the backend-supported profile fields. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
-          "operation": "modify",
-          "description": "Remove the local mock ExternalBlob and use the blob-storage ExternalBlob provided by the generated backend bindings for optional image handling; ensure upload progress wiring remains functional and the resulting image reference is passed through the real add gift card mutation. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/admin/AdminKycReviewPage.tsx",
-          "operation": "modify",
-          "description": "Implement the admin KYC review UI to actually query user KYC records by principal and allow admin status updates using the real admin KYC hooks; display loading/empty/error states and ensure successful updates invalidate/admin-refresh the relevant queries. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/components/payout/NigerianBankSelect.tsx",
+          "operation": "create",
+          "description": "Create a reusable Select-based Nigerian bank picker that imports the Nigerian banks list and provides in-dropdown search/filtering; compose existing shadcn-ui Select/Input components without modifying anything under frontend/src/components/ui. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-5",
-      "summary": "Update authentication UX copy to state Internet Identity-only login and ensure sign-out clears identity and cached app data.",
+      "id": "REQ-2",
+      "summary": "Replace free-text bank name entry in the Send to Bank sheet payout-method add step with a searchable Nigerian bank Select while still storing the chosen name in the existing fields.",
       "acceptanceCriteria": [
-        "Login screen text is in English and clearly states sign-in uses Internet Identity",
-        "Any references to Google Sign-In or email/password authentication are removed from user-facing UI text",
-        "Sign-out continues to clear identity and relevant cached queries so the app returns to the login screen"
+        "In the SendToBankSheet add-method step, the \"Bank Name\" field is a Select-based dropdown populated from the Nigerian banks list.",
+        "Users can search/filter the bank dropdown to quickly find a bank name.",
+        "Submitting a new payout method stores the selected bank name and it appears correctly in the payout-method list/selection step afterward."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/auth/LoginCard.tsx",
+          "path": "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
           "operation": "modify",
-          "description": "Audit and update login screen copy so it explicitly reflects Internet Identity authentication (and does not imply Google Sign-In or email/password). Keep the messaging English and user-facing. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/layout/AppShell.tsx",
-          "operation": "modify",
-          "description": "Ensure the sign-out action calls Internet Identity logout/clear and also clears React Query cached data (e.g., queryClient.clear()) so the UI reliably returns to the login screen and does not display stale authenticated data. Follow the authorization component guidance on cache clearing after logout. Verify the component's usage instructions before implementing."
+          "description": "In the add-method step, replace the Bank Name Input with the reusable NigerianBankSelect component (Select-based, searchable) wired to the existing bankName state so submission continues to send the selected bank name unchanged. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-6",
-      "summary": "Add a non-blocking in-app informational note clarifying there is no Firebase/Google/email-password auth, and data is stored on-canister with Internet Identity.",
+      "id": "REQ-3",
+      "summary": "Replace free-text bank name entry on the Withdrawals page Add Payout Method form with a searchable Nigerian bank Select while preserving the existing backend payload shape and downstream displays.",
       "acceptanceCriteria": [
-        "A concise informational message is displayed in a sensible location (e.g., login screen footer or settings) stating authentication uses Internet Identity and data is stored on-canister",
-        "The message is purely informational and does not block login or app usage"
+        "On the Withdrawals page \"Add Payout Method\" form, the \"Bank Name\" field is a Select-based dropdown populated from the Nigerian banks list.",
+        "Users can search/filter the bank dropdown to quickly find a bank name.",
+        "Creating a payout method from this page continues to succeed without any backend changes and the selected bank name is displayed in \"Your Payout Methods\" and in the withdrawal request form payout-method picker."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/auth/LoginCard.tsx",
+          "path": "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
           "operation": "modify",
-          "description": "Add a short, non-blocking informational note near the login footer clarifying that this deployment does not use Firebase or third-party auth providers (Google/email-password) and that identity is managed via Internet Identity with on-canister storage. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/SettingsPage.tsx",
-          "operation": "modify",
-          "description": "Add an informational settings section reiterating Internet Identity authentication and on-canister data storage, explicitly stating Firebase and Google/email-password auth are not used; ensure it is purely informational and does not block usage. Verify the component's usage instructions before implementing."
+          "description": "Update the Payout Methods tab \"Add Payout Method\" form to use the reusable NigerianBankSelect component for bankName (searchable Select) while keeping the createPayoutMethod call payload shape (bankName/accountName/accountNumber) unchanged; ensure the selected bank name renders in the payout methods list and continues to appear in the request form's payout-method picker. Verify the component's usage instructions before implementing."
         }
       ]
     }

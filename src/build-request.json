@@ -1,93 +1,70 @@
 {
   "kind": "build_request",
-  "title": "Replace Firebase auth/data request with Internet Identity authentication and full Motoko data persistence",
+  "title": "Add full Nigerian bank list for bank-withdrawal payout method selection",
   "priority": "normal",
   "requirements": [
     {
+      "id": "REQ-1",
+      "text": "Create a maintained static list of Nigerian banks in the frontend and use it as the selectable options source for payout-method creation.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "I want all Nigeria banks to added available for user to make a withdraw into their bank account Nigeria bank available"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A new frontend config/module exists that exports an array of Nigerian bank names (strings) suitable for use in UI Select components.",
+        "The list is used by all payout-method creation UIs (not duplicated inline in components)."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Update the payout-method creation UI in the \"Send to Bank\" sheet to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while still storing the selected bank name in the existing payout method fields.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "I want all Nigeria banks to added available for user to make a withdraw into their bank account Nigeria bank available"
+        ]
+      },
+      "acceptanceCriteria": [
+        "In the SendToBankSheet add-method step, the \"Bank Name\" field is a Select-based dropdown populated from the Nigerian banks list.",
+        "Users can search/filter the bank dropdown to quickly find a bank name.",
+        "Submitting a new payout method stores the selected bank name and it appears correctly in the payout-method list/selection step afterward."
+      ]
+    },
+    {
       "id": "REQ-3",
-      "text": "Implement a fully functioning Internet Computer backend data layer (Motoko, single-actor) to persist all app data currently stubbed in the frontend, using the authenticated caller Principal as the user identity.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "create a fully functioning backend ... and to store all of the data"
-        ]
-      },
-      "acceptanceCriteria": [
-        "backend/main.mo exposes stable, persistent CRUD methods for: user profiles, gift cards, gift card tags/labels, and KYC records (in addition to existing payouts/withdrawals)",
-        "All user-scoped query/mutation methods enforce that callers can only read/write their own records (keyed by caller Principal)",
-        "Admin-only methods (e.g., KYC review / withdrawal processing) require admin privileges via the existing access control mixin, and unauthorized calls trap with clear English error messages",
-        "Data is preserved across canister upgrades (add backend/migration.mo if required by existing persisted state)"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Wire the frontend React Query hooks to the real backend methods so that core flows no longer throw \"Backend method not implemented\" or return placeholder values.",
+      "text": "Update the payout-method creation UI on the Withdrawals page to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while preserving the existing backend payload shape (bankName/accountName/accountNumber).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-3"
         ],
         "quotes": [
-          "create everything functioning for me"
+          "I want all Nigeria banks to added available for user to make a withdraw into their bank account Nigeria bank available"
         ]
       },
       "acceptanceCriteria": [
-        "frontend/src/hooks/useQueries.ts is updated so queries/mutations for user profile, gift cards, gift card tags, KYC, and admin KYC use real backend actor calls",
-        "Profile setup modal successfully creates a profile and then the dashboard loads without repeatedly prompting for setup",
-        "Gift card list/add/detail/status update and tag editing flows read/write persisted backend data and reflect updates after mutations (via React Query invalidation)",
-        "KYC submission and status viewing persist and reload from backend data",
-        "Admin pages load data from backend and can update statuses successfully when the caller is an admin"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Update authentication UX copy to reflect the supported authentication method (Internet Identity) and prevent the UI from implying Google Sign-In or email/password support.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "authenticated either through a Google sign in or with a email and password"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Login screen text is in English and clearly states sign-in uses Internet Identity",
-        "Any references to Google Sign-In or email/password authentication are removed from user-facing UI text",
-        "Sign-out continues to clear identity and relevant cached queries so the app returns to the login screen"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Add a short in-app note (English) explaining that third-party authentication providers (Google/email-password) and Firebase are not used in this deployment, and that identity is managed via Internet Identity + canister storage.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "use a fire base ... Google sign in ... email and password"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A concise informational message is displayed in a sensible location (e.g., login screen footer or settings) stating authentication uses Internet Identity and data is stored on-canister",
-        "The message is purely informational and does not block login or app usage"
+        "On the Withdrawals page \"Add Payout Method\" form, the \"Bank Name\" field is a Select-based dropdown populated from the Nigerian banks list.",
+        "Users can search/filter the bank dropdown to quickly find a bank name.",
+        "Creating a payout method from this page continues to succeed without any backend changes and the selected bank name is displayed in \"Your Payout Methods\" and in the withdrawal request form payout-method picker."
       ]
     }
   ],
   "constraints": [
-    "Do not integrate Firebase (including Firebase MCP) or any external database/service for authentication or data storage.",
-    "Do not implement Google Sign-In or email/password authentication; only Internet Identity authentication is supported.",
-    "Backend must remain a single Motoko actor in backend/main.mo; add backend/migration.mo only if needed to preserve existing state across upgrade.",
-    "Do not edit files in frontend immutablePaths (e.g., frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui)."
+    "Do not modify files under frontend/src/components/ui (compose existing shadcn components instead).",
+    "Keep the backend single-actor architecture; do not introduce additional canisters/services."
   ],
   "nonGoals": [
-    "Adding any third-party authentication provider integration (Google OAuth, Firebase Auth, email/password).",
-    "Adding real-time features (WebSockets/push).",
-    "Integrating external hosted databases or cloud services."
+    "Adding third-party APIs to fetch Nigerian banks dynamically.",
+    "Adding bank verification (e.g., account number/name resolution) or payment rails integration.",
+    "Changing backend payout method or withdrawal request schemas."
   ],
   "imageRequirements": {
     "required": [],

@@ -2,13 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-wire-the-frontend-react-query-hooks-to-the-real-backend-methods-so-that-core-flows-no-longer-throw-backend-method-not-implemented-or-return-placeholder-values",
-      "featureTitle": "Wire the frontend React Query hooks to the real backend methods so that core flows no longer throw \"Backend method not implemented\" or return placeholder values.",
+      "featureId": "feature-create-a-maintained-static-list-of-nigerian-banks-in-the-frontend-and-use-it-as-the-selectable-options-source-for-payout-method-creation",
+      "featureTitle": "Create a maintained static list of Nigerian banks in the frontend and use it as the selectable options source for payout-method creation.",
       "files": [
-        "frontend/src/components/profile/ProfileSetupModal.tsx",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/admin/AdminKycReviewPage.tsx",
-        "frontend/src/pages/giftcards/AddGiftCardPage.tsx"
+        "frontend/src/components/payout/NigerianBankSelect.tsx",
+        "frontend/src/config/nigerianBanks.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -20,16 +18,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-4"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-authentication-ux-copy-to-reflect-the-supported-authentication-method-internet-identity-and-prevent-the-ui-from-implying-google-sign-in-or-email-password-support",
-      "featureTitle": "Update authentication UX copy to reflect the supported authentication method (Internet Identity) and prevent the UI from implying Google Sign-In or email/password support.",
+      "featureId": "feature-update-the-payout-method-creation-ui-in-the-send-to-bank-sheet-to-select-a-nigerian-bank-from-a-dropdown-with-search-instead-of-free-text-entry-while-still-storing-the-selected-bank-name-in-the-existing-payout-method-fields",
+      "featureTitle": "Update the payout-method creation UI in the \"Send to Bank\" sheet to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while still storing the selected bank name in the existing payout method fields.",
       "files": [
-        "frontend/src/components/auth/LoginCard.tsx",
-        "frontend/src/components/layout/AppShell.tsx"
+        "frontend/src/components/crypto/sheets/SendToBankSheet.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -41,16 +38,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-5"
+        "REQ-2"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-short-in-app-note-english-explaining-that-third-party-authentication-providers-google-email-password-and-firebase-are-not-used-in-this-deployment-and-that-identity-is-managed-via-internet-identity-canister-storage",
-      "featureTitle": "Add a short in-app note (English) explaining that third-party authentication providers (Google/email-password) and Firebase are not used in this deployment, and that identity is managed via Internet Identity + canister storage.",
+      "featureId": "feature-update-the-payout-method-creation-ui-on-the-withdrawals-page-to-select-a-nigerian-bank-from-a-dropdown-with-search-instead-of-free-text-entry-while-preserving-the-existing-backend-payload-shape-bankname-accountname-accountnumber",
+      "featureTitle": "Update the payout-method creation UI on the Withdrawals page to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while preserving the existing backend payload shape (bankName/accountName/accountNumber).",
       "files": [
-        "frontend/src/components/auth/LoginCard.tsx",
-        "frontend/src/pages/SettingsPage.tsx"
+        "frontend/src/pages/withdrawals/WithdrawalsPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -62,7 +58,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-6"
+        "REQ-3"
       ],
       "confidence": "high"
     }

@@ -13,6 +13,7 @@ import { formatDate } from '../../lib/utils';
 import { toast } from 'sonner';
 import type { WithdrawalRequest } from '../../types/app-types';
 import { Currency } from '../../types/app-types';
+import NigerianBankSelect from '../../components/payout/NigerianBankSelect';
 
 export default function WithdrawalsPage() {
   const { data: withdrawals = [], isLoading: withdrawalsLoading } = useGetWithdrawalRequests();
@@ -148,47 +149,49 @@ export default function WithdrawalsPage() {
             <CardHeader>
               <CardTitle>Request Withdrawal</CardTitle>
               <CardDescription>
-                Submit a new withdrawal request
+                Submit a new withdrawal request to your bank account
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleWithdrawalRequest} className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      step="0.01"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="100.00"
-                      disabled={requestWithdrawal.isPending}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="100.00"
+                    required
+                  />
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="currency">Currency</Label>
-                    <Select value={currency} onValueChange={setCurrency} disabled={requestWithdrawal.isPending}>
-                      <SelectTrigger id="currency">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="usd">USD</SelectItem>
-                        <SelectItem value="kes">KES</SelectItem>
-                        <SelectItem value="ngn">NGN</SelectItem>
-                        <SelectItem value="inr">INR</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger id="currency">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="usd">USD - US Dollar</SelectItem>
+                      <SelectItem value="ngn">NGN - Nigerian Naira</SelectItem>
+                      <SelectItem value="kes">KES - Kenyan Shilling</SelectItem>
+                      <SelectItem value="inr">INR - Indian Rupee</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="method">Payout Method</Label>
                   {methodsLoading ? (
                     <Skeleton className="h-10 w-full" />
+                  ) : payoutMethods.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No payout methods available. Add one in the Payout Methods tab.
+                    </p>
                   ) : (
-                    <Select value={selectedMethod} onValueChange={setSelectedMethod} disabled={requestWithdrawal.isPending}>
+                    <Select value={selectedMethod} onValueChange={setSelectedMethod}>
                       <SelectTrigger id="method">
                         <SelectValue placeholder="Select payout method" />
                       </SelectTrigger>
@@ -200,11 +203,6 @@ export default function WithdrawalsPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                  )}
-                  {!methodsLoading && payoutMethods.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      No payout methods available. Add one in the Payout Methods tab.
-                    </p>
                   )}
                 </div>
 
@@ -233,12 +231,11 @@ export default function WithdrawalsPage() {
               <form onSubmit={handleAddPayoutMethod} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="bankName">Bank Name</Label>
-                  <Input
-                    id="bankName"
+                  <NigerianBankSelect
                     value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
-                    placeholder="First Bank"
+                    onValueChange={setBankName}
                     disabled={addPayoutMethod.isPending}
+                    placeholder="Select your bank"
                   />
                 </div>
 
@@ -249,7 +246,7 @@ export default function WithdrawalsPage() {
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
                     placeholder="John Doe"
-                    disabled={addPayoutMethod.isPending}
+                    required
                   />
                 </div>
 
@@ -260,7 +257,7 @@ export default function WithdrawalsPage() {
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
                     placeholder="1234567890"
-                    disabled={addPayoutMethod.isPending}
+                    required
                   />
                 </div>
 
@@ -271,7 +268,7 @@ export default function WithdrawalsPage() {
                 >
                   {addPayoutMethod.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Method
+                  Add Payout Method
                 </Button>
               </form>
             </CardContent>
@@ -287,26 +284,30 @@ export default function WithdrawalsPage() {
             <CardContent>
               {methodsLoading ? (
                 <div className="space-y-3">
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
                 </div>
               ) : payoutMethods.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
-                  No payout methods yet. Add one above.
+                  No payout methods yet. Add one above to get started.
                 </p>
               ) : (
                 <div className="space-y-3">
                   {payoutMethods.map((method) => (
                     <div
                       key={method.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
+                      className="border rounded-lg p-4 space-y-1"
                     >
-                      <div>
-                        <p className="font-medium">{method.bankName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {method.accountName} • {method.accountNumber}
-                        </p>
-                      </div>
+                      <p className="font-medium">{method.bankName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {method.accountName}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {method.accountNumber}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Added {formatDate(Number(method.createdAt) / 1_000_000)}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -320,48 +321,55 @@ export default function WithdrawalsPage() {
             <CardHeader>
               <CardTitle>Withdrawal History</CardTitle>
               <CardDescription>
-                View your past withdrawal requests
+                View all your withdrawal requests and their status
               </CardDescription>
             </CardHeader>
             <CardContent>
               {withdrawalsLoading ? (
                 <div className="space-y-3">
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full" />
                 </div>
               ) : withdrawals.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
-                  No withdrawal requests yet.
+                  No withdrawal requests yet. Submit one in the Request tab.
                 </p>
               ) : (
                 <div className="space-y-3">
                   {withdrawals.map((withdrawal) => {
                     const statusStr = getStatusString(withdrawal);
+                    const method = payoutMethods.find(m => m.id === withdrawal.payoutMethodId);
+
                     return (
                       <div
                         key={withdrawal.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
+                        className="border rounded-lg p-4 space-y-2"
                       >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-medium">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <p className="font-medium text-lg">
                               {formatAmount(withdrawal.amount)}
                             </p>
-                            <Badge variant={getStatusVariant(statusStr)} className="flex items-center gap-1">
-                              {getStatusIcon(statusStr)}
-                              {statusStr}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {formatDate(Number(withdrawal.createdAt) / 1_000_000)}
-                          </p>
-                          {withdrawal.processedAt && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Processed: {formatDate(Number(withdrawal.processedAt) / 1_000_000)}
+                            {method && (
+                              <p className="text-sm text-muted-foreground">
+                                {method.bankName} - {method.accountNumber}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(Number(withdrawal.createdAt) / 1_000_000)}
                             </p>
-                          )}
+                          </div>
+                          <Badge variant={getStatusVariant(statusStr)} className="flex items-center gap-1">
+                            {getStatusIcon(statusStr)}
+                            {statusStr}
+                          </Badge>
                         </div>
+                        {withdrawal.processedAt && (
+                          <p className="text-xs text-muted-foreground">
+                            Processed {formatDate(Number(withdrawal.processedAt) / 1_000_000)}
+                          </p>
+                        )}
                       </div>
                     );
                   })}

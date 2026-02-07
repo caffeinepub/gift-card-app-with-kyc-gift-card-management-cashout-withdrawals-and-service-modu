@@ -15,6 +15,7 @@ import { ArrowLeft, Loader2, Building2, Plus } from 'lucide-react';
 import { useGetPayoutMethods, useAddPayoutMethod, useRequestWithdrawal } from '../../../hooks/useQueries';
 import { toast } from 'sonner';
 import type { Currency } from '../../../types/app-types';
+import NigerianBankSelect from '../../payout/NigerianBankSelect';
 
 interface SendToBankSheetProps {
   open: boolean;
@@ -261,12 +262,11 @@ export default function SendToBankSheet({ open, onOpenChange }: SendToBankSheetP
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="bankName">Bank Name</Label>
-                  <Input
-                    id="bankName"
+                  <NigerianBankSelect
                     value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
-                    placeholder="First Bank"
+                    onValueChange={setBankName}
                     disabled={addPayoutMethod.isPending}
+                    placeholder="Select your bank"
                   />
                 </div>
 
