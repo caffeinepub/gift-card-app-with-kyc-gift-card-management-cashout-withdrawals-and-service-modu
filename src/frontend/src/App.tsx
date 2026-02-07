@@ -2,7 +2,9 @@ import { createRouter, createRoute, createRootRoute, RouterProvider, Outlet } fr
 import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useGetCallerUserProfile } from './hooks/useCurrentUserProfile';
 import { useProfileSetupSuppression } from './hooks/useProfileSetupSuppression';
+import { useEnsureUserRegistered } from './hooks/useEnsureUserRegistered';
 import LoginCard from './components/auth/LoginCard';
+import AuthInitializingScreen from './components/auth/AuthInitializingScreen';
 import AppShell from './components/layout/AppShell';
 import ProfileSetupModal from './components/profile/ProfileSetupModal';
 import DashboardPage from './pages/DashboardPage';
@@ -25,23 +27,94 @@ import WifiInternetPage from './pages/services/WifiInternetPage';
 import CableTvBillsPage from './pages/services/CableTvBillsPage';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Button } from './components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
 
 function Layout() {
-  const { identity } = useInternetIdentity();
+  const { identity, isInitializing } = useInternetIdentity();
+  const { 
+    isRegistering, 
+    isRegistered, 
+    registrationError, 
+    retryRegistration 
+  } = useEnsureUserRegistered();
+  
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
   
   const isAuthenticated = !!identity;
   const principalString = identity?.getPrincipal().toString() || null;
   
   const { isSuppressed, suppress } = useProfileSetupSuppression(principalString);
+
+  // Show initializing screen while Internet Identity is loading
+  if (isInitializing) {
+    return <AuthInitializingScreen />;
+  }
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <LoginCard />;
+  }
+
+  // Show registration loading state
+  if (isRegistering) {
+    return (
+      <div className="min-h-screen bg-[oklch(0.35_0.08_280)] flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md px-6">
+          <Loader2 className="h-12 w-12 animate-spin text-[oklch(0.75_0.12_220)] mx-auto" />
+          <p className="text-lg text-[oklch(0.85_0.05_280)] font-medium">
+            Setting up your account...
+          </p>
+          <p className="text-sm text-[oklch(0.75_0.05_280)]">
+            Please wait while we register your account with the backend.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show registration error with retry only if registration truly failed
+  // and the user is not yet registered
+  if (registrationError && !isRegistered) {
+    const errorMessage = registrationError instanceof Error 
+      ? registrationError.message 
+      : 'Unknown error occurred during registration';
+
+    return (
+      <div className="min-h-screen bg-[oklch(0.35_0.08_280)] flex items-center justify-center p-6">
+        <div className="max-w-md w-full space-y-4">
+          <Alert variant="destructive" className="bg-background">
+            <AlertCircle className="h-5 w-5" />
+            <AlertTitle className="text-lg font-semibold">Registration Failed</AlertTitle>
+            <AlertDescription className="mt-2 space-y-3">
+              <p>
+                We couldn't complete your account registration. This is required to access the application.
+              </p>
+              <p className="text-sm font-mono bg-muted p-2 rounded">
+                {errorMessage}
+              </p>
+            </AlertDescription>
+          </Alert>
+          <Button
+            onClick={() => retryRegistration()}
+            className="w-full h-12 rounded-full text-base font-medium bg-[oklch(0.75_0.12_220)] hover:bg-[oklch(0.70_0.12_220)] text-[oklch(0.40_0.08_280)]"
+          >
+            Retry Registration
+          </Button>
+        </div>
+      </div>
+    );
+  }
   
   // Show profile setup modal only if:
-  // 1. User is authenticated
+  // 1. User is authenticated and registered
   // 2. Profile query has completed
   // 3. No profile exists (userProfile === null)
   // 4. User hasn't dismissed it for this principal
   const showProfileSetup = 
     isAuthenticated && 
+    isRegistered &&
     !profileLoading && 
     isFetched && 
     userProfile === null && 
@@ -52,10 +125,6 @@ function Layout() {
       suppress();
     }
   };
-
-  if (!isAuthenticated) {
-    return <LoginCard />;
-  }
 
   return (
     <>

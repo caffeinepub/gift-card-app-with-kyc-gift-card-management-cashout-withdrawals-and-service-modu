@@ -14,10 +14,12 @@ export type DocumentType = { 'votersID' : null } |
   { 'passport' : null } |
   { 'nationalID' : null } |
   { 'driversLicense' : null };
+export type ExternalBlob = Uint8Array;
 export interface KycRecord {
   'id' : KycRecordId,
   'status' : KycStatus,
   'documentType' : DocumentType,
+  'signature' : [] | [ExternalBlob],
   'documentURI' : string,
   'user' : Principal,
   'submittedAt' : Time,
@@ -102,7 +104,10 @@ export interface _SERVICE {
   'listUserPayoutMethods' : ActorMethod<[], Array<PayoutMethod>>,
   'listUserWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'submitKycRecord' : ActorMethod<[DocumentType, string, string], KycRecordId>,
+  'submitKycRecord' : ActorMethod<
+    [DocumentType, string, string, [] | [ExternalBlob]],
+    KycRecordId
+  >,
   'updateKycStatus' : ActorMethod<[KycRecordId, KycStatus], undefined>,
   'updateWithdrawalStatus' : ActorMethod<
     [WithdrawalRequestId, WithdrawalStatus],

@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-wire-the-frontend-react-query-hooks-in-frontend-src-hooks-usequeries-ts-to-the-new-backend-kyc-apis-replace-the-current-backend-method-not-implemented-stubs-and-ensure-queries-invalidate-appropriately-after-submission-and-admin-status-updates",
-      "featureTitle": "Wire the frontend React Query hooks in frontend/src/hooks/useQueries.ts to the new backend KYC APIs (replace the current 'Backend method not implemented' stubs) and ensure queries invalidate appropriately after submission and admin status updates.",
+      "featureId": "feature-expand-the-nigerian-bank-options-used-for-withdrawal-payout-methods-to-include-kuda-bank-opay-moniepoint-and-palmpay-and-broaden-the-list-to-cover-nigerian-online-digital-banking-options-so-users-can-select-them-during-payout-method-creation",
+      "featureTitle": "Expand the Nigerian bank options used for withdrawal payout methods to include Kuda Bank, OPay, Moniepoint, and PalmPay, and broaden the list to cover Nigerian online/digital banking options so users can select them during payout method creation.",
       "files": [
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/config/__tests__/nigerianBanks.test.ts",
+        "frontend/src/config/nigerianBanks.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -17,47 +18,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-the-kyc-submission-ui-frontend-src-pages-kycpage-tsx-to-support-the-requested-document-types-nin-id-card-voter-s-card-passport-and-address-verification-including-appropriate-form-labels-and-validation-so-users-cannot-submit-without-required-fields-and-an-uploaded-document",
-      "featureTitle": "Update the KYC submission UI (frontend/src/pages/KycPage.tsx) to support the requested document types: NIN, ID card, voter’s card, passport, and address verification, including appropriate form labels and validation so users cannot submit without required fields and an uploaded document.",
-      "files": [
-        "frontend/src/pages/KycPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-the-admin-kyc-review-ui-frontend-src-pages-admin-adminkycreviewpage-tsx-to-show-each-record-s-key-details-and-provide-a-direct-way-for-admins-to-open-the-submitted-document-uri-for-review-before-approving-rejecting",
-      "featureTitle": "Update the admin KYC review UI (frontend/src/pages/admin/AdminKycReviewPage.tsx) to show each record’s key details and provide a direct way for admins to open the submitted document URI for review before approving/rejecting.",
-      "files": [
-        "frontend/src/pages/admin/AdminKycReviewPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-6"
+        "REQ-1"
       ],
       "confidence": "high"
     }

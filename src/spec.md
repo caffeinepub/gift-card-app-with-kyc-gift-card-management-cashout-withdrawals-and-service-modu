@@ -1,14 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Implement a complete KYC verification workflow covering NIN, ID card, voter’s card, passport, and address verification, including user submission, backend storage, and admin review/approval.
+**Goal:** Expand the selectable Nigerian bank list for withdrawal payout method creation to include major digital banks/fintechs.
 
 **Planned changes:**
-- Add a backend KYC record data model and persistent per-user storage (document type, document URI, ID number, uploaded-by principal, status, timestamps).
-- Add backend user APIs to submit a KYC record (default status=pending) and list the authenticated user’s KYC records.
-- Add backend admin APIs to fetch any user’s KYC records and update a record’s status to verified/rejected (and optionally expired if supported).
-- Wire frontend React Query hooks to the new backend KYC APIs and ensure queries invalidate/refresh after submissions and admin status updates.
-- Update the KYC submission page UI to support document types (NIN, ID card, voter’s card, passport, address verification) with required-field validation and existing file constraints.
-- Update the admin KYC review UI to display record details and provide a link/button to open the submitted document URI for review before approving/rejecting.
+- Update `frontend/src/config/nigerianBanks.ts` to add user-facing bank entries for: Kuda Bank, OPay, Moniepoint, and PalmPay.
+- Ensure the updated bank list remains the single source of truth consumed by `NigerianBankSelect`, so the new options appear via search (e.g., “kuda”, “opay”, “monie”, “palm”).
+- Verify payout method creation works with these new selections in both the Withdrawals flow and the Send-to-Bank sheet without UI/validation issues.
 
-**User-visible outcome:** Users can submit KYC documents for the supported document types and view their KYC status history; admins can search for a user’s KYC records, open submitted documents via their URI, and approve/reject pending submissions.
+**User-visible outcome:** Users can search for and select Kuda Bank, OPay, Moniepoint, and PalmPay (and other Nigerian digital bank options present in the updated list) when creating a payout method for withdrawals.

@@ -14,26 +14,20 @@ import { getBrandRateTable } from '../../config/giftCardRatesNGN';
 export default function GiftCardsListPage() {
   const navigate = useNavigate();
   const { data: cards = [], isLoading } = useGetGiftCards();
-  const { data: userTagsData = [] } = useGetUserTags();
+  const { data: userTagsMap = new Map() } = useGetUserTags();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  // Create a map of giftCardId -> tags[]
+  // Since useGetUserTags returns Map<string, number> (tag name -> count),
+  // we need to create a map of giftCardId -> tags[] from the cards themselves
+  // For now, we'll use an empty map since the backend doesn't support tags yet
   const tagsMap = useMemo(() => {
-    const map = new Map<string, string[]>();
-    userTagsData.forEach(([giftCardId, tags]) => {
-      map.set(giftCardId, tags);
-    });
-    return map;
-  }, [userTagsData]);
+    return new Map<string, string[]>();
+  }, []);
 
-  // Extract all unique tags from user tags data
+  // Extract all unique tags from the tags map (tag names)
   const availableTags = useMemo(() => {
-    const tagsSet = new Set<string>();
-    userTagsData.forEach(([_, tags]) => {
-      tags.forEach(tag => tagsSet.add(tag));
-    });
-    return Array.from(tagsSet);
-  }, [userTagsData]);
+    return Array.from(userTagsMap.keys());
+  }, [userTagsMap]);
 
   // Filter cards by selected tags
   const filteredCards = useMemo(() => {

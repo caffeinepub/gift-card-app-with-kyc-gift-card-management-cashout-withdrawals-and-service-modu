@@ -1,5 +1,5 @@
 import { useGetKycRecords, useSubmitKyc } from '../hooks/useQueries';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { CheckCircle, Clock, XCircle, Upload, Loader2, FileText } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, Upload, Loader2, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExternalBlob } from '../backend';
+import DocumentSignatureOverlay from '../components/kyc/DocumentSignatureOverlay';
 
 export default function KycPage() {
   const { data: kycRecords = [], isLoading } = useGetKycRecords();
@@ -20,11 +21,20 @@ export default function KycPage() {
   const [idNumber, setIdNumber] = useState('');
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [hasSignature, setHasSignature] = useState(false);
+  const [enableSigning, setEnableSigning] = useState(true);
+
+  const exportSignatureRef = useRef<(() => Promise<Blob | null>) | null>(null);
 
   const latestKyc = kycRecords[kycRecords.length - 1];
   const kycStatus = latestKyc?.status;
 
   const canSubmit = !kycStatus || kycStatus.__kind__ === 'rejected' || kycStatus.__kind__ === 'expired';
+
+  const isImageFile = (file: File | null): boolean => {
+    if (!file) return false;
+    return file.type.startsWith('image/');
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -34,6 +44,14 @@ export default function KycPage() {
         return;
       }
       setDocumentFile(file);
+      setHasSignature(false);
+      
+      // Auto-enable signing for images, disable for PDFs
+      if (isImageFile(file)) {
+        setEnableSigning(true);
+      } else {
+        setEnableSigning(false);
+      }
     }
   };
 
@@ -42,6 +60,12 @@ export default function KycPage() {
 
     if (!documentType || !idNumber || !documentFile) {
       toast.error('Please fill in all fields and upload a document');
+      return;
+    }
+
+    // Validate signature if signing is enabled for images
+    if (enableSigning && isImageFile(documentFile) && !hasSignature) {
+      toast.error('Please sign the document before submitting');
       return;
     }
 
@@ -58,10 +82,24 @@ export default function KycPage() {
       // Get the direct URL for storage
       const documentUri = blob.getDirectURL();
 
+      // Export signature if enabled and available
+      let signatureBlob: ExternalBlob | null = null;
+      if (enableSigning && isImageFile(documentFile) && exportSignatureRef.current) {
+        const exportFn = (exportSignatureRef.current as any).current;
+        if (exportFn) {
+          const signatureBlobData = await exportFn();
+          if (signatureBlobData) {
+            const signatureBytes = new Uint8Array(await signatureBlobData.arrayBuffer());
+            signatureBlob = ExternalBlob.fromBytes(signatureBytes);
+          }
+        }
+      }
+
       await submitKyc.mutateAsync({
         documentType,
         documentUri,
         idNumber,
+        signature: signatureBlob,
       });
 
       toast.success('KYC submitted successfully!');
@@ -69,6 +107,8 @@ export default function KycPage() {
       setIdNumber('');
       setDocumentFile(null);
       setUploadProgress(0);
+      setHasSignature(false);
+      setEnableSigning(true);
     } catch (error: any) {
       if (error.message?.includes('Address verification is not yet supported')) {
         toast.error('Address verification is not yet supported. Please select another document type.');
@@ -204,6 +244,25 @@ export default function KycPage() {
                 </p>
               </div>
 
+              {/* Non-image file alert */}
+              {documentFile && !isImageFile(documentFile) && (
+                <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <AlertDescription className="text-amber-800 dark:text-amber-200">
+                    PDF files cannot be signed. Please upload an image file to use the signature feature, or continue without signing.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Signature overlay for images */}
+              {documentFile && isImageFile(documentFile) && enableSigning && (
+                <DocumentSignatureOverlay
+                  imageFile={documentFile}
+                  onSignatureChange={setHasSignature}
+                  onExportSignature={exportSignatureRef as any}
+                />
+              )}
+
               {uploadProgress > 0 && uploadProgress < 100 && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -222,7 +281,13 @@ export default function KycPage() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={submitKyc.isPending || !documentType || !idNumber || !documentFile}
+                disabled={
+                  submitKyc.isPending || 
+                  !documentType || 
+                  !idNumber || 
+                  !documentFile ||
+                  (enableSigning && isImageFile(documentFile) && !hasSignature)
+                }
               >
                 {submitKyc.isPending ? (
                   <>

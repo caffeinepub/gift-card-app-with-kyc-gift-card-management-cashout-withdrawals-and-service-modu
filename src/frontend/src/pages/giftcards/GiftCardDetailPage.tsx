@@ -34,7 +34,7 @@ export default function GiftCardDetailPage() {
         { __kind__: 'archived' };
 
       await updateStatus.mutateAsync({
-        id: card.id,
+        cardId: card.id,
         newStatus: statusObj,
       });
       toast.success('Status updated successfully');

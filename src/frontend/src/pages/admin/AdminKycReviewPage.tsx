@@ -6,7 +6,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
-import { Shield, Search, Loader2, ExternalLink, FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Shield, Search, Loader2, ExternalLink, FileText, CheckCircle, XCircle, Clock, FileSignature } from 'lucide-react';
 import AdminRouteGuard from '../../components/admin/AdminRouteGuard';
 import { toast } from 'sonner';
 import type { KycStatus } from '../../types/app-types';
@@ -44,6 +44,10 @@ function AdminKycReviewContent() {
 
   const handleViewDocument = (documentUri: string) => {
     window.open(documentUri, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleViewSignature = (signatureUri: string) => {
+    window.open(signatureUri, '_blank', 'noopener,noreferrer');
   };
 
   const getStatusIcon = (status: KycStatus) => {
@@ -179,7 +183,7 @@ function AdminKycReviewContent() {
                       </div>
                     </div>
 
-                    <div>
+                    <div className="grid grid-cols-1 gap-2">
                       <Button
                         variant="outline"
                         className="w-full"
@@ -188,6 +192,17 @@ function AdminKycReviewContent() {
                         <ExternalLink className="mr-2 h-4 w-4" />
                         View Document
                       </Button>
+
+                      {record.signatureUri && (
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => handleViewSignature(record.signatureUri)}
+                        >
+                          <FileSignature className="mr-2 h-4 w-4" />
+                          View Signature
+                        </Button>
+                      )}
                     </div>
 
                     {record.status.__kind__ === 'pending' && (

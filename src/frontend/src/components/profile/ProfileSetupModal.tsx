@@ -25,6 +25,7 @@ export default function ProfileSetupModal({ open, onOpenChange }: ProfileSetupMo
     }
 
     try {
+      const now = BigInt(Date.now() * 1000000);
       await createProfile.mutateAsync({
         id: `user-${Date.now()}`,
         email: null,
@@ -38,6 +39,10 @@ export default function ProfileSetupModal({ open, onOpenChange }: ProfileSetupMo
           style: null,
         },
         country: 'US',
+        wallets: null,
+        isPremium: false,
+        createdAt: now,
+        updatedAt1: null,
       });
       toast.success('Profile created successfully!');
       onOpenChange(false);

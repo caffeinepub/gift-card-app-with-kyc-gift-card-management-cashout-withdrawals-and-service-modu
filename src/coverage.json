@@ -1,86 +1,37 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T22:03:04.047Z",
+  "generatedAt": "2026-02-07T23:36:40.011Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 6,
-    "implemented": 3,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Implement backend KYC data model and storage to support user-submitted KYC records, including document type, document URI, ID number, uploaded-by principal, status (pending/verified/rejected/expired), and timestamps as needed for auditing.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Add backend user APIs for KYC submission and retrieval: allow a logged-in user to submit a new KYC record (default status=pending) and list their own KYC records.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Add backend admin APIs for KYC review: allow an admin to fetch a specific user’s KYC records and update a specific record’s status to verified or rejected (and optionally expired if supported).",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Wire the frontend React Query hooks in frontend/src/hooks/useQueries.ts to the new backend KYC APIs (replace the current 'Backend method not implemented' stubs) and ensure queries invalidate appropriately after submission and admin status updates.",
+        "summary": "Expand the Nigerian bank options used for withdrawal payout methods to include Kuda Bank, OPay, Moniepoint, and PalmPay, and broaden the list to cover Nigerian online/digital banking options so users can select them during payout method creation.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/config/nigerianBanks.ts",
+          "frontend/src/config/__tests__/nigerianBanks.test.ts"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Update the KYC submission UI (frontend/src/pages/KycPage.tsx) to support the requested document types: NIN, ID card, voter’s card, passport, and address verification, including appropriate form labels and validation so users cannot submit without required fields and an uploaded document.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/KycPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/KycPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Update the admin KYC review UI (frontend/src/pages/admin/AdminKycReviewPage.tsx) to show each record’s key details and provide a direct way for admins to open the submitted document URI for review before approving/rejecting.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/admin/AdminKycReviewPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/admin/AdminKycReviewPage.tsx"
+          "frontend/src/config/nigerianBanks.ts",
+          "frontend/src/config/__tests__/nigerianBanks.test.ts"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/KycPage.tsx",
-    "frontend/src/pages/admin/AdminKycReviewPage.tsx",
-    "frontend/src/types/app-types.ts",
+    "frontend/src/config/__tests__/nigerianBanks.test.ts",
+    "frontend/src/config/nigerianBanks.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

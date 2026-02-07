@@ -8,6 +8,8 @@
  */
 
 import { backendInterface } from './backend';
+import { UserRole } from './backend';
+import { Principal } from '@dfinity/principal';
 
 declare module './backend' {
   interface backendInterface {
@@ -20,5 +22,15 @@ declare module './backend' {
      * @returns Promise that resolves when initialization is complete
      */
     _initializeAccessControlWithSecret(secret: string): Promise<void>;
+
+    /**
+     * Self-register the caller as a user in the access control system.
+     * This is an idempotent operation - if the caller is already registered,
+     * this method does nothing. This allows newly authenticated principals
+     * to gain access to protected backend functions.
+     * 
+     * @returns Promise that resolves when registration is complete
+     */
+    assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
   }
 }

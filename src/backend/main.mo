@@ -4,13 +4,13 @@ import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import Time "mo:core/Time";
 import Nat "mo:core/Nat";
+
 import MixinAuthorization "authorization/MixinAuthorization";
+import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
 import AccessControl "authorization/access-control";
-import Migration "migration";
 
-// Apply migration logic on upgrade via with syntax.
-(with migration = Migration.run)
+
 actor {
   public type UserProfile = {
     name : Text;
@@ -34,18 +34,19 @@ actor {
     #rejected;
   };
 
-  type KycRecord = {
+  public type KycRecord = {
     id : KycRecordId;
     user : Principal;
     documentURI : Text;
     documentType : DocumentType;
     idNumber : Text;
     status : KycStatus;
+    signature : ?Storage.ExternalBlob;
     submittedAt : Time.Time;
     verifiedAt : ?Time.Time;
   };
 
-  type KycStatus = {
+  public type KycStatus = {
     #pending;
     #unverified;
     #verified;
@@ -87,7 +88,7 @@ actor {
   include MixinStorage();
 
   // KYC
-  public shared ({ caller }) func submitKycRecord(documentType : DocumentType, idNumber : Text, documentURI : Text) : async KycRecordId {
+  public shared ({ caller }) func submitKycRecord(documentType : DocumentType, idNumber : Text, documentURI : Text, signature : ?Storage.ExternalBlob) : async KycRecordId {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can submit KYC records");
     };
@@ -102,6 +103,7 @@ actor {
       idNumber;
       documentURI;
       status = #pending;
+      signature;
       submittedAt = Time.now();
       verifiedAt = null;
     };

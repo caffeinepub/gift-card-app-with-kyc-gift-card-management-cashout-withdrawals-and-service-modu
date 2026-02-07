@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Loader2, Eye, EyeOff, Info } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Info, AlertCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,29 +10,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
+import { Alert, AlertDescription } from '../ui/alert';
 
 export default function LoginCard() {
-  const { login, loginStatus } = useInternetIdentity();
+  const { login, loginStatus, loginError } = useInternetIdentity();
   const [showPassword, setShowPassword] = useState(false);
   const [showInfoDialog, setShowInfoDialog] = useState(false);
+  const [customLoginError, setCustomLoginError] = useState<string | null>(null);
 
   const isLoggingIn = loginStatus === 'logging-in';
+  const hasError = loginStatus === 'loginError';
 
   const handleContinue = async () => {
+    setCustomLoginError(null);
     try {
       await login();
     } catch (error: any) {
       console.error('Login error:', error);
+      setCustomLoginError(error.message || 'Failed to connect to Internet Identity. Please try again.');
     }
   };
 
-  const handleSignUpClick = () => {
-    setShowInfoDialog(true);
+  const handleSignUpClick = async () => {
+    // Sign up also triggers Internet Identity login
+    // Internet Identity handles account creation in its own UI
+    setCustomLoginError(null);
+    try {
+      await login();
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      setCustomLoginError(error.message || 'Failed to connect to Internet Identity. Please try again.');
+    }
   };
 
   const handleForgotPasswordClick = () => {
     setShowInfoDialog(true);
   };
+
+  const displayError = customLoginError || (hasError && loginError?.message);
 
   return (
     <>
@@ -51,7 +66,8 @@ export default function LoginCard() {
               <span className="text-muted-foreground">Don't have an account?</span>
               <button
                 onClick={handleSignUpClick}
-                className="text-[oklch(0.65_0.15_220)] hover:underline font-medium"
+                disabled={isLoggingIn}
+                className="text-[oklch(0.65_0.15_220)] hover:underline font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Sign up
               </button>
@@ -61,9 +77,20 @@ export default function LoginCard() {
             <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg border border-muted">
               <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <p className="text-xs text-muted-foreground">
-                This app uses <strong>Internet Identity</strong> for authentication. Click Continue to sign in securely.
+                This app uses <strong>Internet Identity</strong> for secure authentication. 
+                Click Continue or Sign up to proceed.
               </p>
             </div>
+
+            {/* Error Alert */}
+            {displayError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {displayError}
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Email input (non-functional, for visual consistency) */}
             <div className="space-y-3">
@@ -97,6 +124,11 @@ export default function LoginCard() {
               </div>
             </div>
 
+            {/* Note about non-functional fields */}
+            <p className="text-xs text-muted-foreground">
+              Email and password fields are for display only. Authentication is handled by Internet Identity.
+            </p>
+
             {/* Forgot password link */}
             <button
               onClick={handleForgotPasswordClick}
@@ -120,33 +152,45 @@ export default function LoginCard() {
                 'Continue'
               )}
             </Button>
+
+            {/* Retry button for errors */}
+            {displayError && !isLoggingIn && (
+              <Button
+                onClick={handleContinue}
+                variant="outline"
+                className="w-full h-12 rounded-full text-base font-medium"
+              >
+                Try Again
+              </Button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Info Dialog */}
+      {/* Info Dialog for Forgot Password */}
       <Dialog open={showInfoDialog} onOpenChange={setShowInfoDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Internet Identity Authentication</DialogTitle>
+            <DialogTitle>Account Recovery</DialogTitle>
             <DialogDescription className="space-y-3 pt-2">
               <p>
                 This application uses <strong>Internet Identity</strong> for secure, decentralized authentication.
               </p>
               <p>
-                To create an account or reset your credentials, click "Continue" and follow the Internet Identity flow. 
-                Internet Identity will guide you through account creation or recovery.
+                To recover your account or reset your credentials, visit Internet Identity directly. 
+                Internet Identity provides secure recovery options for your account.
               </p>
               <p className="text-xs text-muted-foreground">
-                Learn more at{' '}
+                Visit{' '}
                 <a
                   href="https://identity.ic0.app"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline"
+                  className="text-primary hover:underline font-medium"
                 >
                   identity.ic0.app
                 </a>
+                {' '}to manage your Internet Identity account and recovery options.
               </p>
             </DialogDescription>
           </DialogHeader>

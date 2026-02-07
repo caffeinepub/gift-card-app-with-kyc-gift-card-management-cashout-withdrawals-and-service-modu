@@ -1,80 +1,48 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T22:03:04.043Z",
-  "summary": "Core KYC backend APIs and basic frontend wiring/UI were added, but the implementation does not fully match the requested KYC workflow: address verification is explicitly unsupported, the backend data model/statuses and document types differ from the spec, and some admin/update semantics and query invalidation behavior cannot be confirmed from the truncated diff. Additionally, multiple unrelated frontend features appear to have been added/modified beyond the KYC scope.",
+  "generatedAt": "2026-02-07T23:36:40.007Z",
+  "summary": "REQ-1 is partially implemented: `frontend/src/config/nigerianBanks.ts` now includes the required new bank/fintech entries and expands the list. However, based on the provided diff summary, there is not enough evidence that the updated list is actually wired as the single source of truth for `NigerianBankSelect` across both the Withdrawals flow and the Send-to-Bank sheet, or that users can complete payout method creation using these new options without validation/UI issues.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Backend KYC record type must include at minimum: documentType, documentUri, idNumber, uploadedBy, and status (pending/verified/rejected/expired).",
-      "reason": "Backend record uses different field names/semantics (e.g., `user` instead of `uploadedBy`, `documentURI` instead of `documentUri`) and introduces extra status `#unverified` not in the required set; this does not clearly satisfy the required shape.",
+      "requirement": "The updated list remains the single source of truth used by `NigerianBankSelect`, and the new entries appear in bank search results when typing queries like \"kuda\", \"opay\", \"monie\", and \"palm\".",
+      "reason": "While the config adds the new entries and introduces `filterBanksByQuery`, the diff summary does not show any changes to `NigerianBankSelect` (or its consumers) confirming it imports/uses this list and filter for search results.",
       "evidence": [
-        "backend/main.mo",
-        "backend/migration.mo"
+        "frontend/src/config/nigerianBanks.ts"
       ]
     },
     {
-      "id": "REQ-3",
-      "requirement": "Admin-only method can update an existing KYC record’s status (e.g., located by idNumber within that user’s records).",
-      "reason": "The backend update API shown updates by `recordId` only; the acceptance criteria explicitly mentions locating by `idNumber` within that user’s records as an example approach, but no such lookup is evidenced in the diff snippet.",
+      "id": "REQ-1",
+      "requirement": "Users can successfully add a payout method selecting any of these new options from the searchable dropdown in both the Withdrawals flow and the Send-to-Bank sheet, with no UI crashes or validation dead-ends.",
+      "reason": "No code changes are shown for the Withdrawals flow UI, the Send-to-Bank sheet UI, or payout-method creation/validation paths. The diff summary only evidences config/test changes, so end-to-end usability in both locations cannot be verified.",
       "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "React Query hooks should invalidate appropriately after submission and admin status updates.",
-      "reason": "The diff is truncated and does not show the actual KYC hook implementations/mutations and their `queryClient.invalidateQueries` behavior; cannot confirm required invalidation is implemented.",
-      "evidence": [
-        "frontend/src/hooks/useQueries.ts"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "requirement": "KYC submission UI must support document types: NIN, ID card, voter’s card, passport, and address verification.",
-      "reason": "Address verification is explicitly not supported: the frontend mapping throws an error for `address_verification`, and the UI shows an error message stating it is not supported. Backend document types also do not include an address verification variant.",
-      "evidence": [
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/KycPage.tsx",
-        "backend/main.mo",
-        "backend/migration.mo"
+        "frontend/src/config/nigerianBanks.ts",
+        "frontend/src/config/__tests__/nigerianBanks.test.ts"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Introduced KYC status variant `unverified` which is not part of the requested status set (pending/verified/rejected/expired).",
-      "reason": "BuildRequest does not ask for an `unverified` status; adding it changes the state model beyond spec.",
+      "description": "Added new search normalization and query filtering utilities (`normalizeForSearch`, `filterBanksByQuery`) in the bank config module.",
+      "reason": "REQ-1 asks for expanded bank options and for new entries to appear in search results, but it does not explicitly request adding new exported search/filter functions or normalization behavior within the config module.",
       "evidence": [
-        "backend/main.mo",
-        "backend/migration.mo"
+        "frontend/src/config/nigerianBanks.ts"
       ]
     },
     {
-      "description": "Added/modified a large set of non-KYC frontend features (betting top-up page, crypto wallet flows, gift card brand catalog/components, withdrawals/admin withdrawals changes, global theme changes, etc.).",
-      "reason": "BuildRequest scope is KYC workflow only; these unrelated features are not requested.",
+      "description": "Added unit tests for the Nigerian bank config.",
+      "reason": "REQ-1 does not request adding tests; this is additional implementation beyond the stated requirements.",
       "evidence": [
-        "frontend-file-summaries.txt"
-      ]
-    },
-    {
-      "description": "Added backend migration module and applied migration logic on upgrade.",
-      "reason": "BuildRequest did not request data migration/upgrade logic; this is additional infrastructure beyond the specified KYC workflow requirements.",
-      "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo"
+        "frontend/src/config/__tests__/nigerianBanks.test.ts"
       ]
     }
   ],
-  "confidence": 0.66,
+  "confidence": 0.62,
   "changed_files": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/KycPage.tsx",
-    "frontend/src/pages/admin/AdminKycReviewPage.tsx",
-    "frontend/src/types/app-types.ts",
+    "frontend/src/config/__tests__/nigerianBanks.test.ts",
+    "frontend/src/config/nigerianBanks.ts",
     "project_state.json"
   ]
 }

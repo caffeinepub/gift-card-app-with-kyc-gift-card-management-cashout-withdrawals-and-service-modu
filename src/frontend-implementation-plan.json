@@ -1,55 +1,26 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "KYC workflow frontend wiring (submission + admin review)",
+  "title": "Expand Nigerian bank list for payout method selection",
   "requirements": [
     {
-      "id": "REQ-4",
-      "summary": "Replace React Query KYC stubs with real backend calls and proper cache invalidation for user and admin flows.",
+      "id": "REQ-1",
+      "summary": "Expand and improve the Nigerian bank/fintech options used by payout-method bank selection so users can choose major digital banks (Kuda, OPay, Moniepoint, PalmPay) in Withdrawals and Send-to-Bank flows.",
       "acceptanceCriteria": [
-        "KYC page loads KYC records from the backend using useGetKycRecords and displays current status when records exist.",
-        "Submitting KYC from the KYC page calls the backend and the UI refreshes to show the new pending record.",
-        "Admin KYC review page can search a principal and load records from the backend.",
-        "Approving/rejecting in the admin page calls the backend and refreshes the admin list for that principal."
+        "`frontend/src/config/nigerianBanks.ts` includes entries for: \"Kuda Bank\", \"OPay\", \"Moniepoint\", and \"PalmPay\" (spelled as user-facing names).",
+        "The updated list remains the single source of truth used by `NigerianBankSelect`, and the new entries appear in bank search results when typing queries like \"kuda\", \"opay\", \"monie\", and \"palm\".",
+        "Users can successfully add a payout method selecting any of these new options from the searchable dropdown in both the Withdrawals flow and the Send-to-Bank sheet, with no UI crashes or validation dead-ends."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/config/nigerianBanks.ts",
           "operation": "modify",
-          "description": "Implement KYC React Query hooks by calling backend capabilities already present in the typed interface: fetch caller KYC records, submit KYC record, admin fetch user KYC records (Principal text -> Principal), and admin update KYC status (use recordId rather than idNumber). Add mapping between backend KycRecord/KycStatus/DocumentType shapes and the local frontend KycRecord/KycStatus shapes used by the pages, and ensure query invalidation after submit and admin status updates (invalidate both the admin principal-scoped query and the caller's KYC query where appropriate). Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Update KYC submission form to support NIN, ID card, voter’s card, passport, and address verification with validation and correct UX.",
-      "acceptanceCriteria": [
-        "Document type picker includes options for: NIN, ID card, voter’s card, passport, and address verification (user-facing text in English).",
-        "Form prevents submission unless document type, ID number (or reference number for address verification if still using a single field), and file are present.",
-        "File size limit (<=5MB) and accepted types (image/*,.pdf) remain enforced as currently implemented.",
-        "After successful submission, the form resets and a success toast is shown."
-      ],
-      "file_operations": [
+          "description": "Expand `NIGERIAN_BANKS` to include Nigerian digital banks/fintechs, explicitly adding \"Kuda Bank\", \"OPay\", \"Moniepoint\", and \"PalmPay\" as user-facing names; broaden the list with additional common online/digital options. Update `filterBanksByQuery` to use a more forgiving match (case-insensitive + normalized punctuation/whitespace) so queries like \"kuda\", \"opay\", \"monie\", and \"palm\" reliably surface the new entries while keeping this config as the single source of truth."
+        },
         {
-          "path": "frontend/src/pages/KycPage.tsx",
-          "operation": "modify",
-          "description": "Update the document type picker options and labels to: NIN, ID card, voter’s card, passport, and address verification; adjust the ID number label/placeholder to accommodate address verification (e.g., \"Reference number\" while keeping a single field). Ensure submit remains blocked unless required fields and a file are present, keep the existing <=5MB and accepted file type enforcement, and keep/reset form state with a success toast on completion. Ensure the submitted document type value aligns with the mapping implemented in useSubmitKyc (including a user-facing error if a selected type is not yet supported by the backend enum). Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "summary": "Enhance admin KYC review UI to show record details and allow opening the submitted document URI before approving/rejecting.",
-      "acceptanceCriteria": [
-        "Each KYC record row/card displays documentType, idNumber, and status.",
-        "Each record provides a clickable link or button that opens documentUri in a new tab/window for review.",
-        "Approve/Reject buttons remain available only when status is pending, and show loading/disabled state while the mutation is in-flight."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/admin/AdminKycReviewPage.tsx",
-          "operation": "modify",
-          "description": "Render each KYC record with visible documentType, idNumber, and status, and add a \"View document\" link/button that opens the record's documentUri in a new tab/window for review. Update the approve/reject actions to target the backend record identifier used by the admin mutation (recordId), keep actions available only for pending records, and add clear loading/disabled states while the status update mutation is in-flight. Remove any placeholder messaging that claims backend KYC methods are not implemented once wiring is complete. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/config/__tests__/nigerianBanks.test.ts",
+          "operation": "create",
+          "description": "Add a focused unit test for `filterBanksByQuery` asserting that queries \"kuda\", \"opay\", \"monie\", and \"palm\" return results containing \"Kuda Bank\", \"OPay\", \"Moniepoint\", and \"PalmPay\", ensuring search behavior remains stable as the list grows."
         }
       ]
     }

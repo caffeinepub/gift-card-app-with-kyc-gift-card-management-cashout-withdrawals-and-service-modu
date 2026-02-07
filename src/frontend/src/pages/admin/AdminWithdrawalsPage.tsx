@@ -14,11 +14,11 @@ export default function AdminWithdrawalsPage() {
   const updateStatus = useAdminUpdateWithdrawalStatus();
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const handleApprove = async (withdrawalId: string) => {
-    setProcessingId(withdrawalId);
+  const handleApprove = async (requestId: string) => {
+    setProcessingId(requestId);
     try {
       await updateStatus.mutateAsync({
-        withdrawalId,
+        requestId,
         newStatus: 'paid',
       });
       toast.success('Withdrawal approved');
@@ -31,11 +31,11 @@ export default function AdminWithdrawalsPage() {
     }
   };
 
-  const handleReject = async (withdrawalId: string) => {
-    setProcessingId(withdrawalId);
+  const handleReject = async (requestId: string) => {
+    setProcessingId(requestId);
     try {
       await updateStatus.mutateAsync({
-        withdrawalId,
+        requestId,
         newStatus: 'rejected',
       });
       toast.success('Withdrawal rejected');

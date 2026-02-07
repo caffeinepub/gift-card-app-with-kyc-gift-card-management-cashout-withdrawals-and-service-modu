@@ -41,11 +41,13 @@ export const DocumentType = IDL.Variant({
   'nationalID' : IDL.Null,
   'driversLicense' : IDL.Null,
 });
+export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const Time = IDL.Int;
 export const KycRecord = IDL.Record({
   'id' : KycRecordId,
   'status' : KycStatus,
   'documentType' : DocumentType,
+  'signature' : IDL.Opt(ExternalBlob),
   'documentURI' : IDL.Text,
   'user' : IDL.Principal,
   'submittedAt' : Time,
@@ -134,7 +136,7 @@ export const idlService = IDL.Service({
   'listUserWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'submitKycRecord' : IDL.Func(
-      [DocumentType, IDL.Text, IDL.Text],
+      [DocumentType, IDL.Text, IDL.Text, IDL.Opt(ExternalBlob)],
       [KycRecordId],
       [],
     ),
@@ -182,11 +184,13 @@ export const idlFactory = ({ IDL }) => {
     'nationalID' : IDL.Null,
     'driversLicense' : IDL.Null,
   });
+  const ExternalBlob = IDL.Vec(IDL.Nat8);
   const Time = IDL.Int;
   const KycRecord = IDL.Record({
     'id' : KycRecordId,
     'status' : KycStatus,
     'documentType' : DocumentType,
+    'signature' : IDL.Opt(ExternalBlob),
     'documentURI' : IDL.Text,
     'user' : IDL.Principal,
     'submittedAt' : Time,
@@ -279,7 +283,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'submitKycRecord' : IDL.Func(
-        [DocumentType, IDL.Text, IDL.Text],
+        [DocumentType, IDL.Text, IDL.Text, IDL.Opt(ExternalBlob)],
         [KycRecordId],
         [],
       ),

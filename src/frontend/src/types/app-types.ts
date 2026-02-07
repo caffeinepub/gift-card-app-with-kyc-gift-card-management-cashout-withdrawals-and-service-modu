@@ -113,6 +113,7 @@ export interface KycRecord {
   status: KycStatus;
   externalId: ExternalId | null;
   recordId?: string; // Optional field for admin operations
+  signatureUri?: string | null; // Optional signature display URL
 }
 
 // Payout Method types
