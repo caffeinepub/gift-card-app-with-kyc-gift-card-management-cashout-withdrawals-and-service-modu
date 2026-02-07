@@ -2,31 +2,29 @@
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
   "summary": "New project",
-  "architectural_notes": [
-    "Withdrawal flow should include a selectable list of all Nigerian banks (kept up to date via a reliable data source/API)."
-  ],
+  "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-create-a-maintained-static-list-of-nigerian-banks-in-the-frontend-and-use-it-as-the-selectable-options-source-for-payout-method-creation",
-      "title": "Create a maintained static list of Nigerian banks in the frontend and use it as the selectable options source for payout-method creation.",
+      "id": "feature-update-the-unauthenticated-login-ui-to-visually-match-the-provided-screenshot-full-screen-dark-header-background-large-white-rounded-corner-sheet-log-in-title-don-t-have-an-account-sign-up-row-with-the-sign-up-styled-as-a-link-two-large-rounded-input-fields-email-password-a-forgot-password-link-and-a-wide-rounded-continue-primary-cta-at-the-bottom",
+      "title": "Update the unauthenticated login UI to visually match the provided screenshot: full-screen dark header/background, large white rounded-corner sheet, \"Log in\" title, \"Don’t have an account? Sign up\" row with the \"Sign up\" styled as a link, two large rounded input fields (email + password), a \"Forgot Password?\" link, and a wide rounded \"Continue\" primary CTA at the bottom.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-payout-method-creation-ui-in-the-send-to-bank-sheet-to-select-a-nigerian-bank-from-a-dropdown-with-search-instead-of-free-text-entry-while-still-storing-the-selected-bank-name-in-the-existing-payout-method-fields",
-      "title": "Update the payout-method creation UI in the \"Send to Bank\" sheet to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while still storing the selected bank name in the existing payout method fields.",
+      "id": "feature-preserve-internet-identity-as-the-only-authentication-method-while-presenting-the-screenshot-style-form-the-continue-button-must-trigger-the-existing-internet-identity-login-flow-useinternetidentity-login-email-password-fields-must-not-attempt-email-password-authentication-instead-treat-them-as-non-auth-fields-e-g-optional-disabled-or-ignored-and-provide-clear-inline-helper-messaging-so-users-understand-internet-identity-is-used-without-cluttering-the-ui",
+      "title": "Preserve Internet Identity as the only authentication method while presenting the screenshot-style form: the \"Continue\" button must trigger the existing Internet Identity login flow (useInternetIdentity().login). Email/password fields must not attempt email/password authentication; instead, treat them as non-auth fields (e.g., optional/disabled or ignored) and provide clear inline/helper messaging so users understand Internet Identity is used (without cluttering the UI).",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-payout-method-creation-ui-on-the-withdrawals-page-to-select-a-nigerian-bank-from-a-dropdown-with-search-instead-of-free-text-entry-while-preserving-the-existing-backend-payload-shape-bankname-accountname-accountnumber",
-      "title": "Update the payout-method creation UI on the Withdrawals page to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while preserving the existing backend payload shape (bankName/accountName/accountNumber).",
+      "id": "feature-implement-screenshot-like-interactions-on-the-login-screen-password-visibility-toggle-icon-inside-the-password-field-link-styling-for-forgot-password-and-sign-up-and-appropriate-disabled-pressed-states-for-the-continue-button",
+      "title": "Implement screenshot-like interactions on the login screen: password visibility toggle icon inside the password field, link styling for \"Forgot Password?\" and \"Sign up\", and appropriate disabled/pressed states for the \"Continue\" button.",
       "reqIds": [
         "REQ-3"
       ],
@@ -36,12 +34,13 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add support for withdrawals to Nigerian bank accounts by making all Nigerian banks available for user selection",
+      "summary": "Implement a login screen matching the provided screenshot (UI/layout and styling)",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Add full Nigerian bank list for bank-withdrawal payout method selection",
+  "gameProjectType": "none",
+  "projectName": "Redesign login screen to match provided screenshot (email/password style UI using Internet Identity)",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

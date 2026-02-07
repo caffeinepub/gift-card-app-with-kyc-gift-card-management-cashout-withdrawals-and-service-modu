@@ -1,57 +1,53 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add searchable Nigerian bank dropdowns for payout method creation",
+  "title": "Screenshot-style Internet Identity login screen redesign",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a single maintained Nigerian banks static list module and reuse it as the source of truth for payout-method creation UIs.",
+      "summary": "Redesign the logged-out login screen layout to match the provided screenshot (dark background + large white rounded sheet, title, sign-up row, email/password fields, forgot link, bottom primary CTA).",
       "acceptanceCriteria": [
-        "A new frontend config/module exists that exports an array of Nigerian bank names (strings) suitable for use in UI Select components.",
-        "The list is used by all payout-method creation UIs (not duplicated inline in components)."
+        "When logged out, the app renders a login screen that matches the screenshot’s layout and spacing (dark top/background + white sheet + large rounded inputs + bottom CTA).",
+        "The layout is mobile-first and remains usable on desktop (content centered with sensible max width).",
+        "All user-facing text on this screen is in English and matches the screenshot wording (including capitalization and punctuation) unless Internet Identity constraints require additional clarifying copy (handled in REQ-2)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/config/nigerianBanks.ts",
-          "operation": "create",
-          "description": "Create a maintained static export (e.g., a const array of strings) containing Nigerian bank names, plus optional lightweight helpers (e.g., case-insensitive filter) for searchable selection."
-        },
-        {
-          "path": "frontend/src/components/payout/NigerianBankSelect.tsx",
-          "operation": "create",
-          "description": "Create a reusable Select-based Nigerian bank picker that imports the Nigerian banks list and provides in-dropdown search/filtering; compose existing shadcn-ui Select/Input components without modifying anything under frontend/src/components/ui. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/components/auth/LoginCard.tsx",
+          "operation": "modify",
+          "description": "Replace the current card/alert-based logged-out UI with screenshot-style layout and spacing using Tailwind classes (dark full-screen background/header feel + centered white rounded sheet + required text rows + large rounded email/password fields + bottom full-width rounded primary CTA). Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Replace free-text bank name entry in the Send to Bank sheet payout-method add step with a searchable Nigerian bank Select while still storing the chosen name in the existing fields.",
+      "summary": "Keep Internet Identity as the only auth method while presenting email/password-style fields; wire Continue to useInternetIdentity().login with loading state and add concise helper copy explaining II.",
       "acceptanceCriteria": [
-        "In the SendToBankSheet add-method step, the \"Bank Name\" field is a Select-based dropdown populated from the Nigerian banks list.",
-        "Users can search/filter the bank dropdown to quickly find a bank name.",
-        "Submitting a new payout method stores the selected bank name and it appears correctly in the payout-method list/selection step afterward."
+        "Clicking \"Continue\" starts the Internet Identity login flow and shows a loading state consistent with the rest of the app (e.g., spinner + disabled CTA) while loginStatus is \"logging-in\".",
+        "No API calls, backend mutations, or local storage mechanisms are introduced for email/password authentication.",
+        "A concise, visible explanation indicates that login is via Internet Identity (and not email/password), without reintroducing the old large alert card UI."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+          "path": "frontend/src/components/auth/LoginCard.tsx",
           "operation": "modify",
-          "description": "In the add-method step, replace the Bank Name Input with the reusable NigerianBankSelect component (Select-based, searchable) wired to the existing bankName state so submission continues to send the selected bank name unchanged. Verify the component's usage instructions before implementing."
+          "description": "Ensure the \"Continue\" CTA calls useInternetIdentity().login and reflects loginStatus === 'logging-in' with disabled + spinner/label change; keep email/password fields as non-auth inputs (ignored and/or disabled) and add a short inline helper line (non-card) indicating Internet Identity is used. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Replace free-text bank name entry on the Withdrawals page Add Payout Method form with a searchable Nigerian bank Select while preserving the existing backend payload shape and downstream displays.",
+      "summary": "Add screenshot-like interactions: password visibility toggle, link styling for Forgot Password and Sign up, and robust disabled/pressed CTA states.",
       "acceptanceCriteria": [
-        "On the Withdrawals page \"Add Payout Method\" form, the \"Bank Name\" field is a Select-based dropdown populated from the Nigerian banks list.",
-        "Users can search/filter the bank dropdown to quickly find a bank name.",
-        "Creating a payout method from this page continues to succeed without any backend changes and the selected bank name is displayed in \"Your Payout Methods\" and in the withdrawal request form payout-method picker."
+        "Password field includes a visibility toggle that switches between masked/unmasked states and is keyboard accessible.",
+        "\"Forgot Password?\" and \"Sign up\" are rendered as links/buttons with hover/focus styles and do not break navigation (they may open an informational modal/toast explaining Internet Identity if no dedicated routes exist).",
+        "The primary CTA reflects disabled state while logging in and cannot be double-submitted."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+          "path": "frontend/src/components/auth/LoginCard.tsx",
           "operation": "modify",
-          "description": "Update the Payout Methods tab \"Add Payout Method\" form to use the reusable NigerianBankSelect component for bankName (searchable Select) while keeping the createPayoutMethod call payload shape (bankName/accountName/accountNumber) unchanged; ensure the selected bank name renders in the payout methods list and continues to appear in the request form's payout-method picker. Verify the component's usage instructions before implementing."
+          "description": "Implement a password visibility toggle button inside the password input (keyboard accessible, uses existing icon library already in use), style \"Forgot Password?\" and \"Sign up\" as links with hover/focus states, and prevent double-submission by disabling the CTA while logging in (including active/pressed styling). If no routes exist, have links open a small non-intrusive informational dialog/toast about Internet Identity or an external Internet Identity help/sign-up page. Verify the component's usage instructions before implementing."
         }
       ]
     }

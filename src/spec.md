@@ -1,11 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Let users choose from a complete static list of Nigerian banks when adding a “Send to Bank” payout method, instead of typing the bank name manually.
+**Goal:** Redesign the logged-out login screen to match the provided screenshot’s email/password-style UI while keeping Internet Identity as the only authentication method.
 
 **Planned changes:**
-- Add a maintained frontend module/config that exports an array of Nigerian bank names (strings) to be used as the single source for bank Select options.
-- Update the “Send to Bank” sheet payout-method creation step so “Bank Name” is a searchable Select dropdown populated from the Nigerian banks list, while storing the selected bank name in the existing payout method fields.
-- Update the Withdrawals page “Add Payout Method” form so “Bank Name” is a searchable Select dropdown populated from the same Nigerian banks list, preserving the existing backend payload shape (bankName/accountName/accountNumber).
+- Update the unauthenticated login layout to match the screenshot: dark full-screen background/header with a large white rounded sheet containing the “Log in” title, “Don’t have an account? Sign up” row, two large rounded input fields (email + password), “Forgot Password?” link, and a wide rounded “Continue” primary CTA at the bottom.
+- Keep routing/auth gating intact so this redesigned screen shows when no identity is present.
+- Wire the “Continue” button to trigger the existing Internet Identity flow (`useInternetIdentity().login`) with a loading/disabled state while `loginStatus` is “logging-in”.
+- Ensure the email/password fields do not perform email/password authentication (ignored/optional/disabled) and add concise helper text indicating that login uses Internet Identity (without bringing back a large alert card).
+- Add screenshot-like interactions: password visibility toggle inside the password field, link styling + hover/focus states for “Sign up” and “Forgot Password?”, and prevent double-submit on the primary CTA.
 
-**User-visible outcome:** When adding a bank payout method (from the Send to Bank sheet or the Withdrawals page), users can search and select any Nigerian bank from a dropdown, and the chosen bank name appears correctly in payout-method lists and pickers.
+**User-visible outcome:** When logged out, users see a screenshot-matching login screen and can tap “Continue” to sign in via Internet Identity, with clear UI feedback and no email/password authentication behavior.

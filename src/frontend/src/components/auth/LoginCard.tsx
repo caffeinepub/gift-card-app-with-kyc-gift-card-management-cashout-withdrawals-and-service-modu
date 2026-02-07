@@ -1,63 +1,160 @@
+import { useState } from 'react';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Alert, AlertDescription } from '../ui/alert';
-import { Loader2, Info } from 'lucide-react';
+import { Input } from '../ui/input';
+import { Loader2, Eye, EyeOff, Info } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
 
 export default function LoginCard() {
   const { login, loginStatus } = useInternetIdentity();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showInfoDialog, setShowInfoDialog] = useState(false);
 
   const isLoggingIn = loginStatus === 'logging-in';
 
+  const handleContinue = async () => {
+    try {
+      await login();
+    } catch (error: any) {
+      console.error('Login error:', error);
+    }
+  };
+
+  const handleSignUpClick = () => {
+    setShowInfoDialog(true);
+  };
+
+  const handleForgotPasswordClick = () => {
+    setShowInfoDialog(true);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <img 
-              src="/assets/generated/app-logo.dim_512x512.png" 
-              alt="GiftVault Logo" 
-              className="h-20 w-20 object-contain"
-            />
-          </div>
-          <div>
-            <CardTitle className="text-3xl font-bold">GiftVault</CardTitle>
-            <CardDescription className="text-base mt-2">
-              Secure gift card management powered by the Internet Computer
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button
-            onClick={login}
-            disabled={isLoggingIn}
-            className="w-full h-12 text-base"
-            size="lg"
-          >
-            {isLoggingIn ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Connecting...
-              </>
-            ) : (
-              'Sign in with Internet Identity'
-            )}
-          </Button>
+    <>
+      <div className="min-h-screen bg-[oklch(0.35_0.08_280)] flex flex-col">
+        {/* Dark header area */}
+        <div className="flex-1 min-h-[20vh]" />
+        
+        {/* White rounded sheet */}
+        <div className="bg-background rounded-t-[2.5rem] px-6 pt-8 pb-12 flex-[2] shadow-2xl">
+          <div className="max-w-md mx-auto space-y-6">
+            {/* Title */}
+            <h1 className="text-4xl font-bold text-foreground">Log in</h1>
+            
+            {/* Sign up row */}
+            <div className="flex items-center gap-2 text-base">
+              <span className="text-muted-foreground">Don't have an account?</span>
+              <button
+                onClick={handleSignUpClick}
+                className="text-[oklch(0.65_0.15_220)] hover:underline font-medium"
+              >
+                Sign up
+              </button>
+            </div>
 
-          <Alert className="bg-muted/50 border-muted">
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              This app uses <strong>Internet Identity</strong> for secure, decentralized authentication. 
-              Your data is stored on-chain on the Internet Computer blockchain.
-            </AlertDescription>
-          </Alert>
+            {/* Internet Identity info banner */}
+            <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg border border-muted">
+              <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                This app uses <strong>Internet Identity</strong> for authentication. Click Continue to sign in securely.
+              </p>
+            </div>
 
-          <div className="text-center text-xs text-muted-foreground pt-2">
-            <p>No Firebase, Google Sign-In, or email/password authentication.</p>
-            <p className="mt-1">All data is stored on-canister with Internet Identity.</p>
+            {/* Email input (non-functional, for visual consistency) */}
+            <div className="space-y-3">
+              <Input
+                type="email"
+                placeholder="Enter your email address"
+                disabled
+                className="h-14 rounded-2xl bg-muted/30 border-0 text-base placeholder:text-muted-foreground/60"
+              />
+
+              {/* Password input with visibility toggle */}
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter password"
+                  disabled
+                  className="h-14 rounded-2xl bg-muted/30 border-0 text-base placeholder:text-muted-foreground/60 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Forgot password link */}
+            <button
+              onClick={handleForgotPasswordClick}
+              className="text-[oklch(0.65_0.15_220)] hover:underline text-sm font-medium"
+            >
+              Forgot Password?
+            </button>
+
+            {/* Continue button */}
+            <Button
+              onClick={handleContinue}
+              disabled={isLoggingIn}
+              className="w-full h-14 rounded-full text-base font-medium bg-[oklch(0.75_0.12_220)] hover:bg-[oklch(0.70_0.12_220)] text-[oklch(0.40_0.08_280)] disabled:opacity-50 disabled:cursor-not-allowed mt-8"
+            >
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                'Continue'
+              )}
+            </Button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+
+      {/* Info Dialog */}
+      <Dialog open={showInfoDialog} onOpenChange={setShowInfoDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Internet Identity Authentication</DialogTitle>
+            <DialogDescription className="space-y-3 pt-2">
+              <p>
+                This application uses <strong>Internet Identity</strong> for secure, decentralized authentication.
+              </p>
+              <p>
+                To create an account or reset your credentials, click "Continue" and follow the Internet Identity flow. 
+                Internet Identity will guide you through account creation or recovery.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Learn more at{' '}
+                <a
+                  href="https://identity.ic0.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  identity.ic0.app
+                </a>
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end">
+            <Button onClick={() => setShowInfoDialog(false)}>Got it</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

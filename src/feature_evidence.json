@@ -2,11 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-create-a-maintained-static-list-of-nigerian-banks-in-the-frontend-and-use-it-as-the-selectable-options-source-for-payout-method-creation",
-      "featureTitle": "Create a maintained static list of Nigerian banks in the frontend and use it as the selectable options source for payout-method creation.",
+      "featureId": "feature-update-the-unauthenticated-login-ui-to-visually-match-the-provided-screenshot-full-screen-dark-header-background-large-white-rounded-corner-sheet-log-in-title-don-t-have-an-account-sign-up-row-with-the-sign-up-styled-as-a-link-two-large-rounded-input-fields-email-password-a-forgot-password-link-and-a-wide-rounded-continue-primary-cta-at-the-bottom",
+      "featureTitle": "Update the unauthenticated login UI to visually match the provided screenshot: full-screen dark header/background, large white rounded-corner sheet, \"Log in\" title, \"Don’t have an account? Sign up\" row with the \"Sign up\" styled as a link, two large rounded input fields (email + password), a \"Forgot Password?\" link, and a wide rounded \"Continue\" primary CTA at the bottom.",
       "files": [
-        "frontend/src/components/payout/NigerianBankSelect.tsx",
-        "frontend/src/config/nigerianBanks.ts"
+        "frontend/src/components/auth/LoginCard.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,10 +22,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-payout-method-creation-ui-in-the-send-to-bank-sheet-to-select-a-nigerian-bank-from-a-dropdown-with-search-instead-of-free-text-entry-while-still-storing-the-selected-bank-name-in-the-existing-payout-method-fields",
-      "featureTitle": "Update the payout-method creation UI in the \"Send to Bank\" sheet to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while still storing the selected bank name in the existing payout method fields.",
+      "featureId": "feature-preserve-internet-identity-as-the-only-authentication-method-while-presenting-the-screenshot-style-form-the-continue-button-must-trigger-the-existing-internet-identity-login-flow-useinternetidentity-login-email-password-fields-must-not-attempt-email-password-authentication-instead-treat-them-as-non-auth-fields-e-g-optional-disabled-or-ignored-and-provide-clear-inline-helper-messaging-so-users-understand-internet-identity-is-used-without-cluttering-the-ui",
+      "featureTitle": "Preserve Internet Identity as the only authentication method while presenting the screenshot-style form: the \"Continue\" button must trigger the existing Internet Identity login flow (useInternetIdentity().login). Email/password fields must not attempt email/password authentication; instead, treat them as non-auth fields (e.g., optional/disabled or ignored) and provide clear inline/helper messaging so users understand Internet Identity is used (without cluttering the UI).",
       "files": [
-        "frontend/src/components/crypto/sheets/SendToBankSheet.tsx"
+        "frontend/src/components/auth/LoginCard.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -43,10 +42,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-payout-method-creation-ui-on-the-withdrawals-page-to-select-a-nigerian-bank-from-a-dropdown-with-search-instead-of-free-text-entry-while-preserving-the-existing-backend-payload-shape-bankname-accountname-accountnumber",
-      "featureTitle": "Update the payout-method creation UI on the Withdrawals page to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while preserving the existing backend payload shape (bankName/accountName/accountNumber).",
+      "featureId": "feature-implement-screenshot-like-interactions-on-the-login-screen-password-visibility-toggle-icon-inside-the-password-field-link-styling-for-forgot-password-and-sign-up-and-appropriate-disabled-pressed-states-for-the-continue-button",
+      "featureTitle": "Implement screenshot-like interactions on the login screen: password visibility toggle icon inside the password field, link styling for \"Forgot Password?\" and \"Sign up\", and appropriate disabled/pressed states for the \"Continue\" button.",
       "files": [
-        "frontend/src/pages/withdrawals/WithdrawalsPage.tsx"
+        "frontend/src/components/auth/LoginCard.tsx"
       ],
       "components": [
         "authorization@4.0.0",

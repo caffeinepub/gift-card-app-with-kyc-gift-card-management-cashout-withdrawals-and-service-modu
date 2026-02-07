@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T21:22:02.794Z",
+  "generatedAt": "2026-02-07T21:34:51.503Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,37 +12,35 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Create a maintained static list of Nigerian banks in the frontend and use it as the selectable options source for payout-method creation.",
+        "summary": "Update the unauthenticated login UI to visually match the provided screenshot: full-screen dark header/background, large white rounded-corner sheet, \"Log in\" title, \"Don’t have an account? Sign up\" row with the \"Sign up\" styled as a link, two large rounded input fields (email + password), a \"Forgot Password?\" link, and a wide rounded \"Continue\" primary CTA at the bottom.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/config/nigerianBanks.ts",
-          "frontend/src/components/payout/NigerianBankSelect.tsx"
+          "frontend/src/components/auth/LoginCard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/config/nigerianBanks.ts",
-          "frontend/src/components/payout/NigerianBankSelect.tsx"
+          "frontend/src/components/auth/LoginCard.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Update the payout-method creation UI in the \"Send to Bank\" sheet to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while still storing the selected bank name in the existing payout method fields.",
+        "summary": "Preserve Internet Identity as the only authentication method while presenting the screenshot-style form: the \"Continue\" button must trigger the existing Internet Identity login flow (useInternetIdentity().login). Email/password fields must not attempt email/password authentication; instead, treat them as non-auth fields (e.g., optional/disabled or ignored) and provide clear inline/helper messaging so users understand Internet Identity is used (without cluttering the UI).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/crypto/sheets/SendToBankSheet.tsx"
+          "frontend/src/components/auth/LoginCard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/crypto/sheets/SendToBankSheet.tsx"
+          "frontend/src/components/auth/LoginCard.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Update the payout-method creation UI on the Withdrawals page to select a Nigerian bank from a dropdown (with search) instead of free-text entry, while preserving the existing backend payload shape (bankName/accountName/accountNumber).",
+        "summary": "Implement screenshot-like interactions on the login screen: password visibility toggle icon inside the password field, link styling for \"Forgot Password?\" and \"Sign up\", and appropriate disabled/pressed states for the \"Continue\" button.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx"
+          "frontend/src/components/auth/LoginCard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx"
+          "frontend/src/components/auth/LoginCard.tsx"
         ]
       }
     ]
@@ -52,10 +50,7 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
-    "frontend/src/components/payout/NigerianBankSelect.tsx",
-    "frontend/src/config/nigerianBanks.ts",
-    "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+    "frontend/src/components/auth/LoginCard.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",
