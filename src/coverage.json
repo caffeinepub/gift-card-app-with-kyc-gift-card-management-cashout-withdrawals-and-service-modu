@@ -1,49 +1,93 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T19:11:04.414Z",
+  "generatedAt": "2026-02-07T20:09:08.581Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
+    "total": 6,
     "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "On the Add Gift Card page, display the Nigeria (NGN) rate summary when the user enters an Amount, so the rate is visible (and not silently missing) for the selected Brand and currency.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/giftcards/addGiftCardNGNRate.ts",
-          "frontend/src/pages/giftcards/AddGiftCardPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/giftcards/addGiftCardNGNRate.ts",
-          "frontend/src/pages/giftcards/AddGiftCardPage.tsx"
-        ]
+        "summary": "Implement backend support for bank payout methods so an authenticated user can create and list their payout methods (bank name, account name, account number) with persistent storage.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Add a lightweight UI regression check to prevent the NGN rate summary from becoming invisible again when a valid amount is entered.",
+        "summary": "Implement backend support for send-to-bank (withdrawal requests): allow an authenticated user to create a withdrawal request that references an existing payout method, and allow the user to list their own withdrawal requests.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Implement backend admin capabilities for send-to-bank processing: allow admins to list all pending withdrawal requests and mark a withdrawal as 'paid' or 'rejected', recording processedAt and processedBy.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Wire the existing Withdrawals UI to real backend data by updating React Query hooks for payout methods and withdrawals to call backend methods (instead of placeholder implementations), including proper loading and error states.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+          "frontend/src/pages/admin/AdminWithdrawalsPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+          "frontend/src/pages/admin/AdminWithdrawalsPage.tsx"
         ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Add a 'Send to bank' step to the crypto wallet experience by adding a new quick action that opens a bottom-sheet flow for creating a withdrawal request (select currency, enter amount, choose or add payout method, review, confirm).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+          "frontend/src/components/crypto/CryptoQuickActions.tsx",
+          "frontend/src/pages/services/CryptoWalletPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+          "frontend/src/components/crypto/CryptoQuickActions.tsx",
+          "frontend/src/pages/services/CryptoWalletPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Add conditional state migration support if needed for existing deployed canisters when introducing new stable state for payout methods and withdrawal requests.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
-    "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx",
-    "frontend/src/pages/giftcards/addGiftCardNGNRate.ts",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/crypto/CryptoQuickActions.tsx",
+    "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/lib/utils.ts",
+    "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
+    "frontend/src/pages/services/CryptoWalletPage.tsx",
+    "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

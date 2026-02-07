@@ -12,9 +12,24 @@ import type {
   Currency,
   Avatar,
 } from '../types/app-types';
+import type { PayoutMethod as BackendPayoutMethod, WithdrawalRequest as BackendWithdrawalRequest, WithdrawalStatus as BackendWithdrawalStatus } from '../backend';
+import { Principal } from '@dfinity/principal';
 
 // Note: ExternalBlob is still imported from backend as it's part of blob-storage
 // All other types are now local since backend only provides authorization
+
+// Helper to convert backend WithdrawalStatus to frontend
+function mapBackendWithdrawalStatus(status: BackendWithdrawalStatus): { __kind__: 'pending' } | { __kind__: 'paid' } | { __kind__: 'rejected' } {
+  if (status === 'pending') return { __kind__: 'pending' };
+  if (status === 'paid') return { __kind__: 'paid' };
+  if (status === 'rejected') return { __kind__: 'rejected' };
+  return { __kind__: 'pending' };
+}
+
+// Helper to convert frontend status string to backend enum
+function mapFrontendStatusToBackend(status: Variant_paid_rejected): BackendWithdrawalStatus {
+  return status as BackendWithdrawalStatus;
+}
 
 // User Profile Queries
 export function useGetCallerUserProfile() {
@@ -271,8 +286,15 @@ export function useGetPayoutMethods() {
     queryKey: ['payoutMethods'],
     queryFn: async () => {
       if (!actor) return [];
-      // Backend method doesn't exist
-      return [];
+      const backendMethods = await actor.listUserPayoutMethods();
+      // Map backend PayoutMethod to frontend PayoutMethod
+      return backendMethods.map((method: BackendPayoutMethod) => ({
+        id: method.id.toString(),
+        bankName: method.bankName,
+        accountName: method.accountName,
+        accountNumber: method.accountNumber,
+        createdAt: method.created,
+      }));
     },
     enabled: !!actor && !isFetching,
   });
@@ -289,8 +311,12 @@ export function useAddPayoutMethod() {
       accountNumber: string;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend method doesn't exist
-      throw new Error('Backend method not implemented');
+      const methodId = await actor.createPayoutMethod(
+        params.bankName,
+        params.accountNumber,
+        params.accountName
+      );
+      return methodId.toString();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payoutMethods'] });
@@ -306,8 +332,19 @@ export function useGetWithdrawalRequests() {
     queryKey: ['withdrawalRequests'],
     queryFn: async () => {
       if (!actor) return [];
-      // Backend method doesn't exist
-      return [];
+      const backendRequests = await actor.listUserWithdrawals();
+      // Map backend WithdrawalRequest to frontend WithdrawalRequest
+      return backendRequests.map((request: BackendWithdrawalRequest) => ({
+        id: request.id.toString(),
+        user: request.owner,
+        amount: request.amount,
+        currency: { __kind__: 'usd', usd: null } as Currency, // Backend doesn't store currency yet
+        payoutMethodId: request.payoutMethodId.toString(),
+        status: mapBackendWithdrawalStatus(request.status),
+        createdAt: request.created,
+        processedAt: request.processedAt ?? null,
+        processedBy: request.processedBy ?? null,
+      }));
     },
     enabled: !!actor && !isFetching,
   });
@@ -324,8 +361,11 @@ export function useRequestWithdrawal() {
       payoutMethodId: string;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend method doesn't exist
-      throw new Error('Backend method not implemented');
+      const requestId = await actor.createWithdrawalRequest(
+        BigInt(params.payoutMethodId),
+        params.amount
+      );
+      return requestId.toString();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['withdrawalRequests'] });
@@ -342,8 +382,19 @@ export function useAdminGetPendingWithdrawals() {
     queryKey: ['adminPendingWithdrawals'],
     queryFn: async () => {
       if (!actor) return [];
-      // Backend method doesn't exist
-      return [];
+      const backendRequests = await actor.listPendingWithdrawals();
+      // Map backend WithdrawalRequest to frontend WithdrawalRequest
+      return backendRequests.map((request: BackendWithdrawalRequest) => ({
+        id: request.id.toString(),
+        user: request.owner,
+        amount: request.amount,
+        currency: { __kind__: 'usd', usd: null } as Currency,
+        payoutMethodId: request.payoutMethodId.toString(),
+        status: mapBackendWithdrawalStatus(request.status),
+        createdAt: request.created,
+        processedAt: request.processedAt ?? null,
+        processedBy: request.processedBy ?? null,
+      }));
     },
     enabled: !!actor && !isFetching,
   });
@@ -359,8 +410,10 @@ export function useAdminUpdateWithdrawalStatus() {
       newStatus: Variant_paid_rejected;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend method doesn't exist
-      throw new Error('Backend method not implemented');
+      await actor.updateWithdrawalStatus(
+        BigInt(params.withdrawalId),
+        mapFrontendStatusToBackend(params.newStatus)
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminPendingWithdrawals'] });

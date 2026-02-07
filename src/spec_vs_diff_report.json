@@ -1,55 +1,93 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T19:11:04.411Z",
-  "summary": "The diff introduces a helper for NGN rate tier matching (using the existing config logic) and wires some memoized matching into AddGiftCardPage, plus adds a test file. However, the provided truncated diff does not show the actual inline rendering of NGNRateInlineSummary or the specific regression assertions required. Additionally, the diff summary indicates several unrelated changes (e.g., stubbing backend hooks, UI/theme/catalog additions) that were not requested.",
+  "generatedAt": "2026-02-07T20:09:08.578Z",
+  "summary": "Core send-to-bank flow is partially implemented across backend and frontend (payout methods, withdrawals UI/hooks, crypto wallet quick action + sheet, and a migration module). However, the backend withdrawal API does not match the requested spec (missing currency and createdAt naming), and the diff includes many unrelated frontend features/changes (gift cards, betting page, global CSS/theme updates).",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Render an inline Nigeria (NGN) rate summary near the Amount field on /gift-cards/add when a Brand is selected and a positive Amount is entered; show an explicit 'rate unavailable' message when no tier matches; hide the summary for empty/non-numeric/<=0 amounts; reuse giftCardRatesNGN matching logic and NGNRateInlineSummary; keep form submission behavior intact (useAddGiftCard mutation + toasts).",
-      "reason": "Although AddGiftCardPage.tsx now computes a matchedTier and imports NGNRateInlineSummary, the truncated diff does not include the JSX where the summary is actually rendered near the Amount field, nor does it show that the 'rate unavailable' state is rendered (as opposed to rendering nothing). It also does not show that the summary is hidden for non-numeric values (only a parseFloat(amount)>0 check is visible), and the mutation/toast behavior cannot be fully verified from the truncated content.",
+      "requirement": "Creating a payout method validates required fields (bank name, account name, account number).",
+      "reason": "Backend method createPayoutMethod traps only on authorization; no evidence of non-empty/required-field validation in the shown implementation.",
       "evidence": [
-        "frontend/src/pages/giftcards/AddGiftCardPage.tsx (truncated)"
+        "backend/main.mo"
       ]
     },
     {
       "id": "REQ-2",
-      "requirement": "Add automated regression checks that render the Add Gift Card page (or extracted logic) with a selected Brand and valid Amount and assert Nigeria rate summary text (e.g., 'Nigeria Rate:') is in the DOM, and a second check asserting the 'Rate unavailable…' message is shown when no tier matches; checks must be wired to the real matching/formatting logic from giftCardRatesNGN.ts.",
-      "reason": "A test file is added, but its contents are not included in the diff summary, so the presence of the required assertions (Nigeria Rate label and Rate unavailable message) and that it is wired to the real matching/formatting logic cannot be confirmed.",
+      "requirement": "Backend exposes a method to create a withdrawal request with (amount, currency, payoutMethodId).",
+      "reason": "createWithdrawalRequest in the diff only accepts (payoutMethodId, amount) and there is no currency field on WithdrawalRequest in backend/main.mo.",
       "evidence": [
-        "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx (added, contents not shown)"
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Withdrawal requests include createdAt timestamps (and status defaults to pending).",
+      "reason": "The backend type uses field name `created` rather than `createdAt`. While status defaults to #pending, the required createdAt field name is not present in the shown type.",
+      "evidence": [
+        "backend/main.mo",
+        "backend/migration.mo"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Backend admin methods to list all pending withdrawals and update a withdrawal status to paid/rejected (setting processedAt and processedBy) with non-admin access denied.",
+      "reason": "The diff snippet for backend/main.mo is truncated before any admin-specific methods appear; no concrete evidence in the provided diff summary that these admin Candid methods and authorization checks exist.",
+      "evidence": [
+        "backend/main.mo (truncated)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Stubbing or rewriting React Query backend hooks (useQueries.ts) with placeholder implementations unrelated to fixing NGN rate display on Add Gift Card page.",
-      "reason": "The BuildRequest only asks to fix NGN rate summary rendering on Add Gift Card and add a regression check; it does not request altering backend query hooks or replacing them with stubs.",
+      "description": "Large set of gift-card related UI/components/pages and catalog updates unrelated to send-to-bank/payout methods/withdrawals.",
+      "reason": "Not requested by any REQ-1..REQ-6; diff summary shows multiple gift card components/pages and brand catalog changes.",
       "evidence": [
-        "frontend-file-summaries.txt (entry: \"frontend/src/hooks/useQueries.ts\")"
+        "frontend/src/config/giftCardBrandCatalog.ts",
+        "frontend/src/components/giftcards/GiftCardBrandRow.tsx",
+        "frontend/src/components/giftcards/SelectGiftCardCategoryPicker.tsx",
+        "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
+        "frontend/src/pages/giftcards/GiftCardDetailPage.tsx (truncated)",
+        "frontend-file-summaries.txt"
       ]
     },
     {
-      "description": "Broad UI/theme and unrelated page/component additions/changes (e.g., global CSS token updates, new placeholder service pages, admin/withdrawals/dashboard changes, brand catalog expansions, labels components, detail/list page updates).",
-      "reason": "These changes are not part of the stated goals and are explicitly outside the scope (non-goals include unrelated features and changing other flows unless needed). The diff summary indicates many unrelated modifications/additions beyond the Add Gift Card NGN rate summary fix and its regression test.",
+      "description": "New/changed betting page placeholder feature.",
+      "reason": "Not requested by any requirement in the BuildRequest.",
       "evidence": [
-        "frontend-file-summaries.txt (multiple entries: frontend/src/index.css, frontend/src/pages/services/CryptoWalletPage.tsx, frontend/src/pages/services/BettingPage.tsx, frontend/src/pages/admin/AdminWithdrawalsPage.tsx, frontend/src/pages/withdrawals/WithdrawalsPage.tsx, frontend/src/hooks/useDashboardData.ts, frontend/src/config/giftCardBrandCatalog.ts, frontend/src/components/giftcards/GiftCardLabelsEditor.tsx, frontend/src/pages/giftcards/GiftCardDetailPage.tsx, frontend/src/pages/giftcards/GiftCardsListPage.tsx, etc.)"
+        "frontend/src/pages/services/BettingPage.ts",
+        "frontend-file-summaries.txt"
       ]
     },
     {
-      "description": "Introducing a mock ExternalBlob class inside AddGiftCardPage for image upload progress simulation.",
-      "reason": "The BuildRequest did not ask to modify image upload behavior or add mocks; it focused on rendering the NGN rate summary and adding regression tests.",
+      "description": "Global CSS/theme token updates (purple/blue scheme, safe-area utility) not specifically required for the send-to-bank flow.",
+      "reason": "Not mentioned in REQ-1..REQ-6 and not necessary to meet the stated acceptance criteria based on the diff summary.",
       "evidence": [
-        "frontend/src/pages/giftcards/AddGiftCardPage.tsx (\"// Mock ExternalBlob for type compatibility\" and class ExternalBlob)"
+        "frontend/src/index.css",
+        "frontend-file-summaries.txt"
+      ]
+    },
+    {
+      "description": "Profile setup modal behavior changes unrelated to the requested send-to-bank flow.",
+      "reason": "Not requested by any REQ-1..REQ-6.",
+      "evidence": [
+        "frontend/src/components/profile/ProfileSetupModal.tsx",
+        "frontend-file-summaries.txt"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.66,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
-    "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx",
-    "frontend/src/pages/giftcards/addGiftCardNGNRate.ts",
+    "frontend/src/components/crypto/CryptoQuickActions.tsx",
+    "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/lib/utils.ts",
+    "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
+    "frontend/src/pages/services/CryptoWalletPage.tsx",
+    "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
     "project_state.json"
   ]
 }

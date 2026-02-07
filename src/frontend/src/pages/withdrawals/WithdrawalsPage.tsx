@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/ta
 import { Badge } from '../../components/ui/badge';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Wallet, Plus, Loader2, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { formatCurrency, formatDate } from '../../lib/utils';
+import { formatDate } from '../../lib/utils';
 import { toast } from 'sonner';
 import type { WithdrawalRequest } from '../../types/app-types';
 import { Currency } from '../../types/app-types';
@@ -53,8 +53,9 @@ export default function WithdrawalsPage() {
       toast.success('Withdrawal request submitted');
       setAmount('');
       setSelectedMethod('');
-    } catch (error) {
-      toast.error('Failed to submit withdrawal request');
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Failed to submit withdrawal request';
+      toast.error(errorMessage);
       console.error(error);
     }
   };
@@ -78,8 +79,9 @@ export default function WithdrawalsPage() {
       setBankName('');
       setAccountName('');
       setAccountNumber('');
-    } catch (error) {
-      toast.error('Failed to add payout method');
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Failed to add payout method';
+      toast.error(errorMessage);
       console.error(error);
     }
   };
@@ -116,6 +118,10 @@ export default function WithdrawalsPage() {
       default:
         return 'outline';
     }
+  };
+
+  const formatAmount = (amount: bigint): string => {
+    return `$${(Number(amount) / 100).toFixed(2)}`;
   };
 
   return (
@@ -163,7 +169,7 @@ export default function WithdrawalsPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="currency">Currency</Label>
-                    <Select value={currency} onValueChange={setCurrency}>
+                    <Select value={currency} onValueChange={setCurrency} disabled={requestWithdrawal.isPending}>
                       <SelectTrigger id="currency">
                         <SelectValue />
                       </SelectTrigger>
@@ -179,18 +185,27 @@ export default function WithdrawalsPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="method">Payout Method</Label>
-                  <Select value={selectedMethod} onValueChange={setSelectedMethod}>
-                    <SelectTrigger id="method">
-                      <SelectValue placeholder="Select payout method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {payoutMethods.map((method) => (
-                        <SelectItem key={method.id} value={method.id}>
-                          {method.bankName} - {method.accountNumber}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {methodsLoading ? (
+                    <Skeleton className="h-10 w-full" />
+                  ) : (
+                    <Select value={selectedMethod} onValueChange={setSelectedMethod} disabled={requestWithdrawal.isPending}>
+                      <SelectTrigger id="method">
+                        <SelectValue placeholder="Select payout method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {payoutMethods.map((method) => (
+                          <SelectItem key={method.id} value={method.id}>
+                            {method.bankName} - {method.accountNumber}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {!methodsLoading && payoutMethods.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      No payout methods available. Add one in the Payout Methods tab.
+                    </p>
+                  )}
                 </div>
 
                 <Button
@@ -198,21 +213,9 @@ export default function WithdrawalsPage() {
                   className="w-full"
                   disabled={requestWithdrawal.isPending || payoutMethods.length === 0}
                 >
-                  {requestWithdrawal.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    'Submit Request'
-                  )}
+                  {requestWithdrawal.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Submit Request
                 </Button>
-
-                {payoutMethods.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center">
-                    Please add a payout method first
-                  </p>
-                )}
               </form>
             </CardContent>
           </Card>
@@ -234,7 +237,7 @@ export default function WithdrawalsPage() {
                     id="bankName"
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
-                    placeholder="Enter bank name"
+                    placeholder="First Bank"
                     disabled={addPayoutMethod.isPending}
                   />
                 </div>
@@ -245,7 +248,7 @@ export default function WithdrawalsPage() {
                     id="accountName"
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
-                    placeholder="Enter account holder name"
+                    placeholder="John Doe"
                     disabled={addPayoutMethod.isPending}
                   />
                 </div>
@@ -256,7 +259,7 @@ export default function WithdrawalsPage() {
                     id="accountNumber"
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
-                    placeholder="Enter account number"
+                    placeholder="1234567890"
                     disabled={addPayoutMethod.isPending}
                   />
                 </div>
@@ -266,104 +269,106 @@ export default function WithdrawalsPage() {
                   className="w-full"
                   disabled={addPayoutMethod.isPending}
                 >
-                  {addPayoutMethod.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Method
-                    </>
-                  )}
+                  {addPayoutMethod.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Method
                 </Button>
               </form>
             </CardContent>
           </Card>
 
-          {methodsLoading ? (
-            <Skeleton className="h-48" />
-          ) : payoutMethods.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Payout Methods</CardTitle>
-              </CardHeader>
-              <CardContent>
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Payout Methods</CardTitle>
+              <CardDescription>
+                Manage your saved bank accounts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {methodsLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              ) : payoutMethods.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No payout methods yet. Add one above.
+                </p>
+              ) : (
                 <div className="space-y-3">
                   {payoutMethods.map((method) => (
                     <div
                       key={method.id}
-                      className="p-4 border border-border rounded-lg"
+                      className="flex items-center justify-between p-4 border rounded-lg"
                     >
-                      <p className="font-semibold">{method.bankName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {method.accountName}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {method.accountNumber}
-                      </p>
+                      <div>
+                        <p className="font-medium">{method.bankName}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {method.accountName} • {method.accountNumber}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          ) : null}
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
-          {withdrawalsLoading ? (
-            <Skeleton className="h-96" />
-          ) : withdrawals.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  No withdrawal history
+          <Card>
+            <CardHeader>
+              <CardTitle>Withdrawal History</CardTitle>
+              <CardDescription>
+                View your past withdrawal requests
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {withdrawalsLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : withdrawals.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No withdrawal requests yet.
                 </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Withdrawal History</CardTitle>
-                <CardDescription>
-                  View all your withdrawal requests
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              ) : (
+                <div className="space-y-3">
                   {withdrawals.map((withdrawal) => {
                     const statusStr = getStatusString(withdrawal);
-                    
                     return (
                       <div
                         key={withdrawal.id}
-                        className="p-4 border border-border rounded-lg space-y-2"
+                        className="flex items-center justify-between p-4 border rounded-lg"
                       >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-semibold text-lg">
-                              {formatCurrency(Number(withdrawal.amount) / 100, withdrawal.currency)}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-medium">
+                              {formatAmount(withdrawal.amount)}
                             </p>
-                            <p className="text-sm text-muted-foreground">
-                              {formatDate(Number(withdrawal.createdAt))}
-                            </p>
-                          </div>
-                          <Badge variant={getStatusVariant(statusStr)}>
-                            <span className="flex items-center gap-1">
+                            <Badge variant={getStatusVariant(statusStr)} className="flex items-center gap-1">
                               {getStatusIcon(statusStr)}
                               {statusStr}
-                            </span>
-                          </Badge>
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDate(Number(withdrawal.createdAt) / 1_000_000)}
+                          </p>
+                          {withdrawal.processedAt && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Processed: {formatDate(Number(withdrawal.processedAt) / 1_000_000)}
+                            </p>
+                          )}
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

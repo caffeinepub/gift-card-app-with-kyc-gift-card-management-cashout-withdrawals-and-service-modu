@@ -1,114 +1,57 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { useNavigate } from '@tanstack/react-router';
+import { ArrowLeft, Receipt } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Badge } from '../../components/ui/badge';
-import { Alert, AlertDescription } from '../../components/ui/alert';
-import { FileText, Loader2, Info } from 'lucide-react';
-import { toast } from 'sonner';
-import { addLocalTransaction } from '../../state/localTransactions';
+import BillCategoryTile from '../../components/services/BillCategoryTile';
+import { Radio, Grid3x3, Zap, Wifi, Tv, Dices } from 'lucide-react';
 
 export default function BillsPage() {
-  const [billerReference, setBillerReference] = useState('');
-  const [amount, setAmount] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!billerReference || !amount) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    addLocalTransaction({
-      type: 'bills',
-      amount: parseFloat(amount),
-      currency: 'USD',
-      description: `Bill payment for ${billerReference}`,
-      status: 'pending',
-    });
-
-    toast.success('Bill payment logged (placeholder)');
-    setBillerReference('');
-    setAmount('');
-    setIsProcessing(false);
-  };
+  const categories = [
+    { label: 'Airtime', icon: Radio, path: '/services/airtime' },
+    { label: 'Data', icon: Grid3x3, path: '/services/data' },
+    { label: 'Electricity', icon: Zap, path: '/services/electricity' },
+    { label: 'Wifi | Internet', icon: Wifi, path: '/services/wifi-internet' },
+    { label: 'Cable | TV Bills', icon: Tv, path: '/services/cable-tv-bills' },
+    { label: 'Betting', icon: Dices, path: '/services/betting' },
+  ];
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <FileText className="h-8 w-8" />
+    <div className="max-w-2xl mx-auto space-y-8 pb-8">
+      {/* Back button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => window.history.back()}
+        className="rounded-full"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Button>
+
+      {/* Header with centered icon */}
+      <div className="flex flex-col items-center text-center space-y-4">
+        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+          <Receipt className="h-10 w-10 text-primary" />
+        </div>
         <div>
-          <h1 className="text-3xl font-bold">Bills Payment</h1>
+          <h1 className="text-2xl font-bold">Bills Payment</h1>
           <p className="text-muted-foreground mt-1">
-            Pay your utility bills
+            What bills do you want to pay?
           </p>
         </div>
       </div>
 
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          <Badge variant="secondary" className="mr-2">Coming Soon</Badge>
-          This is a placeholder. Real bills payment integration will be added in a future update.
-        </AlertDescription>
-      </Alert>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Pay Bill</CardTitle>
-          <CardDescription>
-            Pay electricity, water, internet, and more
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reference">Biller Reference</Label>
-              <Input
-                id="reference"
-                value={billerReference}
-                onChange={(e) => setBillerReference(e.target.value)}
-                placeholder="Account or meter number"
-                disabled={isProcessing}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount (USD)</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="50.00"
-                disabled={isProcessing}
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                'Pay Bill'
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      {/* 2-column grid of category tiles */}
+      <div className="grid grid-cols-2 gap-4 px-4">
+        {categories.map((category) => (
+          <BillCategoryTile
+            key={category.path}
+            label={category.label}
+            icon={category.icon}
+            onClick={() => navigate({ to: category.path })}
+          />
+        ))}
+      </div>
     </div>
   );
 }

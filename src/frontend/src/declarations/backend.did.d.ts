@@ -10,9 +10,33 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface PayoutMethod {
+  'id' : PayoutMethodId,
+  'created' : Time,
+  'owner' : Principal,
+  'bankName' : string,
+  'accountName' : string,
+  'accountNumber' : string,
+}
+export type PayoutMethodId = bigint;
+export type Time = bigint;
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface WithdrawalRequest {
+  'id' : WithdrawalRequestId,
+  'status' : WithdrawalStatus,
+  'created' : Time,
+  'payoutMethodId' : PayoutMethodId,
+  'owner' : Principal,
+  'processedAt' : [] | [Time],
+  'processedBy' : [] | [Principal],
+  'amount' : bigint,
+}
+export type WithdrawalRequestId = bigint;
+export type WithdrawalStatus = { 'pending' : null } |
+  { 'paid' : null } |
+  { 'rejected' : null };
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -42,8 +66,20 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'createPayoutMethod' : ActorMethod<[string, string, string], PayoutMethodId>,
+  'createWithdrawalRequest' : ActorMethod<
+    [PayoutMethodId, bigint],
+    WithdrawalRequestId
+  >,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'listPendingWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
+  'listUserPayoutMethods' : ActorMethod<[], Array<PayoutMethod>>,
+  'listUserWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
+  'updateWithdrawalStatus' : ActorMethod<
+    [WithdrawalRequestId, WithdrawalStatus],
+    undefined
+  >,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

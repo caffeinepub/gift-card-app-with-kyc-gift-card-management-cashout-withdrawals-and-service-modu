@@ -6,6 +6,12 @@ interface LocalTransaction {
   description: string;
   timestamp: number;
   status: string;
+  // Optional crypto-specific metadata
+  asset?: string;
+  network?: string;
+  direction?: 'sent' | 'received' | 'swap';
+  fromAsset?: string;
+  toAsset?: string;
 }
 
 const STORAGE_KEY = 'local_transactions';
@@ -50,3 +56,5 @@ export function clearLocalTransactions() {
     console.warn('Failed to clear local transactions:', error);
   }
 }
+
+export type { LocalTransaction };

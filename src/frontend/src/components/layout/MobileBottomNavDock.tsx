@@ -18,7 +18,7 @@ export default function MobileBottomNavDock() {
       id: 'wallet', 
       label: 'Wallet', 
       icon: Wallet, 
-      comingSoon: true,
+      route: '/services/crypto',
     },
     { 
       id: 'history', 

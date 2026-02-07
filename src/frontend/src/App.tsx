@@ -19,6 +19,9 @@ import BillsPage from './pages/services/BillsPage';
 import DataPage from './pages/services/DataPage';
 import BettingPage from './pages/services/BettingPage';
 import CryptoWalletPage from './pages/services/CryptoWalletPage';
+import ElectricityPage from './pages/services/ElectricityPage';
+import WifiInternetPage from './pages/services/WifiInternetPage';
+import CableTvBillsPage from './pages/services/CableTvBillsPage';
 
 function Layout() {
   const { identity } = useInternetIdentity();
@@ -152,6 +155,24 @@ const cryptoRoute = createRoute({
   component: CryptoWalletPage,
 });
 
+const electricityRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/services/electricity',
+  component: ElectricityPage,
+});
+
+const wifiInternetRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/services/wifi-internet',
+  component: WifiInternetPage,
+});
+
+const cableTvBillsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/services/cable-tv-bills',
+  component: CableTvBillsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   kycRoute,
@@ -167,6 +188,9 @@ const routeTree = rootRoute.addChildren([
   dataRoute,
   bettingRoute,
   cryptoRoute,
+  electricityRoute,
+  wifiInternetRoute,
+  cableTvBillsRoute,
 ]);
 
 const router = createRouter({ routeTree });

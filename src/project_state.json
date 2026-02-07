@@ -3,30 +3,67 @@
   "projectStateVersion": 3,
   "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [
-    "Rate is not displaying when the user enters a gift card amount."
-  ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-on-the-add-gift-card-page-display-the-nigeria-ngn-rate-summary-when-the-user-enters-an-amount-so-the-rate-is-visible-and-not-silently-missing-for-the-selected-brand-and-currency",
-      "title": "On the Add Gift Card page, display the Nigeria (NGN) rate summary when the user enters an Amount, so the rate is visible (and not silently missing) for the selected Brand and currency.",
+      "id": "feature-wire-the-existing-withdrawals-ui-to-real-backend-data-by-updating-react-query-hooks-for-payout-methods-and-withdrawals-to-call-backend-methods-instead-of-placeholder-implementations-including-proper-loading-and-error-states",
+      "title": "Wire the existing Withdrawals UI to real backend data by updating React Query hooks for payout methods and withdrawals to call backend methods (instead of placeholder implementations), including proper loading and error states.",
       "reqIds": [
-        "REQ-1"
+        "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-lightweight-ui-regression-check-to-prevent-the-ngn-rate-summary-from-becoming-invisible-again-when-a-valid-amount-is-entered",
-      "title": "Add a lightweight UI regression check to prevent the NGN rate summary from becoming invisible again when a valid amount is entered.",
+      "id": "feature-add-a-send-to-bank-step-to-the-crypto-wallet-experience-by-adding-a-new-quick-action-that-opens-a-bottom-sheet-flow-for-creating-a-withdrawal-request-select-currency-enter-amount-choose-or-add-payout-method-review-confirm",
+      "title": "Add a 'Send to bank' step to the crypto wallet experience by adding a new quick action that opens a bottom-sheet flow for creating a withdrawal request (select currency, enter amount, choose or add payout method, review, confirm).",
       "reqIds": [
-        "REQ-2"
+        "REQ-5"
       ],
       "version": 1
     }
   ],
-  "new_feature_requests": [],
-  "projectName": "Fix missing NGN rate display when entering amount on Add Gift Card page",
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Add a \"send-to-bank\" step/feature as the next step after the latest live update.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Implement backend support for bank payout methods so an authenticated user can create and list their payout methods (bank name, account name, account number) with persistent storage.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Implement backend support for send-to-bank (withdrawal requests): allow an authenticated user to create a withdrawal request that references an existing payout method, and allow the user to list their own withdrawal requests.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Implement backend admin capabilities for send-to-bank processing: allow admins to list all pending withdrawal requests and mark a withdrawal as 'paid' or 'rejected', recording processedAt and processedBy.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Add conditional state migration support if needed for existing deployed canisters when introducing new stable state for payout methods and withdrawal requests.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Add send-to-bank flow backed by payout methods and withdrawals",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -24,6 +24,32 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const PayoutMethodId = IDL.Nat;
+export const WithdrawalRequestId = IDL.Nat;
+export const WithdrawalStatus = IDL.Variant({
+  'pending' : IDL.Null,
+  'paid' : IDL.Null,
+  'rejected' : IDL.Null,
+});
+export const Time = IDL.Int;
+export const WithdrawalRequest = IDL.Record({
+  'id' : WithdrawalRequestId,
+  'status' : WithdrawalStatus,
+  'created' : Time,
+  'payoutMethodId' : PayoutMethodId,
+  'owner' : IDL.Principal,
+  'processedAt' : IDL.Opt(Time),
+  'processedBy' : IDL.Opt(IDL.Principal),
+  'amount' : IDL.Nat,
+});
+export const PayoutMethod = IDL.Record({
+  'id' : PayoutMethodId,
+  'created' : Time,
+  'owner' : IDL.Principal,
+  'bankName' : IDL.Text,
+  'accountName' : IDL.Text,
+  'accountNumber' : IDL.Text,
+});
 
 export const idlService = IDL.Service({
   '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -54,8 +80,26 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'createPayoutMethod' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text],
+      [PayoutMethodId],
+      [],
+    ),
+  'createWithdrawalRequest' : IDL.Func(
+      [PayoutMethodId, IDL.Nat],
+      [WithdrawalRequestId],
+      [],
+    ),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'listPendingWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], []),
+  'listUserPayoutMethods' : IDL.Func([], [IDL.Vec(PayoutMethod)], ['query']),
+  'listUserWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], ['query']),
+  'updateWithdrawalStatus' : IDL.Func(
+      [WithdrawalRequestId, WithdrawalStatus],
+      [],
+      [],
+    ),
 });
 
 export const idlInitArgs = [];
@@ -76,6 +120,32 @@ export const idlFactory = ({ IDL }) => {
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
+  });
+  const PayoutMethodId = IDL.Nat;
+  const WithdrawalRequestId = IDL.Nat;
+  const WithdrawalStatus = IDL.Variant({
+    'pending' : IDL.Null,
+    'paid' : IDL.Null,
+    'rejected' : IDL.Null,
+  });
+  const Time = IDL.Int;
+  const WithdrawalRequest = IDL.Record({
+    'id' : WithdrawalRequestId,
+    'status' : WithdrawalStatus,
+    'created' : Time,
+    'payoutMethodId' : PayoutMethodId,
+    'owner' : IDL.Principal,
+    'processedAt' : IDL.Opt(Time),
+    'processedBy' : IDL.Opt(IDL.Principal),
+    'amount' : IDL.Nat,
+  });
+  const PayoutMethod = IDL.Record({
+    'id' : PayoutMethodId,
+    'created' : Time,
+    'owner' : IDL.Principal,
+    'bankName' : IDL.Text,
+    'accountName' : IDL.Text,
+    'accountNumber' : IDL.Text,
   });
   
   return IDL.Service({
@@ -107,8 +177,30 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'createPayoutMethod' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text],
+        [PayoutMethodId],
+        [],
+      ),
+    'createWithdrawalRequest' : IDL.Func(
+        [PayoutMethodId, IDL.Nat],
+        [WithdrawalRequestId],
+        [],
+      ),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'listPendingWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], []),
+    'listUserPayoutMethods' : IDL.Func([], [IDL.Vec(PayoutMethod)], ['query']),
+    'listUserWithdrawals' : IDL.Func(
+        [],
+        [IDL.Vec(WithdrawalRequest)],
+        ['query'],
+      ),
+    'updateWithdrawalStatus' : IDL.Func(
+        [WithdrawalRequestId, WithdrawalStatus],
+        [],
+        [],
+      ),
   });
 };
 

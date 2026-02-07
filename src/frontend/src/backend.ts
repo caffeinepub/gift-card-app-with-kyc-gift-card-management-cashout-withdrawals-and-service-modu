@@ -89,6 +89,22 @@ export class ExternalBlob {
         return this;
     }
 }
+export type Time = bigint;
+export type WithdrawalRequestId = bigint;
+export type PayoutMethodId = bigint;
+export interface _CaffeineStorageRefillInformation {
+    proposed_top_up_amount?: bigint;
+}
+export interface WithdrawalRequest {
+    id: WithdrawalRequestId;
+    status: WithdrawalStatus;
+    created: Time;
+    payoutMethodId: PayoutMethodId;
+    owner: Principal;
+    processedAt?: Time;
+    processedBy?: Principal;
+    amount: bigint;
+}
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
@@ -97,13 +113,23 @@ export interface _CaffeineStorageRefillResult {
     success?: boolean;
     topped_up_amount?: bigint;
 }
-export interface _CaffeineStorageRefillInformation {
-    proposed_top_up_amount?: bigint;
+export interface PayoutMethod {
+    id: PayoutMethodId;
+    created: Time;
+    owner: Principal;
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
 }
 export enum UserRole {
     admin = "admin",
     user = "user",
     guest = "guest"
+}
+export enum WithdrawalStatus {
+    pending = "pending",
+    paid = "paid",
+    rejected = "rejected"
 }
 export interface backendInterface {
     _caffeineStorageBlobIsLive(hash: Uint8Array): Promise<boolean>;
@@ -114,10 +140,16 @@ export interface backendInterface {
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    createPayoutMethod(bankName: string, accountNumber: string, accountName: string): Promise<PayoutMethodId>;
+    createWithdrawalRequest(payoutMethodId: PayoutMethodId, amount: bigint): Promise<WithdrawalRequestId>;
     getCallerUserRole(): Promise<UserRole>;
     isCallerAdmin(): Promise<boolean>;
+    listPendingWithdrawals(): Promise<Array<WithdrawalRequest>>;
+    listUserPayoutMethods(): Promise<Array<PayoutMethod>>;
+    listUserWithdrawals(): Promise<Array<WithdrawalRequest>>;
+    updateWithdrawalStatus(requestId: WithdrawalRequestId, status: WithdrawalStatus): Promise<void>;
 }
-import type { UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { PayoutMethodId as _PayoutMethodId, Time as _Time, UserRole as _UserRole, WithdrawalRequest as _WithdrawalRequest, WithdrawalRequestId as _WithdrawalRequestId, WithdrawalStatus as _WithdrawalStatus, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -232,6 +264,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async createPayoutMethod(arg0: string, arg1: string, arg2: string): Promise<PayoutMethodId> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.createPayoutMethod(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.createPayoutMethod(arg0, arg1, arg2);
+            return result;
+        }
+    }
+    async createWithdrawalRequest(arg0: PayoutMethodId, arg1: bigint): Promise<WithdrawalRequestId> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.createWithdrawalRequest(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.createWithdrawalRequest(arg0, arg1);
+            return result;
+        }
+    }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
@@ -260,18 +320,116 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async listPendingWithdrawals(): Promise<Array<WithdrawalRequest>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.listPendingWithdrawals();
+                return from_candid_vec_n12(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.listPendingWithdrawals();
+            return from_candid_vec_n12(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async listUserPayoutMethods(): Promise<Array<PayoutMethod>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.listUserPayoutMethods();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.listUserPayoutMethods();
+            return result;
+        }
+    }
+    async listUserWithdrawals(): Promise<Array<WithdrawalRequest>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.listUserWithdrawals();
+                return from_candid_vec_n12(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.listUserWithdrawals();
+            return from_candid_vec_n12(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async updateWithdrawalStatus(arg0: WithdrawalRequestId, arg1: WithdrawalStatus): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateWithdrawalStatus(arg0, to_candid_WithdrawalStatus_n19(this._uploadFile, this._downloadFile, arg1));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateWithdrawalStatus(arg0, to_candid_WithdrawalStatus_n19(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
 }
 function from_candid_UserRole_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
     return from_candid_variant_n11(_uploadFile, _downloadFile, value);
 }
+function from_candid_WithdrawalRequest_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _WithdrawalRequest): WithdrawalRequest {
+    return from_candid_record_n14(_uploadFile, _downloadFile, value);
+}
+function from_candid_WithdrawalStatus_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _WithdrawalStatus): WithdrawalStatus {
+    return from_candid_variant_n16(_uploadFile, _downloadFile, value);
+}
 function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
+}
+function from_candid_opt_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Time]): Time | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [Principal]): Principal | null {
+    return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
+}
+function from_candid_record_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: _WithdrawalRequestId;
+    status: _WithdrawalStatus;
+    created: _Time;
+    payoutMethodId: _PayoutMethodId;
+    owner: Principal;
+    processedAt: [] | [_Time];
+    processedBy: [] | [Principal];
+    amount: bigint;
+}): {
+    id: WithdrawalRequestId;
+    status: WithdrawalStatus;
+    created: Time;
+    payoutMethodId: PayoutMethodId;
+    owner: Principal;
+    processedAt?: Time;
+    processedBy?: Principal;
+    amount: bigint;
+} {
+    return {
+        id: value.id,
+        status: from_candid_WithdrawalStatus_n15(_uploadFile, _downloadFile, value.status),
+        created: value.created,
+        payoutMethodId: value.payoutMethodId,
+        owner: value.owner,
+        processedAt: record_opt_to_undefined(from_candid_opt_n17(_uploadFile, _downloadFile, value.processedAt)),
+        processedBy: record_opt_to_undefined(from_candid_opt_n18(_uploadFile, _downloadFile, value.processedBy)),
+        amount: value.amount
+    };
 }
 function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     success: [] | [boolean];
@@ -294,8 +452,23 @@ function from_candid_variant_n11(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
+function from_candid_variant_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    pending: null;
+} | {
+    paid: null;
+} | {
+    rejected: null;
+}): WithdrawalStatus {
+    return "pending" in value ? WithdrawalStatus.pending : "paid" in value ? WithdrawalStatus.paid : "rejected" in value ? WithdrawalStatus.rejected : value;
+}
+function from_candid_vec_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_WithdrawalRequest>): Array<WithdrawalRequest> {
+    return value.map((x)=>from_candid_WithdrawalRequest_n13(_uploadFile, _downloadFile, x));
+}
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
+}
+function to_candid_WithdrawalStatus_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: WithdrawalStatus): _WithdrawalStatus {
+    return to_candid_variant_n20(_uploadFile, _downloadFile, value);
 }
 function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation): __CaffeineStorageRefillInformation {
     return to_candid_record_n3(_uploadFile, _downloadFile, value);
@@ -311,6 +484,21 @@ function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
     return {
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
     };
+}
+function to_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: WithdrawalStatus): {
+    pending: null;
+} | {
+    paid: null;
+} | {
+    rejected: null;
+} {
+    return value == WithdrawalStatus.pending ? {
+        pending: null
+    } : value == WithdrawalStatus.paid ? {
+        paid: null
+    } : value == WithdrawalStatus.rejected ? {
+        rejected: null
+    } : value;
 }
 function to_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
     admin: null;

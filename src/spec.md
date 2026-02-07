@@ -1,13 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Ensure the Add Gift Card form shows the Nigeria (NGN) rate summary when a valid Amount is entered, instead of silently showing nothing.
+**Goal:** Add a complete “send to bank” withdrawal flow backed by persistent payout methods and withdrawal requests, and connect existing withdrawals UI to real backend data.
 
 **Planned changes:**
-- On `/gift-cards/add`, render the existing `NGNRateInlineSummary` near the Amount field when a Brand is selected and the Amount is a positive number.
-- Use the existing NGN rate configuration/matching logic (`giftCardRatesNGN.ts` via `getBrandRateTable` + `findMatchingTier`) to determine the matching tier and drive the inline summary display.
-- When no tier matches the entered Amount, show the existing explicit “rate unavailable” state from `NGNRateInlineSummary` (rather than rendering nothing).
-- Add lightweight automated UI regression checks to confirm the rate summary appears for a matching Amount and that the “rate unavailable” message appears when no tier matches, both wired to the current NGN matching/formatting logic.
-- Keep the Add Gift Card submit flow unchanged (still uses `useAddGiftCard` and existing success/error toasts).
+- Add backend Candid methods and stable storage for authenticated users to create and list their bank payout methods (bank name, account name, account number), with validation and stable unique IDs.
+- Add backend Candid methods and stable storage for authenticated users to create and list their withdrawal requests (amount, currency, payoutMethodId) with default `pending` status and `createdAt` timestamps.
+- Add backend admin-only methods to list all pending withdrawals and mark withdrawals as `paid` or `rejected`, recording `processedAt` and `processedBy`.
+- Update Withdrawals React Query hooks to call the new backend methods for payout methods and withdrawals, including loading/error states and toast-based error handling.
+- Add a new “Send to bank” quick action in the crypto wallet that opens a bottom-sheet multi-step flow (amount/currency, choose/add payout method, review, confirm) and creates a withdrawal on confirm.
+- Add conditional state migration support only if needed to safely introduce new stable state without trapping on upgrade.
 
-**User-visible outcome:** When adding a gift card and entering a valid amount, users see an inline “Nigeria Rate” summary (or a clear “rate unavailable” message if no NGN tier matches) instead of a blank/missing rate area.
+**User-visible outcome:** Users can add bank payout methods, request send-to-bank withdrawals, and see withdrawal history/status in the Withdrawals screens; they can also start the flow from the crypto wallet via a new “Send to bank” quick action, while admins can process pending withdrawals as paid or rejected.

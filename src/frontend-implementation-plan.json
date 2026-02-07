@@ -1,44 +1,59 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Restore NGN rate inline summary visibility on Add Gift Card amount entry",
+  "title": "Send-to-bank flow wired to backend payout methods and withdrawals",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Show NGN rate inline summary on /gift-cards/add when Brand is selected and a valid Amount is entered, including explicit unavailable state.",
+      "id": "REQ-4",
+      "summary": "Replace placeholder React Query hooks with real backend calls for payout methods and withdrawals, including loading/error handling in the existing Withdrawals UI.",
       "acceptanceCriteria": [
-        "Given the user is on `/gift-cards/add` (Add Gift Card), when a Brand is selected and a positive Amount is entered, an inline Nigeria rate summary is rendered in the form (near the Amount field) instead of showing nothing.",
-        "If the entered Amount does not match any NGN tier for the selected Brand, the UI shows an explicit 'rate unavailable' message (reuse the existing unavailable state behavior from `frontend/src/components/giftcards/NGNRateInlineSummary.tsx`) rather than rendering nothing.",
-        "If the Amount is empty, non-numeric, or <= 0, the Nigeria rate summary is not shown.",
-        "The implementation uses the existing NGN rate configuration and matching logic from `frontend/src/config/giftCardRatesNGN.ts` (e.g., `getBrandRateTable` + `findMatchingTier`) and the existing UI component `frontend/src/components/giftcards/NGNRateInlineSummary.tsx` to avoid duplicating formatting/logic.",
-        "The Add Gift Card page remains functional: submitting a valid form still calls the existing `useAddGiftCard` mutation and shows existing success/error toasts."
+        "Withdrawals page 'Payout Methods' tab can add a payout method and the new method appears in the list without a full reload",
+        "Withdrawals page 'Request' tab loads payout methods from the backend and can submit a withdrawal request successfully",
+        "Withdrawals page 'History' tab loads withdrawal requests from the backend and displays status/timestamps correctly",
+        "Errors from backend calls are surfaced via existing toast patterns and do not crash the page"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/giftcards/addGiftCardNGNRate.ts",
-          "operation": "create",
-          "description": "Create a small helper that parses the entered amount, gets the brand's NGN rate table via getBrandRateTable, and returns the matched tier via findMatchingTier (or null). This centralizes the matching behavior for reuse in UI and regression checks."
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Update payout-method and withdrawal React Query hooks to call backend actor methods (listUserPayoutMethods, createPayoutMethod, listUserWithdrawals, createWithdrawalRequest) instead of placeholders; map backend types to the app UI types where needed (e.g., bigint IDs/timestamps), and ensure errors propagate for toast handling. Use the authorization component’s frontend guidance to keep queries disabled until an authenticated actor is available; verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
+          "path": "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
           "operation": "modify",
-          "description": "Wire the NGN inline summary into the Add Gift Card form near the Amount field: when Brand is selected and Amount parses to a positive number, compute matchedTier using the new helper (backed by frontend/src/config/giftCardRatesNGN.ts) and render the existing frontend/src/components/giftcards/NGNRateInlineSummary.tsx with showUnavailable={!matchedTier}. Ensure the summary is not rendered when amount is empty/non-numeric/<=0. Keep existing form submission flow intact (useAddGiftCard + toasts)."
+          "description": "Ensure Withdrawals page correctly reflects hook loading/error states for payout methods and withdrawals (skeletons/disabled controls already present), and align displayed fields (timestamps/status) with the mapped backend data returned by the updated hooks; keep toast-based error surfacing consistent with existing patterns and do not crash on failures."
+        },
+        {
+          "path": "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
+          "operation": "modify",
+          "description": "Adjust admin withdrawals UI field usage to match the updated hook return shape produced from backend data mapping (e.g., owner vs user naming and timestamp fields), preserving existing AdminRouteGuard behavior and toast-based error handling."
         }
       ]
     },
     {
-      "id": "REQ-2",
-      "summary": "Add an automated UI regression check ensuring the NGN rate summary (or explicit unavailable message) renders for valid Add Gift Card inputs.",
+      "id": "REQ-5",
+      "summary": "Add a new 'Send to bank' crypto wallet quick action that opens a multi-step bottom-sheet flow to create a withdrawal request using backend payout methods.",
       "acceptanceCriteria": [
-        "Add an automated check (test or assertion) that renders the Add Gift Card page (or the extracted rate-summary logic) with a selected Brand and a valid Amount and verifies that the Nigeria rate summary text is present in the DOM (e.g., contains the 'Nigeria Rate:' label).",
-        "Add a second automated check that uses an Amount that does not match any tier and verifies the 'Rate unavailable…' message is present (not blank).",
-        "The regression check is wired to the current matching/formatting logic from `frontend/src/config/giftCardRatesNGN.ts` and will fail if the summary stops rendering again."
+        "Crypto wallet page shows a new quick action labeled 'Send to bank'",
+        "Tapping 'Send to bank' opens a bottom sheet with a multi-step flow: input amount/currency, select payout method (and add one if none), review, confirm",
+        "On confirm, the app calls the backend to create a withdrawal request and shows a success toast",
+        "After success, the flow closes and the user can see the new request in Withdrawals > History"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx",
+          "path": "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
           "operation": "create",
-          "description": "Add a lightweight automated regression test that uses the shared helper from frontend/src/pages/giftcards/addGiftCardNGNRate.ts (which relies on getBrandRateTable + findMatchingTier) and renders frontend/src/components/giftcards/NGNRateInlineSummary.tsx to verify: (1) a valid brand + amount produces markup containing 'Nigeria Rate:'; (2) a valid brand + non-matching amount produces markup containing the component's unavailable-rate message (not blank)."
+          "description": "Create a new bottom-sheet (using the existing shadcn-ui Sheet component) implementing the multi-step 'Send to bank' flow: amount/currency entry, payout method selection (with inline add payout method), review, and confirm; on confirm call the existing withdrawal mutation hook and surface success/error via toasts. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/crypto/CryptoQuickActions.tsx",
+          "operation": "modify",
+          "description": "Add a new quick action button labeled 'Send to bank' and a corresponding callback prop (e.g., onSendToBankClick), keeping the existing actions intact and ensuring the layout accommodates the additional action."
+        },
+        {
+          "path": "frontend/src/pages/services/CryptoWalletPage.tsx",
+          "operation": "modify",
+          "description": "Wire the new 'Send to bank' quick action to open/close the SendToBankSheet, manage its open state alongside other action sheets, and render the new sheet component so it is reachable from the wallet experience."
         }
       ]
     }
