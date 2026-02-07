@@ -1,0 +1,46 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Restore NGN rate inline summary visibility on Add Gift Card amount entry",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Show NGN rate inline summary on /gift-cards/add when Brand is selected and a valid Amount is entered, including explicit unavailable state.",
+      "acceptanceCriteria": [
+        "Given the user is on `/gift-cards/add` (Add Gift Card), when a Brand is selected and a positive Amount is entered, an inline Nigeria rate summary is rendered in the form (near the Amount field) instead of showing nothing.",
+        "If the entered Amount does not match any NGN tier for the selected Brand, the UI shows an explicit 'rate unavailable' message (reuse the existing unavailable state behavior from `frontend/src/components/giftcards/NGNRateInlineSummary.tsx`) rather than rendering nothing.",
+        "If the Amount is empty, non-numeric, or <= 0, the Nigeria rate summary is not shown.",
+        "The implementation uses the existing NGN rate configuration and matching logic from `frontend/src/config/giftCardRatesNGN.ts` (e.g., `getBrandRateTable` + `findMatchingTier`) and the existing UI component `frontend/src/components/giftcards/NGNRateInlineSummary.tsx` to avoid duplicating formatting/logic.",
+        "The Add Gift Card page remains functional: submitting a valid form still calls the existing `useAddGiftCard` mutation and shows existing success/error toasts."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/giftcards/addGiftCardNGNRate.ts",
+          "operation": "create",
+          "description": "Create a small helper that parses the entered amount, gets the brand's NGN rate table via getBrandRateTable, and returns the matched tier via findMatchingTier (or null). This centralizes the matching behavior for reuse in UI and regression checks."
+        },
+        {
+          "path": "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
+          "operation": "modify",
+          "description": "Wire the NGN inline summary into the Add Gift Card form near the Amount field: when Brand is selected and Amount parses to a positive number, compute matchedTier using the new helper (backed by frontend/src/config/giftCardRatesNGN.ts) and render the existing frontend/src/components/giftcards/NGNRateInlineSummary.tsx with showUnavailable={!matchedTier}. Ensure the summary is not rendered when amount is empty/non-numeric/<=0. Keep existing form submission flow intact (useAddGiftCard + toasts)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Add an automated UI regression check ensuring the NGN rate summary (or explicit unavailable message) renders for valid Add Gift Card inputs.",
+      "acceptanceCriteria": [
+        "Add an automated check (test or assertion) that renders the Add Gift Card page (or the extracted rate-summary logic) with a selected Brand and a valid Amount and verifies that the Nigeria rate summary text is present in the DOM (e.g., contains the 'Nigeria Rate:' label).",
+        "Add a second automated check that uses an Amount that does not match any tier and verifies the 'Rate unavailable…' message is present (not blank).",
+        "The regression check is wired to the current matching/formatting logic from `frontend/src/config/giftCardRatesNGN.ts` and will fail if the summary stops rendering again."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx",
+          "operation": "create",
+          "description": "Add a lightweight automated regression test that uses the shared helper from frontend/src/pages/giftcards/addGiftCardNGNRate.ts (which relies on getBrandRateTable + findMatchingTier) and renders frontend/src/components/giftcards/NGNRateInlineSummary.tsx to verify: (1) a valid brand + amount produces markup containing 'Nigeria Rate:'; (2) a valid brand + non-matching amount produces markup containing the component's unavailable-rate message (not blank)."
+        }
+      ]
+    }
+  ]
+}

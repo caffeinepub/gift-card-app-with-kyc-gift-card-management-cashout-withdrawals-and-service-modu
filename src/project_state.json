@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [
+    "Rate is not displaying when the user enters a gift card amount."
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-on-the-add-gift-card-page-display-the-nigeria-ngn-rate-summary-when-the-user-enters-an-amount-so-the-rate-is-visible-and-not-silently-missing-for-the-selected-brand-and-currency",
+      "title": "On the Add Gift Card page, display the Nigeria (NGN) rate summary when the user enters an Amount, so the rate is visible (and not silently missing) for the selected Brand and currency.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-lightweight-ui-regression-check-to-prevent-the-ngn-rate-summary-from-becoming-invisible-again-when-a-valid-amount-is-entered",
+      "title": "Add a lightweight UI regression check to prevent the NGN rate summary from becoming invisible again when a valid amount is entered.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [],
+  "projectName": "Fix missing NGN rate display when entering amount on Add Gift Card page",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

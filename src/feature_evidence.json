@@ -1,0 +1,46 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-on-the-add-gift-card-page-display-the-nigeria-ngn-rate-summary-when-the-user-enters-an-amount-so-the-rate-is-visible-and-not-silently-missing-for-the-selected-brand-and-currency",
+      "featureTitle": "On the Add Gift Card page, display the Nigeria (NGN) rate summary when the user enters an Amount, so the rate is visible (and not silently missing) for the selected Brand and currency.",
+      "files": [
+        "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
+        "frontend/src/pages/giftcards/addGiftCardNGNRate.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-lightweight-ui-regression-check-to-prevent-the-ngn-rate-summary-from-becoming-invisible-again-when-a-valid-amount-is-entered",
+      "featureTitle": "Add a lightweight UI regression check to prevent the NGN rate summary from becoming invisible again when a valid amount is entered.",
+      "files": [
+        "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

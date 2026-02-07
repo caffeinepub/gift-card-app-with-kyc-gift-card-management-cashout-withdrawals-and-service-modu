@@ -1,0 +1,52 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-07T19:11:04.414Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 2,
+    "implemented": 2,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "On the Add Gift Card page, display the Nigeria (NGN) rate summary when the user enters an Amount, so the rate is visible (and not silently missing) for the selected Brand and currency.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/giftcards/addGiftCardNGNRate.ts",
+          "frontend/src/pages/giftcards/AddGiftCardPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/giftcards/addGiftCardNGNRate.ts",
+          "frontend/src/pages/giftcards/AddGiftCardPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Add a lightweight UI regression check to prevent the NGN rate summary from becoming invisible again when a valid amount is entered.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/pages/giftcards/AddGiftCardPage.tsx",
+    "frontend/src/pages/giftcards/__tests__/addGiftCardNGNRateSummary.test.tsx",
+    "frontend/src/pages/giftcards/addGiftCardNGNRate.ts",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

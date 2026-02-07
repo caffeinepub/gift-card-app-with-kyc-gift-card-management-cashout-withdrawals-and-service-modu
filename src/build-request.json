@@ -1,0 +1,59 @@
+{
+  "kind": "build_request",
+  "title": "Fix missing NGN rate display when entering amount on Add Gift Card page",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "On the Add Gift Card page, display the Nigeria (NGN) rate summary when the user enters an Amount, so the rate is visible (and not silently missing) for the selected Brand and currency.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "No rate is showing here when I put amount"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Given the user is on `/gift-cards/add` (Add Gift Card), when a Brand is selected and a positive Amount is entered, an inline Nigeria rate summary is rendered in the form (near the Amount field) instead of showing nothing.",
+        "If the entered Amount does not match any NGN tier for the selected Brand, the UI shows an explicit 'rate unavailable' message (reuse the existing unavailable state behavior from `frontend/src/components/giftcards/NGNRateInlineSummary.tsx`) rather than rendering nothing.",
+        "If the Amount is empty, non-numeric, or <= 0, the Nigeria rate summary is not shown.",
+        "The implementation uses the existing NGN rate configuration and matching logic from `frontend/src/config/giftCardRatesNGN.ts` (e.g., `getBrandRateTable` + `findMatchingTier`) and the existing UI component `frontend/src/components/giftcards/NGNRateInlineSummary.tsx` to avoid duplicating formatting/logic.",
+        "The Add Gift Card page remains functional: submitting a valid form still calls the existing `useAddGiftCard` mutation and shows existing success/error toasts."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Add a lightweight UI regression check to prevent the NGN rate summary from becoming invisible again when a valid amount is entered.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "No rate is showing here when I put amount"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Add an automated check (test or assertion) that renders the Add Gift Card page (or the extracted rate-summary logic) with a selected Brand and a valid Amount and verifies that the Nigeria rate summary text is present in the DOM (e.g., contains the 'Nigeria Rate:' label).",
+        "Add a second automated check that uses an Amount that does not match any tier and verifies the 'Rate unavailable…' message is present (not blank).",
+        "The regression check is wired to the current matching/formatting logic from `frontend/src/config/giftCardRatesNGN.ts` and will fail if the summary stops rendering again."
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not edit files in `frontend/src/components/ui` (compose existing UI components instead).",
+    "Do not modify any Internet Identity hooks or actor hooks in immutable paths (`frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`).",
+    "Keep all changes within the existing React + TypeScript + Tailwind + React Query stack."
+  ],
+  "nonGoals": [
+    "Implementing backend-driven live rates or storing rates in Motoko.",
+    "Adding new vendor payout or conversion features unrelated to showing the NGN rate summary on amount entry.",
+    "Changing the Sell Gift Card flow unless needed to share the same rate-summary behavior."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}
