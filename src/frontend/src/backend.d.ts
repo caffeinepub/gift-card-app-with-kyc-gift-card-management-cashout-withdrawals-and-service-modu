@@ -7,6 +7,10 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
+export type KycRecordId = bigint;
+export type Time = bigint;
+export type WithdrawalRequestId = bigint;
+export type PayoutMethodId = bigint;
 export interface PayoutMethod {
     id: PayoutMethodId;
     created: Time;
@@ -15,9 +19,16 @@ export interface PayoutMethod {
     accountName: string;
     accountNumber: string;
 }
-export type Time = bigint;
-export type WithdrawalRequestId = bigint;
-export type PayoutMethodId = bigint;
+export interface KycRecord {
+    id: KycRecordId;
+    status: KycStatus;
+    documentType: DocumentType;
+    documentURI: string;
+    user: Principal;
+    submittedAt: Time;
+    idNumber: string;
+    verifiedAt?: Time;
+}
 export interface WithdrawalRequest {
     id: WithdrawalRequestId;
     status: WithdrawalStatus;
@@ -30,6 +41,19 @@ export interface WithdrawalRequest {
 }
 export interface UserProfile {
     name: string;
+}
+export enum DocumentType {
+    votersID = "votersID",
+    passport = "passport",
+    nationalID = "nationalID",
+    driversLicense = "driversLicense"
+}
+export enum KycStatus {
+    verified = "verified",
+    expired = "expired",
+    pending = "pending",
+    unverified = "unverified",
+    rejected = "rejected"
 }
 export enum UserRole {
     admin = "admin",
@@ -47,11 +71,15 @@ export interface backendInterface {
     createWithdrawalRequest(payoutMethodId: PayoutMethodId, amount: bigint): Promise<WithdrawalRequestId>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getKycStatus(): Promise<Array<KycRecord>>;
+    getUserKycRecords(user: Principal): Promise<Array<KycRecord>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     listPendingWithdrawals(): Promise<Array<WithdrawalRequest>>;
     listUserPayoutMethods(): Promise<Array<PayoutMethod>>;
     listUserWithdrawals(): Promise<Array<WithdrawalRequest>>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    submitKycRecord(documentType: DocumentType, idNumber: string, documentURI: string): Promise<KycRecordId>;
+    updateKycStatus(recordId: KycRecordId, status: KycStatus): Promise<void>;
     updateWithdrawalStatus(requestId: WithdrawalRequestId, status: WithdrawalStatus): Promise<void>;
 }

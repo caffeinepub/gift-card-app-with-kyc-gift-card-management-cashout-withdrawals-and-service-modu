@@ -12,7 +12,16 @@ import type {
   Currency,
   Avatar,
 } from '../types/app-types';
-import type { PayoutMethod as BackendPayoutMethod, WithdrawalRequest as BackendWithdrawalRequest, WithdrawalStatus as BackendWithdrawalStatus, UserProfile as BackendUserProfile } from '../backend';
+import type { 
+  PayoutMethod as BackendPayoutMethod, 
+  WithdrawalRequest as BackendWithdrawalRequest, 
+  WithdrawalStatus as BackendWithdrawalStatus, 
+  UserProfile as BackendUserProfile,
+  KycRecord as BackendKycRecord,
+  DocumentType as BackendDocumentType,
+  KycStatus as BackendKycStatus,
+} from '../backend';
+import { DocumentType, KycStatus as BackendKycStatusEnum } from '../backend';
 import { Principal } from '@dfinity/principal';
 
 // Note: ExternalBlob is still imported from backend as it's part of blob-storage
@@ -29,6 +38,61 @@ function mapBackendWithdrawalStatus(status: BackendWithdrawalStatus): { __kind__
 // Helper to convert frontend status string to backend enum
 function mapFrontendStatusToBackend(status: Variant_paid_rejected): BackendWithdrawalStatus {
   return status as BackendWithdrawalStatus;
+}
+
+// Helper to map backend DocumentType to frontend string
+function mapBackendDocumentType(docType: BackendDocumentType): string {
+  switch (docType) {
+    case DocumentType.driversLicense:
+      return 'ID card';
+    case DocumentType.passport:
+      return 'Passport';
+    case DocumentType.votersID:
+      return "Voter's card";
+    case DocumentType.nationalID:
+      return 'NIN';
+    default:
+      return 'Unknown';
+  }
+}
+
+// Helper to map frontend document type string to backend enum
+function mapFrontendDocumentType(docType: string): BackendDocumentType {
+  switch (docType) {
+    case 'nin':
+      return DocumentType.nationalID;
+    case 'id_card':
+      return DocumentType.driversLicense;
+    case 'voters_card':
+      return DocumentType.votersID;
+    case 'passport':
+      return DocumentType.passport;
+    case 'address_verification':
+      throw new Error('Address verification is not yet supported by the backend');
+    default:
+      throw new Error(`Unsupported document type: ${docType}`);
+  }
+}
+
+// Helper to map backend KycStatus to frontend
+function mapBackendKycStatus(status: BackendKycStatus): KycStatus {
+  switch (status) {
+    case 'pending':
+      return { __kind__: 'pending' };
+    case 'verified':
+      return { __kind__: 'verified' };
+    case 'rejected':
+      return { __kind__: 'rejected' };
+    case 'expired':
+      return { __kind__: 'expired' };
+    default:
+      return { __kind__: 'pending' };
+  }
+}
+
+// Helper to map frontend KycStatus to backend
+function mapFrontendKycStatus(status: KycStatus): BackendKycStatus {
+  return status.__kind__ as BackendKycStatus;
 }
 
 // User Profile Queries
@@ -241,8 +305,16 @@ export function useGetKycRecords() {
     queryKey: ['kycRecords'],
     queryFn: async () => {
       if (!actor) return [];
-      // Backend method doesn't exist
-      return [];
+      const backendRecords = await actor.getKycStatus();
+      // Map backend KycRecord to frontend KycRecord
+      return backendRecords.map((record: BackendKycRecord) => ({
+        documentType: mapBackendDocumentType(record.documentType),
+        documentUri: record.documentURI,
+        idNumber: record.idNumber,
+        uploadedBy: record.user,
+        status: mapBackendKycStatus(record.status),
+        externalId: null,
+      }));
     },
     enabled: !!actor && !isFetching,
   });
@@ -259,8 +331,13 @@ export function useSubmitKyc() {
       idNumber: string;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend method doesn't exist
-      throw new Error('Backend method not implemented');
+      const backendDocType = mapFrontendDocumentType(params.documentType);
+      const recordId = await actor.submitKycRecord(
+        backendDocType,
+        params.idNumber,
+        params.documentUri
+      );
+      return recordId.toString();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kycRecords'] });
@@ -275,9 +352,19 @@ export function useAdminGetUserKycRecords(userPrincipal: string) {
   return useQuery<KycRecord[]>({
     queryKey: ['adminKycRecords', userPrincipal],
     queryFn: async () => {
-      if (!actor) return [];
-      // Backend method doesn't exist
-      return [];
+      if (!actor || !userPrincipal) return [];
+      const principal = Principal.fromText(userPrincipal);
+      const backendRecords = await actor.getUserKycRecords(principal);
+      // Map backend KycRecord to frontend KycRecord
+      return backendRecords.map((record: BackendKycRecord) => ({
+        documentType: mapBackendDocumentType(record.documentType),
+        documentUri: record.documentURI,
+        idNumber: record.idNumber,
+        uploadedBy: record.user,
+        status: mapBackendKycStatus(record.status),
+        externalId: null,
+        recordId: record.id.toString(), // Add recordId for admin operations
+      }));
     },
     enabled: !!actor && !isFetching && !!userPrincipal,
   });
@@ -290,15 +377,19 @@ export function useAdminUpdateKycStatus() {
   return useMutation({
     mutationFn: async (params: {
       userPrincipal: string;
-      idNumber: string;
+      recordId: string;
       newStatus: KycStatus;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend method doesn't exist
-      throw new Error('Backend method not implemented');
+      const backendStatus = mapFrontendKycStatus(params.newStatus);
+      await actor.updateKycStatus(
+        BigInt(params.recordId),
+        backendStatus
+      );
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['adminKycRecords', variables.userPrincipal] });
+      queryClient.invalidateQueries({ queryKey: ['kycRecords'] });
     },
   });
 }

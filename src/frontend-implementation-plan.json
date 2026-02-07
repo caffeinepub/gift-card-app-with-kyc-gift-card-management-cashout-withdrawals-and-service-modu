@@ -1,53 +1,55 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Screenshot-style Internet Identity login screen redesign",
+  "title": "KYC workflow frontend wiring (submission + admin review)",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Redesign the logged-out login screen layout to match the provided screenshot (dark background + large white rounded sheet, title, sign-up row, email/password fields, forgot link, bottom primary CTA).",
+      "id": "REQ-4",
+      "summary": "Replace React Query KYC stubs with real backend calls and proper cache invalidation for user and admin flows.",
       "acceptanceCriteria": [
-        "When logged out, the app renders a login screen that matches the screenshot’s layout and spacing (dark top/background + white sheet + large rounded inputs + bottom CTA).",
-        "The layout is mobile-first and remains usable on desktop (content centered with sensible max width).",
-        "All user-facing text on this screen is in English and matches the screenshot wording (including capitalization and punctuation) unless Internet Identity constraints require additional clarifying copy (handled in REQ-2)."
+        "KYC page loads KYC records from the backend using useGetKycRecords and displays current status when records exist.",
+        "Submitting KYC from the KYC page calls the backend and the UI refreshes to show the new pending record.",
+        "Admin KYC review page can search a principal and load records from the backend.",
+        "Approving/rejecting in the admin page calls the backend and refreshes the admin list for that principal."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/auth/LoginCard.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Replace the current card/alert-based logged-out UI with screenshot-style layout and spacing using Tailwind classes (dark full-screen background/header feel + centered white rounded sheet + required text rows + large rounded email/password fields + bottom full-width rounded primary CTA). Verify the component's usage instructions before implementing."
+          "description": "Implement KYC React Query hooks by calling backend capabilities already present in the typed interface: fetch caller KYC records, submit KYC record, admin fetch user KYC records (Principal text -> Principal), and admin update KYC status (use recordId rather than idNumber). Add mapping between backend KycRecord/KycStatus/DocumentType shapes and the local frontend KycRecord/KycStatus shapes used by the pages, and ensure query invalidation after submit and admin status updates (invalidate both the admin principal-scoped query and the caller's KYC query where appropriate). Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-2",
-      "summary": "Keep Internet Identity as the only auth method while presenting email/password-style fields; wire Continue to useInternetIdentity().login with loading state and add concise helper copy explaining II.",
+      "id": "REQ-5",
+      "summary": "Update KYC submission form to support NIN, ID card, voter’s card, passport, and address verification with validation and correct UX.",
       "acceptanceCriteria": [
-        "Clicking \"Continue\" starts the Internet Identity login flow and shows a loading state consistent with the rest of the app (e.g., spinner + disabled CTA) while loginStatus is \"logging-in\".",
-        "No API calls, backend mutations, or local storage mechanisms are introduced for email/password authentication.",
-        "A concise, visible explanation indicates that login is via Internet Identity (and not email/password), without reintroducing the old large alert card UI."
+        "Document type picker includes options for: NIN, ID card, voter’s card, passport, and address verification (user-facing text in English).",
+        "Form prevents submission unless document type, ID number (or reference number for address verification if still using a single field), and file are present.",
+        "File size limit (<=5MB) and accepted types (image/*,.pdf) remain enforced as currently implemented.",
+        "After successful submission, the form resets and a success toast is shown."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/auth/LoginCard.tsx",
+          "path": "frontend/src/pages/KycPage.tsx",
           "operation": "modify",
-          "description": "Ensure the \"Continue\" CTA calls useInternetIdentity().login and reflects loginStatus === 'logging-in' with disabled + spinner/label change; keep email/password fields as non-auth inputs (ignored and/or disabled) and add a short inline helper line (non-card) indicating Internet Identity is used. Verify the component's usage instructions before implementing."
+          "description": "Update the document type picker options and labels to: NIN, ID card, voter’s card, passport, and address verification; adjust the ID number label/placeholder to accommodate address verification (e.g., \"Reference number\" while keeping a single field). Ensure submit remains blocked unless required fields and a file are present, keep the existing <=5MB and accepted file type enforcement, and keep/reset form state with a success toast on completion. Ensure the submitted document type value aligns with the mapping implemented in useSubmitKyc (including a user-facing error if a selected type is not yet supported by the backend enum). Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-3",
-      "summary": "Add screenshot-like interactions: password visibility toggle, link styling for Forgot Password and Sign up, and robust disabled/pressed CTA states.",
+      "id": "REQ-6",
+      "summary": "Enhance admin KYC review UI to show record details and allow opening the submitted document URI before approving/rejecting.",
       "acceptanceCriteria": [
-        "Password field includes a visibility toggle that switches between masked/unmasked states and is keyboard accessible.",
-        "\"Forgot Password?\" and \"Sign up\" are rendered as links/buttons with hover/focus styles and do not break navigation (they may open an informational modal/toast explaining Internet Identity if no dedicated routes exist).",
-        "The primary CTA reflects disabled state while logging in and cannot be double-submitted."
+        "Each KYC record row/card displays documentType, idNumber, and status.",
+        "Each record provides a clickable link or button that opens documentUri in a new tab/window for review.",
+        "Approve/Reject buttons remain available only when status is pending, and show loading/disabled state while the mutation is in-flight."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/auth/LoginCard.tsx",
+          "path": "frontend/src/pages/admin/AdminKycReviewPage.tsx",
           "operation": "modify",
-          "description": "Implement a password visibility toggle button inside the password input (keyboard accessible, uses existing icon library already in use), style \"Forgot Password?\" and \"Sign up\" as links with hover/focus states, and prevent double-submission by disabling the CTA while logging in (including active/pressed styling). If no routes exist, have links open a small non-intrusive informational dialog/toast about Internet Identity or an external Internet Identity help/sign-up page. Verify the component's usage instructions before implementing."
+          "description": "Render each KYC record with visible documentType, idNumber, and status, and add a \"View document\" link/button that opens the record's documentUri in a new tab/window for review. Update the approve/reject actions to target the backend record identifier used by the admin mutation (recordId), keep actions available only for pending records, and add clear loading/disabled states while the status update mutation is in-flight. Remove any placeholder messaging that claims backend KYC methods are not implemented once wiring is complete. Verify the component's usage instructions before implementing."
         }
       ]
     }

@@ -1,85 +1,134 @@
 {
   "kind": "build_request",
-  "title": "Redesign login screen to match provided screenshot (email/password style UI using Internet Identity)",
+  "title": "Implement KYC verification workflow (NIN, ID card, voter’s card, passport, address verification)",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the unauthenticated login UI to visually match the provided screenshot: full-screen dark header/background, large white rounded-corner sheet, \"Log in\" title, \"Don’t have an account? Sign up\" row with the \"Sign up\" styled as a link, two large rounded input fields (email + password), a \"Forgot Password?\" link, and a wide rounded \"Continue\" primary CTA at the bottom.",
-      "target": "frontend",
+      "text": "Implement backend KYC data model and storage to support user-submitted KYC records, including document type, document URI, ID number, uploaded-by principal, status (pending/verified/rejected/expired), and timestamps as needed for auditing.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "user-1"
+          "msg-6",
+          "msg-12"
         ],
         "quotes": [
-          "I want to build my login like that on the screenshot"
+          "Add KYC verification NIN  Card  voters card passport address verification",
+          "Go ahead"
         ]
       },
       "acceptanceCriteria": [
-        "When logged out, the app renders a login screen that matches the screenshot’s layout and spacing (dark top/background + white sheet + large rounded inputs + bottom CTA).",
-        "The layout is mobile-first and remains usable on desktop (content centered with sensible max width).",
-        "All user-facing text on this screen is in English and matches the screenshot wording (including capitalization and punctuation) unless Internet Identity constraints require additional clarifying copy (handled in REQ-2)."
+        "Backend exposes a KYC record type that includes at minimum: documentType, documentUri, idNumber, uploadedBy, and status (pending/verified/rejected/expired).",
+        "KYC records are stored per user principal and can be retrieved later (not only held in transient local variables)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Preserve Internet Identity as the only authentication method while presenting the screenshot-style form: the \"Continue\" button must trigger the existing Internet Identity login flow (useInternetIdentity().login). Email/password fields must not attempt email/password authentication; instead, treat them as non-auth fields (e.g., optional/disabled or ignored) and provide clear inline/helper messaging so users understand Internet Identity is used (without cluttering the UI).",
-      "target": "frontend",
+      "text": "Add backend user APIs for KYC submission and retrieval: allow a logged-in user to submit a new KYC record (default status=pending) and list their own KYC records.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "user-1"
+          "msg-6"
         ],
         "quotes": [
-          "I want to build my login like that on the screenshot"
+          "Add KYC verification NIN  Card  voters card passport address verification"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking \"Continue\" starts the Internet Identity login flow and shows a loading state consistent with the rest of the app (e.g., spinner + disabled CTA) while loginStatus is \"logging-in\".",
-        "No API calls, backend mutations, or local storage mechanisms are introduced for email/password authentication.",
-        "A concise, visible explanation indicates that login is via Internet Identity (and not email/password), without reintroducing the old large alert card UI."
+        "Calling the submit KYC method as an authenticated user creates a new KYC record with status=pending.",
+        "Calling the list-my-KYC method returns only the caller’s records.",
+        "Unauthorized callers (no #user permission) are rejected with a clear trap message consistent with existing authorization patterns in backend/main.mo."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Implement screenshot-like interactions on the login screen: password visibility toggle icon inside the password field, link styling for \"Forgot Password?\" and \"Sign up\", and appropriate disabled/pressed states for the \"Continue\" button.",
-      "target": "frontend",
+      "text": "Add backend admin APIs for KYC review: allow an admin to fetch a specific user’s KYC records and update a specific record’s status to verified or rejected (and optionally expired if supported).",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "user-1"
+          "msg-6"
         ],
         "quotes": [
-          "I want to build my login like that on the screenshot"
+          "Add KYC verification NIN  Card  voters card passport address verification"
         ]
       },
       "acceptanceCriteria": [
-        "Password field includes a visibility toggle that switches between masked/unmasked states and is keyboard accessible.",
-        "\"Forgot Password?\" and \"Sign up\" are rendered as links/buttons with hover/focus styles and do not break navigation (they may open an informational modal/toast explaining Internet Identity if no dedicated routes exist).",
-        "The primary CTA reflects disabled state while logging in and cannot be double-submitted."
+        "Admin-only method can retrieve KYC records for an arbitrary principal.",
+        "Admin-only method can update an existing KYC record’s status (e.g., located by idNumber within that user’s records).",
+        "Non-admin callers are rejected with a clear trap message consistent with existing authorization patterns in backend/main.mo."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Wire the frontend React Query hooks in frontend/src/hooks/useQueries.ts to the new backend KYC APIs (replace the current 'Backend method not implemented' stubs) and ensure queries invalidate appropriately after submission and admin status updates.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "Add KYC verification NIN  Card  voters card passport address verification"
+        ]
+      },
+      "acceptanceCriteria": [
+        "KYC page loads KYC records from the backend using useGetKycRecords and displays current status when records exist.",
+        "Submitting KYC from the KYC page calls the backend and the UI refreshes to show the new pending record.",
+        "Admin KYC review page can search a principal and load records from the backend.",
+        "Approving/rejecting in the admin page calls the backend and refreshes the admin list for that principal."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Update the KYC submission UI (frontend/src/pages/KycPage.tsx) to support the requested document types: NIN, ID card, voter’s card, passport, and address verification, including appropriate form labels and validation so users cannot submit without required fields and an uploaded document.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "Add KYC verification NIN  Card  voters card passport address verification"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Document type picker includes options for: NIN, ID card, voter’s card, passport, and address verification (user-facing text in English).",
+        "Form prevents submission unless document type, ID number (or reference number for address verification if still using a single field), and file are present.",
+        "File size limit (<=5MB) and accepted types (image/*,.pdf) remain enforced as currently implemented.",
+        "After successful submission, the form resets and a success toast is shown."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Update the admin KYC review UI (frontend/src/pages/admin/AdminKycReviewPage.tsx) to show each record’s key details and provide a direct way for admins to open the submitted document URI for review before approving/rejecting.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "Add KYC verification NIN  Card  voters card passport address verification"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each KYC record row/card displays documentType, idNumber, and status.",
+        "Each record provides a clickable link or button that opens documentUri in a new tab/window for review.",
+        "Approve/Reject buttons remain available only when status is pending, and show loading/disabled state while the mutation is in-flight."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under frontend/src/components/ui (compose existing UI primitives instead).",
-    "Do not change authentication away from Internet Identity; do not add email/password authentication.",
-    "Keep routing/auth gating behavior in frontend/src/App.tsx intact (still show the login UI when identity is absent)."
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Respect existing authorization patterns using AccessControl (user vs admin checks) and trap on unauthorized access.",
+    "Do not edit files under frontend/src/components/ui (compose existing components only).",
+    "Do not modify immutable paths listed in SYSTEM_CONTEXT.frontend.immutablePaths.",
+    "No third-party KYC providers or external databases; store KYC records on-canister."
   ],
   "nonGoals": [
-    "Building a real email/password authentication system.",
-    "Implementing full sign-up and password reset backends/flows.",
-    "Changing backend Motoko canister logic for authentication."
+    "Implementing automatic/real-world identity verification against government databases or third-party KYC APIs.",
+    "Adding non-Internet-Identity authentication methods.",
+    "Building a full document viewer inside the app beyond opening the stored document URI."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

@@ -1,13 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Redesign the logged-out login screen to match the provided screenshot’s email/password-style UI while keeping Internet Identity as the only authentication method.
+**Goal:** Implement a complete KYC verification workflow covering NIN, ID card, voter’s card, passport, and address verification, including user submission, backend storage, and admin review/approval.
 
 **Planned changes:**
-- Update the unauthenticated login layout to match the screenshot: dark full-screen background/header with a large white rounded sheet containing the “Log in” title, “Don’t have an account? Sign up” row, two large rounded input fields (email + password), “Forgot Password?” link, and a wide rounded “Continue” primary CTA at the bottom.
-- Keep routing/auth gating intact so this redesigned screen shows when no identity is present.
-- Wire the “Continue” button to trigger the existing Internet Identity flow (`useInternetIdentity().login`) with a loading/disabled state while `loginStatus` is “logging-in”.
-- Ensure the email/password fields do not perform email/password authentication (ignored/optional/disabled) and add concise helper text indicating that login uses Internet Identity (without bringing back a large alert card).
-- Add screenshot-like interactions: password visibility toggle inside the password field, link styling + hover/focus states for “Sign up” and “Forgot Password?”, and prevent double-submit on the primary CTA.
+- Add a backend KYC record data model and persistent per-user storage (document type, document URI, ID number, uploaded-by principal, status, timestamps).
+- Add backend user APIs to submit a KYC record (default status=pending) and list the authenticated user’s KYC records.
+- Add backend admin APIs to fetch any user’s KYC records and update a record’s status to verified/rejected (and optionally expired if supported).
+- Wire frontend React Query hooks to the new backend KYC APIs and ensure queries invalidate/refresh after submissions and admin status updates.
+- Update the KYC submission page UI to support document types (NIN, ID card, voter’s card, passport, address verification) with required-field validation and existing file constraints.
+- Update the admin KYC review UI to display record details and provide a link/button to open the submitted document URI for review before approving/rejecting.
 
-**User-visible outcome:** When logged out, users see a screenshot-matching login screen and can tap “Continue” to sign in via Internet Identity, with clear UI feedback and no email/password authentication behavior.
+**User-visible outcome:** Users can submit KYC documents for the supported document types and view their KYC status history; admins can search for a user’s KYC records, open submitted documents via their URI, and approve/reject pending submissions.

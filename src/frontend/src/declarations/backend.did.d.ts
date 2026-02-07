@@ -10,6 +10,26 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export type DocumentType = { 'votersID' : null } |
+  { 'passport' : null } |
+  { 'nationalID' : null } |
+  { 'driversLicense' : null };
+export interface KycRecord {
+  'id' : KycRecordId,
+  'status' : KycStatus,
+  'documentType' : DocumentType,
+  'documentURI' : string,
+  'user' : Principal,
+  'submittedAt' : Time,
+  'idNumber' : string,
+  'verifiedAt' : [] | [Time],
+}
+export type KycRecordId = bigint;
+export type KycStatus = { 'verified' : null } |
+  { 'expired' : null } |
+  { 'pending' : null } |
+  { 'unverified' : null } |
+  { 'rejected' : null };
 export interface PayoutMethod {
   'id' : PayoutMethodId,
   'created' : Time,
@@ -74,12 +94,16 @@ export interface _SERVICE {
   >,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getKycStatus' : ActorMethod<[], Array<KycRecord>>,
+  'getUserKycRecords' : ActorMethod<[Principal], Array<KycRecord>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'listPendingWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
   'listUserPayoutMethods' : ActorMethod<[], Array<PayoutMethod>>,
   'listUserWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'submitKycRecord' : ActorMethod<[DocumentType, string, string], KycRecordId>,
+  'updateKycStatus' : ActorMethod<[KycRecordId, KycStatus], undefined>,
   'updateWithdrawalStatus' : ActorMethod<
     [WithdrawalRequestId, WithdrawalStatus],
     undefined

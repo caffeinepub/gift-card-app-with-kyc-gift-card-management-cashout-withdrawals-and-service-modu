@@ -1,32 +1,32 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
+  "summary": "Project includes implementing KYC verification as part of the product.",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-update-the-unauthenticated-login-ui-to-visually-match-the-provided-screenshot-full-screen-dark-header-background-large-white-rounded-corner-sheet-log-in-title-don-t-have-an-account-sign-up-row-with-the-sign-up-styled-as-a-link-two-large-rounded-input-fields-email-password-a-forgot-password-link-and-a-wide-rounded-continue-primary-cta-at-the-bottom",
-      "title": "Update the unauthenticated login UI to visually match the provided screenshot: full-screen dark header/background, large white rounded-corner sheet, \"Log in\" title, \"Don’t have an account? Sign up\" row with the \"Sign up\" styled as a link, two large rounded input fields (email + password), a \"Forgot Password?\" link, and a wide rounded \"Continue\" primary CTA at the bottom.",
+      "id": "feature-wire-the-frontend-react-query-hooks-in-frontend-src-hooks-usequeries-ts-to-the-new-backend-kyc-apis-replace-the-current-backend-method-not-implemented-stubs-and-ensure-queries-invalidate-appropriately-after-submission-and-admin-status-updates",
+      "title": "Wire the frontend React Query hooks in frontend/src/hooks/useQueries.ts to the new backend KYC APIs (replace the current 'Backend method not implemented' stubs) and ensure queries invalidate appropriately after submission and admin status updates.",
       "reqIds": [
-        "REQ-1"
+        "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-preserve-internet-identity-as-the-only-authentication-method-while-presenting-the-screenshot-style-form-the-continue-button-must-trigger-the-existing-internet-identity-login-flow-useinternetidentity-login-email-password-fields-must-not-attempt-email-password-authentication-instead-treat-them-as-non-auth-fields-e-g-optional-disabled-or-ignored-and-provide-clear-inline-helper-messaging-so-users-understand-internet-identity-is-used-without-cluttering-the-ui",
-      "title": "Preserve Internet Identity as the only authentication method while presenting the screenshot-style form: the \"Continue\" button must trigger the existing Internet Identity login flow (useInternetIdentity().login). Email/password fields must not attempt email/password authentication; instead, treat them as non-auth fields (e.g., optional/disabled or ignored) and provide clear inline/helper messaging so users understand Internet Identity is used (without cluttering the UI).",
+      "id": "feature-update-the-kyc-submission-ui-frontend-src-pages-kycpage-tsx-to-support-the-requested-document-types-nin-id-card-voter-s-card-passport-and-address-verification-including-appropriate-form-labels-and-validation-so-users-cannot-submit-without-required-fields-and-an-uploaded-document",
+      "title": "Update the KYC submission UI (frontend/src/pages/KycPage.tsx) to support the requested document types: NIN, ID card, voter’s card, passport, and address verification, including appropriate form labels and validation so users cannot submit without required fields and an uploaded document.",
       "reqIds": [
-        "REQ-2"
+        "REQ-5"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-screenshot-like-interactions-on-the-login-screen-password-visibility-toggle-icon-inside-the-password-field-link-styling-for-forgot-password-and-sign-up-and-appropriate-disabled-pressed-states-for-the-continue-button",
-      "title": "Implement screenshot-like interactions on the login screen: password visibility toggle icon inside the password field, link styling for \"Forgot Password?\" and \"Sign up\", and appropriate disabled/pressed states for the \"Continue\" button.",
+      "id": "feature-update-the-admin-kyc-review-ui-frontend-src-pages-admin-adminkycreviewpage-tsx-to-show-each-record-s-key-details-and-provide-a-direct-way-for-admins-to-open-the-submitted-document-uri-for-review-before-approving-rejecting",
+      "title": "Update the admin KYC review UI (frontend/src/pages/admin/AdminKycReviewPage.tsx) to show each record’s key details and provide a direct way for admins to open the submitted document URI for review before approving/rejecting.",
       "reqIds": [
-        "REQ-3"
+        "REQ-6"
       ],
       "version": 1
     }
@@ -34,13 +34,36 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Implement a login screen matching the provided screenshot (UI/layout and styling)",
+      "summary": "Add KYC verification workflow supporting NIN, ID card, voter’s card, passport, and address verification",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Implement backend KYC data model and storage to support user-submitted KYC records, including document type, document URI, ID number, uploaded-by principal, status (pending/verified/rejected/expired), and timestamps as needed for auditing.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Add backend user APIs for KYC submission and retrieval: allow a logged-in user to submit a new KYC record (default status=pending) and list their own KYC records.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Add backend admin APIs for KYC review: allow an admin to fetch a specific user’s KYC records and update a specific record’s status to verified or rejected (and optionally expired if supported).",
+      "reqIds": [
+        "REQ-3"
+      ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "Redesign login screen to match provided screenshot (email/password style UI using Internet Identity)",
+  "projectName": "Implement KYC verification workflow (NIN, ID card, voter’s card, passport, address verification)",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

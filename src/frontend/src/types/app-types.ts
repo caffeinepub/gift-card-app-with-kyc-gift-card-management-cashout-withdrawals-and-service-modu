@@ -112,6 +112,7 @@ export interface KycRecord {
   uploadedBy: Principal;
   status: KycStatus;
   externalId: ExternalId | null;
+  recordId?: string; // Optional field for admin operations
 }
 
 // Payout Method types

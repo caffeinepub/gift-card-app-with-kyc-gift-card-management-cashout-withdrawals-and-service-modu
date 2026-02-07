@@ -27,12 +27,36 @@ export const UserRole = IDL.Variant({
 export const PayoutMethodId = IDL.Nat;
 export const WithdrawalRequestId = IDL.Nat;
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
+export const KycRecordId = IDL.Nat;
+export const KycStatus = IDL.Variant({
+  'verified' : IDL.Null,
+  'expired' : IDL.Null,
+  'pending' : IDL.Null,
+  'unverified' : IDL.Null,
+  'rejected' : IDL.Null,
+});
+export const DocumentType = IDL.Variant({
+  'votersID' : IDL.Null,
+  'passport' : IDL.Null,
+  'nationalID' : IDL.Null,
+  'driversLicense' : IDL.Null,
+});
+export const Time = IDL.Int;
+export const KycRecord = IDL.Record({
+  'id' : KycRecordId,
+  'status' : KycStatus,
+  'documentType' : DocumentType,
+  'documentURI' : IDL.Text,
+  'user' : IDL.Principal,
+  'submittedAt' : Time,
+  'idNumber' : IDL.Text,
+  'verifiedAt' : IDL.Opt(Time),
+});
 export const WithdrawalStatus = IDL.Variant({
   'pending' : IDL.Null,
   'paid' : IDL.Null,
   'rejected' : IDL.Null,
 });
-export const Time = IDL.Int;
 export const WithdrawalRequest = IDL.Record({
   'id' : WithdrawalRequestId,
   'status' : WithdrawalStatus,
@@ -93,6 +117,12 @@ export const idlService = IDL.Service({
     ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getKycStatus' : IDL.Func([], [IDL.Vec(KycRecord)], ['query']),
+  'getUserKycRecords' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Vec(KycRecord)],
+      ['query'],
+    ),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -103,6 +133,12 @@ export const idlService = IDL.Service({
   'listUserPayoutMethods' : IDL.Func([], [IDL.Vec(PayoutMethod)], ['query']),
   'listUserWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'submitKycRecord' : IDL.Func(
+      [DocumentType, IDL.Text, IDL.Text],
+      [KycRecordId],
+      [],
+    ),
+  'updateKycStatus' : IDL.Func([KycRecordId, KycStatus], [], []),
   'updateWithdrawalStatus' : IDL.Func(
       [WithdrawalRequestId, WithdrawalStatus],
       [],
@@ -132,12 +168,36 @@ export const idlFactory = ({ IDL }) => {
   const PayoutMethodId = IDL.Nat;
   const WithdrawalRequestId = IDL.Nat;
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
+  const KycRecordId = IDL.Nat;
+  const KycStatus = IDL.Variant({
+    'verified' : IDL.Null,
+    'expired' : IDL.Null,
+    'pending' : IDL.Null,
+    'unverified' : IDL.Null,
+    'rejected' : IDL.Null,
+  });
+  const DocumentType = IDL.Variant({
+    'votersID' : IDL.Null,
+    'passport' : IDL.Null,
+    'nationalID' : IDL.Null,
+    'driversLicense' : IDL.Null,
+  });
+  const Time = IDL.Int;
+  const KycRecord = IDL.Record({
+    'id' : KycRecordId,
+    'status' : KycStatus,
+    'documentType' : DocumentType,
+    'documentURI' : IDL.Text,
+    'user' : IDL.Principal,
+    'submittedAt' : Time,
+    'idNumber' : IDL.Text,
+    'verifiedAt' : IDL.Opt(Time),
+  });
   const WithdrawalStatus = IDL.Variant({
     'pending' : IDL.Null,
     'paid' : IDL.Null,
     'rejected' : IDL.Null,
   });
-  const Time = IDL.Int;
   const WithdrawalRequest = IDL.Record({
     'id' : WithdrawalRequestId,
     'status' : WithdrawalStatus,
@@ -198,6 +258,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getKycStatus' : IDL.Func([], [IDL.Vec(KycRecord)], ['query']),
+    'getUserKycRecords' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(KycRecord)],
+        ['query'],
+      ),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -212,6 +278,12 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'submitKycRecord' : IDL.Func(
+        [DocumentType, IDL.Text, IDL.Text],
+        [KycRecordId],
+        [],
+      ),
+    'updateKycStatus' : IDL.Func([KycRecordId, KycStatus], [], []),
     'updateWithdrawalStatus' : IDL.Func(
         [WithdrawalRequestId, WithdrawalStatus],
         [],

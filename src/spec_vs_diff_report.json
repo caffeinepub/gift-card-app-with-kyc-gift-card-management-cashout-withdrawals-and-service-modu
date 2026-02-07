@@ -1,62 +1,80 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T21:34:51.501Z",
-  "summary": "LoginCard.tsx was redesigned toward a screenshot-style login UI with a dark background, white rounded sheet, title, sign-up row, disabled email/password inputs, an Internet Identity helper banner, password visibility toggle, and link-styled buttons. However, the diff is truncated around the Continue button and does not fully evidence required loading/disabled CTA behavior, exact wording, or the non-breaking link/modal behavior. Unrequested changes appear in project_state.json and frontend-file-summaries.txt.",
+  "generatedAt": "2026-02-07T22:03:04.043Z",
+  "summary": "Core KYC backend APIs and basic frontend wiring/UI were added, but the implementation does not fully match the requested KYC workflow: address verification is explicitly unsupported, the backend data model/statuses and document types differ from the spec, and some admin/update semantics and query invalidation behavior cannot be confirmed from the truncated diff. Additionally, multiple unrelated frontend features appear to have been added/modified beyond the KYC scope.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "All user-facing text on this screen is in English and matches the screenshot wording (including capitalization and punctuation).",
-      "reason": "The sign-up row uses \"Don't have an account?\" (straight apostrophe) instead of the specified \"Don’t have an account?\" (curly apostrophe). Also, the input placeholders differ from the specified screenshot-style \"email + password\" fields (diff shows \"Enter your email address\" and \"Enter password\"), which may not match the required wording.",
+      "requirement": "Backend KYC record type must include at minimum: documentType, documentUri, idNumber, uploadedBy, and status (pending/verified/rejected/expired).",
+      "reason": "Backend record uses different field names/semantics (e.g., `user` instead of `uploadedBy`, `documentURI` instead of `documentUri`) and introduces extra status `#unverified` not in the required set; this does not clearly satisfy the required shape.",
       "evidence": [
-        "frontend/src/components/auth/LoginCard.tsx"
-      ]
-    },
-    {
-      "id": "REQ-1",
-      "requirement": "Wide rounded \"Continue\" primary CTA at the bottom of the sheet.",
-      "reason": "The diff is truncated at the Continue button's onClick handler, so width, placement at the bottom, and rounded styling cannot be verified from the provided summary.",
-      "evidence": [
-        "frontend/src/components/auth/LoginCard.tsx"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "requirement": "Clicking \"Continue\" starts the Internet Identity login flow and shows a loading state (spinner + disabled CTA) while loginStatus is \"logging-in\".",
-      "reason": "Although loginStatus/isLoggingIn and handleContinue() calling login() exist, the diff is truncated before the Button props/rendering, so the spinner/disabled CTA behavior while logging in cannot be confirmed.",
-      "evidence": [
-        "frontend/src/components/auth/LoginCard.tsx"
+        "backend/main.mo",
+        "backend/migration.mo"
       ]
     },
     {
       "id": "REQ-3",
-      "requirement": "\"Forgot Password?\" and \"Sign up\" are rendered as links/buttons with hover/focus styles and do not break navigation (they may open an informational modal/toast if no dedicated routes exist).",
-      "reason": "The buttons have hover styling and click handlers that set showInfoDialog=true, but the actual informational dialog/toast rendering is not shown in the truncated diff, so the non-breaking behavior cannot be verified.",
+      "requirement": "Admin-only method can update an existing KYC record’s status (e.g., located by idNumber within that user’s records).",
+      "reason": "The backend update API shown updates by `recordId` only; the acceptance criteria explicitly mentions locating by `idNumber` within that user’s records as an example approach, but no such lookup is evidenced in the diff snippet.",
       "evidence": [
-        "frontend/src/components/auth/LoginCard.tsx"
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "React Query hooks should invalidate appropriately after submission and admin status updates.",
+      "reason": "The diff is truncated and does not show the actual KYC hook implementations/mutations and their `queryClient.invalidateQueries` behavior; cannot confirm required invalidation is implemented.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "KYC submission UI must support document types: NIN, ID card, voter’s card, passport, and address verification.",
+      "reason": "Address verification is explicitly not supported: the frontend mapping throws an error for `address_verification`, and the UI shows an error message stating it is not supported. Backend document types also do not include an address verification variant.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/KycPage.tsx",
+        "backend/main.mo",
+        "backend/migration.mo"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Modified project state tracking file (project_state.json) marking feature requests as pending.",
-      "reason": "The BuildRequest only asked for UI/auth behavior changes in the frontend; it did not request updating any project tracking/metadata file.",
+      "description": "Introduced KYC status variant `unverified` which is not part of the requested status set (pending/verified/rejected/expired).",
+      "reason": "BuildRequest does not ask for an `unverified` status; adding it changes the state model beyond spec.",
       "evidence": [
-        "project_state.json"
+        "backend/main.mo",
+        "backend/migration.mo"
       ]
     },
     {
-      "description": "Modified frontend-file-summaries.txt containing summaries of many unrelated frontend modules.",
-      "reason": "The BuildRequest is specific to redesigning the unauthenticated login screen; updating a repository-wide file summary was not requested.",
+      "description": "Added/modified a large set of non-KYC frontend features (betting top-up page, crypto wallet flows, gift card brand catalog/components, withdrawals/admin withdrawals changes, global theme changes, etc.).",
+      "reason": "BuildRequest scope is KYC workflow only; these unrelated features are not requested.",
       "evidence": [
         "frontend-file-summaries.txt"
       ]
+    },
+    {
+      "description": "Added backend migration module and applied migration logic on upgrade.",
+      "reason": "BuildRequest did not request data migration/upgrade logic; this is additional infrastructure beyond the specified KYC workflow requirements.",
+      "evidence": [
+        "backend/migration.mo",
+        "backend/main.mo"
+      ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.66,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/auth/LoginCard.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/KycPage.tsx",
+    "frontend/src/pages/admin/AdminKycReviewPage.tsx",
+    "frontend/src/types/app-types.ts",
     "project_state.json"
   ]
 }

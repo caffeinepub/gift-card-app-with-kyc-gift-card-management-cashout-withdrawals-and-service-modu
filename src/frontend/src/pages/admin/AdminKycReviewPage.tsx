@@ -5,7 +5,8 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Alert, AlertDescription } from '../../components/ui/alert';
-import { Shield, Search, Loader2, Info } from 'lucide-react';
+import { Badge } from '../../components/ui/badge';
+import { Shield, Search, Loader2, ExternalLink, FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
 import AdminRouteGuard from '../../components/admin/AdminRouteGuard';
 import { toast } from 'sonner';
 import type { KycStatus } from '../../types/app-types';
@@ -26,22 +27,48 @@ function AdminKycReviewContent() {
     setSearchedPrincipal(userPrincipal.trim());
   };
 
-  const handleUpdateStatus = async (idNumber: string, statusKind: 'verified' | 'rejected') => {
+  const handleUpdateStatus = async (recordId: string, statusKind: 'verified' | 'rejected') => {
     try {
       const newStatus: KycStatus = { __kind__: statusKind };
       await updateKycStatus.mutateAsync({
         userPrincipal: searchedPrincipal,
-        idNumber,
+        recordId,
         newStatus,
       });
       toast.success(`KYC ${statusKind} successfully`);
     } catch (error: any) {
-      if (error.message === 'Backend method not implemented') {
-        toast.error('KYC management is not yet implemented in the backend');
-      } else {
-        toast.error(`Failed to update KYC status`);
-      }
+      toast.error(`Failed to update KYC status: ${error.message || 'Unknown error'}`);
       console.error(error);
+    }
+  };
+
+  const handleViewDocument = (documentUri: string) => {
+    window.open(documentUri, '_blank', 'noopener,noreferrer');
+  };
+
+  const getStatusIcon = (status: KycStatus) => {
+    switch (status.__kind__) {
+      case 'verified':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-amber-500" />;
+      case 'rejected':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'expired':
+        return <XCircle className="h-4 w-4 text-gray-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusVariant = (status: KycStatus): 'default' | 'secondary' | 'destructive' => {
+    switch (status.__kind__) {
+      case 'verified':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      default:
+        return 'destructive';
     }
   };
 
@@ -121,41 +148,84 @@ function AdminKycReviewContent() {
 
           {!isLoading && !error && kycRecords && kycRecords.length > 0 && (
             <div className="space-y-4">
-              {kycRecords.map((record) => (
-                <Card key={record.idNumber}>
+              {kycRecords.map((record: any) => (
+                <Card key={record.recordId || record.idNumber}>
                   <CardHeader>
-                    <CardTitle className="text-lg">KYC Record</CardTitle>
-                    <CardDescription>
-                      Document Type: {record.documentType}
-                    </CardDescription>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          {record.documentType}
+                        </CardTitle>
+                        <CardDescription className="mt-1">
+                          ID: {record.idNumber}
+                        </CardDescription>
+                      </div>
+                      <Badge variant={getStatusVariant(record.status)} className="flex items-center gap-1">
+                        {getStatusIcon(record.status)}
+                        {record.status.__kind__.toUpperCase()}
+                      </Badge>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <Label>ID Number</Label>
-                      <p className="text-sm font-mono mt-1">{record.idNumber}</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Document Type</Label>
+                        <p className="text-sm font-medium mt-1">{record.documentType}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">ID Number</Label>
+                        <p className="text-sm font-mono mt-1">{record.idNumber}</p>
+                      </div>
                     </div>
+
                     <div>
-                      <Label>Status</Label>
-                      <p className="text-sm mt-1 capitalize">{record.status.__kind__}</p>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => handleViewDocument(record.documentUri)}
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        View Document
+                      </Button>
                     </div>
+
                     {record.status.__kind__ === 'pending' && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 pt-2">
                         <Button
-                          onClick={() => handleUpdateStatus(record.idNumber, 'verified')}
+                          onClick={() => handleUpdateStatus(record.recordId, 'verified')}
                           disabled={updateKycStatus.isPending}
                           className="flex-1"
                         >
+                          {updateKycStatus.isPending ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                          )}
                           Approve
                         </Button>
                         <Button
-                          onClick={() => handleUpdateStatus(record.idNumber, 'rejected')}
+                          onClick={() => handleUpdateStatus(record.recordId, 'rejected')}
                           disabled={updateKycStatus.isPending}
                           variant="destructive"
                           className="flex-1"
                         >
+                          {updateKycStatus.isPending ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <XCircle className="mr-2 h-4 w-4" />
+                          )}
                           Reject
                         </Button>
                       </div>
+                    )}
+
+                    {record.status.__kind__ !== 'pending' && (
+                      <Alert className="bg-muted/50">
+                        <AlertDescription className="text-sm">
+                          This KYC record has already been processed and cannot be modified.
+                        </AlertDescription>
+                      </Alert>
                     )}
                   </CardContent>
                 </Card>
@@ -164,14 +234,6 @@ function AdminKycReviewContent() {
           )}
         </>
       )}
-
-      <Alert className="bg-muted/50 border-muted">
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Note:</strong> KYC management functionality is currently not implemented in the backend. 
-          This interface is ready for when the backend KYC methods are added.
-        </AlertDescription>
-      </Alert>
     </div>
   );
 }

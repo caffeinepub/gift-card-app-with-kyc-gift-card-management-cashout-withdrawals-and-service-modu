@@ -69,10 +69,28 @@ export default function KycPage() {
       setIdNumber('');
       setDocumentFile(null);
       setUploadProgress(0);
-    } catch (error) {
-      toast.error('Failed to submit KYC');
+    } catch (error: any) {
+      if (error.message?.includes('Address verification is not yet supported')) {
+        toast.error('Address verification is not yet supported. Please select another document type.');
+      } else {
+        toast.error('Failed to submit KYC');
+      }
       console.error(error);
     }
+  };
+
+  const getIdNumberLabel = () => {
+    if (documentType === 'address_verification') {
+      return 'Reference Number';
+    }
+    return 'ID Number';
+  };
+
+  const getIdNumberPlaceholder = () => {
+    if (documentType === 'address_verification') {
+      return 'Enter reference number';
+    }
+    return 'Enter ID number';
   };
 
   if (isLoading) {
@@ -116,7 +134,10 @@ export default function KycPage() {
                   {kycStatus.__kind__.toUpperCase()}
                 </Badge>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Document: {latestKyc.documentType}
+                  {kycStatus.__kind__ === 'verified' && 'Your identity has been verified'}
+                  {kycStatus.__kind__ === 'pending' && 'Your submission is under review'}
+                  {kycStatus.__kind__ === 'rejected' && 'Your submission was rejected. Please submit again.'}
+                  {kycStatus.__kind__ === 'expired' && 'Your verification has expired. Please submit again.'}
                 </p>
               </div>
             </div>
@@ -124,13 +145,13 @@ export default function KycPage() {
         </Card>
       )}
 
-      {/* Submission Form */}
+      {/* Submit Form */}
       {canSubmit && (
         <Card>
           <CardHeader>
             <CardTitle>Submit KYC Documents</CardTitle>
             <CardDescription>
-              Upload a valid government-issued ID for verification
+              Upload your identity documents for verification
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -142,54 +163,45 @@ export default function KycPage() {
                     <SelectValue placeholder="Select document type" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="nin">NIN</SelectItem>
+                    <SelectItem value="id_card">ID card</SelectItem>
+                    <SelectItem value="voters_card">Voter's card</SelectItem>
                     <SelectItem value="passport">Passport</SelectItem>
-                    <SelectItem value="drivers_license">Driver's License</SelectItem>
-                    <SelectItem value="national_id">National ID</SelectItem>
+                    <SelectItem value="address_verification">Address verification</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="idNumber">ID Number</Label>
+                <Label htmlFor="idNumber">{getIdNumberLabel()}</Label>
                 <Input
                   id="idNumber"
                   value={idNumber}
                   onChange={(e) => setIdNumber(e.target.value)}
-                  placeholder="Enter your ID number"
-                  disabled={submitKyc.isPending}
+                  placeholder={getIdNumberPlaceholder()}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="document">Upload Document</Label>
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-                  <input
+                <div className="flex items-center gap-2">
+                  <Input
                     id="document"
                     type="file"
                     accept="image/*,.pdf"
                     onChange={handleFileChange}
-                    className="hidden"
-                    disabled={submitKyc.isPending}
+                    className="flex-1"
                   />
-                  <label htmlFor="document" className="cursor-pointer">
-                    {documentFile ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <FileText className="h-5 w-5 text-primary" />
-                        <span className="text-sm font-medium">{documentFile.name}</span>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">
-                          Click to upload or drag and drop
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          PNG, JPG, PDF up to 5MB
-                        </p>
-                      </div>
-                    )}
-                  </label>
+                  {documentFile && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      {documentFile.name}
+                    </Badge>
+                  )}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Accepted formats: Images and PDF (max 5MB)
+                </p>
               </div>
 
               {uploadProgress > 0 && uploadProgress < 100 && (
@@ -198,9 +210,9 @@ export default function KycPage() {
                     <span>Uploading...</span>
                     <span>{uploadProgress}%</span>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary transition-all duration-300"
+                  <div className="w-full bg-secondary rounded-full h-2">
+                    <div
+                      className="bg-primary h-2 rounded-full transition-all"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
@@ -218,7 +230,10 @@ export default function KycPage() {
                     Submitting...
                   </>
                 ) : (
-                  'Submit for Verification'
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Submit KYC
+                  </>
                 )}
               </Button>
             </form>
@@ -226,20 +241,20 @@ export default function KycPage() {
         </Card>
       )}
 
-      {!canSubmit && kycStatus?.__kind__ === 'pending' && (
-        <Alert>
-          <Clock className="h-4 w-4" />
-          <AlertDescription>
-            Your KYC documents are currently under review. This typically takes 1-2 business days.
+      {!canSubmit && kycStatus?.__kind__ === 'verified' && (
+        <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-800 dark:text-green-200">
+            Your identity has been verified. You now have full access to all platform features.
           </AlertDescription>
         </Alert>
       )}
 
-      {!canSubmit && kycStatus?.__kind__ === 'verified' && (
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>
-            Your identity has been verified! You now have full access to all platform features.
+      {!canSubmit && kycStatus?.__kind__ === 'pending' && (
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+          <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            Your KYC submission is currently under review. We'll notify you once it's processed.
           </AlertDescription>
         </Alert>
       )}

@@ -1,56 +1,86 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T21:34:51.503Z",
+  "generatedAt": "2026-02-07T22:03:04.047Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
+    "total": 6,
     "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update the unauthenticated login UI to visually match the provided screenshot: full-screen dark header/background, large white rounded-corner sheet, \"Log in\" title, \"Don’t have an account? Sign up\" row with the \"Sign up\" styled as a link, two large rounded input fields (email + password), a \"Forgot Password?\" link, and a wide rounded \"Continue\" primary CTA at the bottom.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/auth/LoginCard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/auth/LoginCard.tsx"
-        ]
+        "summary": "Implement backend KYC data model and storage to support user-submitted KYC records, including document type, document URI, ID number, uploaded-by principal, status (pending/verified/rejected/expired), and timestamps as needed for auditing.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Preserve Internet Identity as the only authentication method while presenting the screenshot-style form: the \"Continue\" button must trigger the existing Internet Identity login flow (useInternetIdentity().login). Email/password fields must not attempt email/password authentication; instead, treat them as non-auth fields (e.g., optional/disabled or ignored) and provide clear inline/helper messaging so users understand Internet Identity is used (without cluttering the UI).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/auth/LoginCard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/auth/LoginCard.tsx"
-        ]
+        "summary": "Add backend user APIs for KYC submission and retrieval: allow a logged-in user to submit a new KYC record (default status=pending) and list their own KYC records.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Implement screenshot-like interactions on the login screen: password visibility toggle icon inside the password field, link styling for \"Forgot Password?\" and \"Sign up\", and appropriate disabled/pressed states for the \"Continue\" button.",
+        "summary": "Add backend admin APIs for KYC review: allow an admin to fetch a specific user’s KYC records and update a specific record’s status to verified or rejected (and optionally expired if supported).",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Wire the frontend React Query hooks in frontend/src/hooks/useQueries.ts to the new backend KYC APIs (replace the current 'Backend method not implemented' stubs) and ensure queries invalidate appropriately after submission and admin status updates.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/auth/LoginCard.tsx"
+          "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/auth/LoginCard.tsx"
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Update the KYC submission UI (frontend/src/pages/KycPage.tsx) to support the requested document types: NIN, ID card, voter’s card, passport, and address verification, including appropriate form labels and validation so users cannot submit without required fields and an uploaded document.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/KycPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/KycPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Update the admin KYC review UI (frontend/src/pages/admin/AdminKycReviewPage.tsx) to show each record’s key details and provide a direct way for admins to open the submitted document URI for review before approving/rejecting.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/admin/AdminKycReviewPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/admin/AdminKycReviewPage.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/auth/LoginCard.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/KycPage.tsx",
+    "frontend/src/pages/admin/AdminKycReviewPage.tsx",
+    "frontend/src/types/app-types.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

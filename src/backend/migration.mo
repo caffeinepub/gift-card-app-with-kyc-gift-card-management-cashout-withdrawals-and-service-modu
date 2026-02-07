@@ -4,48 +4,42 @@ import Nat "mo:core/Nat";
 import Time "mo:core/Time";
 
 module {
-  type PayoutMethodId = Nat;
-  type WithdrawalRequestId = Nat;
-  type WithdrawalStatus = {
+  type KycRecordId = Nat;
+
+  type DocumentType = {
+    #driversLicense;
+    #passport;
+    #votersID;
+    #nationalID;
+  };
+
+  type KycStatus = {
     #pending;
-    #paid;
+    #unverified;
+    #verified;
+    #expired;
     #rejected;
   };
 
-  type PayoutMethod = {
-    id : PayoutMethodId;
-    owner : Principal.Principal;
-    bankName : Text;
-    accountNumber : Text;
-    accountName : Text;
-    created : Time.Time;
-  };
-
-  type WithdrawalRequest = {
-    id : WithdrawalRequestId;
-    owner : Principal.Principal;
-    payoutMethodId : PayoutMethodId;
-    amount : Nat;
-    status : WithdrawalStatus;
-    created : Time.Time;
-    processedBy : ?Principal.Principal;
-    processedAt : ?Time.Time;
+  type KycRecord = {
+    id : KycRecordId;
+    user : Principal;
+    documentURI : Text;
+    documentType : DocumentType;
+    idNumber : Text;
+    status : KycStatus;
+    submittedAt : Time.Time;
+    verifiedAt : ?Time.Time;
   };
 
   type OldActor = {};
+
   type NewActor = {
-    _nextPayoutMethodId : PayoutMethodId;
-    _nextWithdrawalRequestId : WithdrawalRequestId;
-    payoutMethods : Map.Map<PayoutMethodId, PayoutMethod>;
-    withdrawalRequests : Map.Map<WithdrawalRequestId, WithdrawalRequest>;
+    kycRecords : Map.Map<Nat, KycRecord>;
+    _nextKycRecordId : Nat;
   };
 
-  public func run(_ : OldActor) : NewActor {
-    {
-      _nextPayoutMethodId = 0;
-      _nextWithdrawalRequestId = 0;
-      payoutMethods = Map.empty<PayoutMethodId, PayoutMethod>();
-      withdrawalRequests = Map.empty<WithdrawalRequestId, WithdrawalRequest>();
-    };
+  public func run(old : OldActor) : NewActor {
+    { kycRecords = Map.empty<Nat, KycRecord>(); _nextKycRecordId = 0 };
   };
 };
