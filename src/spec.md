@@ -1,11 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Expand the selectable Nigerian bank list for withdrawal payout method creation to include major digital banks/fintechs.
+**Goal:** Add backend support for managing per-brand gift card rates with active/inactive status.
 
 **Planned changes:**
-- Update `frontend/src/config/nigerianBanks.ts` to add user-facing bank entries for: Kuda Bank, OPay, Moniepoint, and PalmPay.
-- Ensure the updated bank list remains the single source of truth consumed by `NigerianBankSelect`, so the new options appear via search (e.g., “kuda”, “opay”, “monie”, “palm”).
-- Verify payout method creation works with these new selections in both the Withdrawals flow and the Send-to-Bank sheet without UI/validation issues.
+- Add a `gift_card_rates` data model in `backend/main.mo` with fields: `id`, `brand_name`, `rate_percentage`, `status` (active/inactive), stored in backend state with an auto-incrementing id counter.
+- Implement admin-only backend methods to create, update, and deactivate/reactivate gift card rate entries.
+- Implement query methods to list gift card rate entries (explicitly defined as admin-only or public) and to fetch the active `rate_percentage` for a given `brand_name` (returning null when none is active).
 
-**User-visible outcome:** Users can search for and select Kuda Bank, OPay, Moniepoint, and PalmPay (and other Nigerian digital bank options present in the updated list) when creating a payout method for withdrawals.
+**User-visible outcome:** Admins can manage brand-specific gift card rates (including toggling active/inactive), and the system can retrieve the active rate for a given brand when needed.

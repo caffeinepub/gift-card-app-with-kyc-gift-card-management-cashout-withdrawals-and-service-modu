@@ -4,13 +4,13 @@ import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import Time "mo:core/Time";
 import Nat "mo:core/Nat";
-
+import Migration "migration";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
 import AccessControl "authorization/access-control";
 
-
+(with migration = Migration.run)
 actor {
   public type UserProfile = {
     name : Text;
@@ -18,8 +18,8 @@ actor {
 
   public type PayoutMethodId = Nat;
   public type WithdrawalRequestId = Nat;
-
-  type KycRecordId = Nat;
+  public type KycRecordId = Nat;
+  public type GiftCardRateId = Nat;
 
   type DocumentType = {
     #driversLicense;
@@ -74,14 +74,30 @@ actor {
     processedAt : ?Time.Time;
   };
 
+  public type GiftCardRateStatus = {
+    #active;
+    #inactive;
+  };
+
+  public type GiftCardRate = {
+    id : GiftCardRateId;
+    brandName : Text;
+    ratePercentage : Nat;
+    status : GiftCardRateStatus;
+    createdAt : Time.Time;
+    updatedAt : Time.Time;
+  };
+
   var _nextKycRecordId : KycRecordId = 0;
   var _nextPayoutMethodId : PayoutMethodId = 0;
   var _nextWithdrawalRequestId : WithdrawalRequestId = 0;
+  var _nextGiftCardRateId : GiftCardRateId = 0;
 
   let userProfiles = Map.empty<Principal, UserProfile>();
   let payoutMethods = Map.empty<PayoutMethodId, PayoutMethod>();
   let withdrawalRequests = Map.empty<WithdrawalRequestId, WithdrawalRequest>();
   let kycRecords = Map.empty<KycRecordId, KycRecord>();
+  let giftCardRates = Map.empty<GiftCardRateId, GiftCardRate>();
 
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -294,5 +310,96 @@ actor {
     };
 
     withdrawalRequests.add(requestId, updatedRequest);
+  };
+
+  // GIFT CARD RATES CRUD
+  public shared ({ caller }) func createGiftCardRate(brandName : Text, ratePercentage : Nat) : async GiftCardRateId {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can create gift card rates");
+    };
+
+    let rateId = _nextGiftCardRateId;
+    _nextGiftCardRateId += 1;
+
+    let rate : GiftCardRate = {
+      id = rateId;
+      brandName;
+      ratePercentage;
+      status = #active;
+      createdAt = Time.now();
+      updatedAt = Time.now();
+    };
+
+    giftCardRates.add(rateId, rate);
+    rateId;
+  };
+
+  public shared ({ caller }) func updateGiftCardRate(rateId : GiftCardRateId, ratePercentage : Nat) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can update gift card rates");
+    };
+
+    let updatedRate = switch (giftCardRates.get(rateId)) {
+      case (?oldRate) {
+        { oldRate with
+          ratePercentage;
+          updatedAt = Time.now();
+        };
+      };
+      case (null) { Runtime.trap("Invalid rate: Not found") };
+    };
+
+    giftCardRates.add(rateId, updatedRate);
+  };
+
+  public shared ({ caller }) func setGiftCardRateStatus(rateId : GiftCardRateId, status : { #active; #inactive }) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can update rate status");
+    };
+
+    let updatedRate = switch (giftCardRates.get(rateId)) {
+      case (?oldRate) {
+        { oldRate with
+          status;
+          updatedAt = Time.now();
+        };
+      };
+      case (null) { Runtime.trap("Invalid rate: Not found") };
+    };
+
+    giftCardRates.add(rateId, updatedRate);
+  };
+
+  public query ({ caller }) func getAllRates() : async [GiftCardRate] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view gift card rates");
+    };
+    giftCardRates.values().toArray();
+  };
+
+  public query ({ caller }) func getActiveRateForBrand(brandName : Text) : async ?Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view gift card rates");
+    };
+
+    let activeRates = giftCardRates.values().filter(
+      func(rate) { rate.brandName == brandName and rate.status == #active }
+    ).toArray();
+
+    if (activeRates.size() == 0) {
+      null;
+    } else {
+      ?activeRates[activeRates.size() - 1].ratePercentage;
+    };
+  };
+
+  public query ({ caller }) func listActiveRates() : async [GiftCardRate] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view gift card rates");
+    };
+
+    giftCardRates.values().filter(
+      func(rate) { rate.status == #active }
+    ).toArray();
   };
 };

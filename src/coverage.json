@@ -1,37 +1,45 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T23:36:40.011Z",
+  "generatedAt": "2026-02-08T00:21:45.868Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 2,
+    "implemented": 0,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Expand the Nigerian bank options used for withdrawal payout methods to include Kuda Bank, OPay, Moniepoint, and PalmPay, and broaden the list to cover Nigerian online/digital banking options so users can select them during payout method creation.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/config/nigerianBanks.ts",
-          "frontend/src/config/__tests__/nigerianBanks.test.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/config/nigerianBanks.ts",
-          "frontend/src/config/__tests__/nigerianBanks.test.ts"
-        ]
+        "summary": "Implement backend storage for a gift card rates table named `gift_card_rates` with fields: `id`, `brand_name`, `rate_percentage`, and `status` (active/inactive).",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Expose backend methods for admins to create, update, and deactivate/reactivate entries in `gift_card_rates`, and expose query methods to list rates and fetch the active rate for a given `brand_name`.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/config/__tests__/nigerianBanks.test.ts",
-    "frontend/src/config/nigerianBanks.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/admin/AdminGiftCardRatesPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

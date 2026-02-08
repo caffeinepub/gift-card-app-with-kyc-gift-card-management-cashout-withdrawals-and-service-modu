@@ -19,6 +19,7 @@ export const NIGERIAN_BANKS = [
   'Kuda Bank',
   'Moniepoint',
   'OPay',
+  'Paga',
   'PalmPay',
   'Parallex Bank',
   'Polaris Bank',
@@ -31,6 +32,7 @@ export const NIGERIAN_BANKS = [
   'Union Bank of Nigeria',
   'United Bank for Africa (UBA)',
   'Unity Bank',
+  'VFD Microfinance Bank',
   'Wema Bank',
   'Zenith Bank',
 ] as const;
@@ -55,6 +57,7 @@ function normalizeForSearch(text: string): string {
  * - filterBanksByQuery('opay') returns ['OPay']
  * - filterBanksByQuery('monie') returns ['Moniepoint']
  * - filterBanksByQuery('palm') returns ['PalmPay']
+ * - filterBanksByQuery('paga') returns ['Paga']
  */
 export function filterBanksByQuery(query: string): string[] {
   const normalizedQuery = normalizeForSearch(query);

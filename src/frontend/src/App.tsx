@@ -17,6 +17,7 @@ import HottestCardsPage from './pages/giftcards/HottestCardsPage';
 import WithdrawalsPage from './pages/withdrawals/WithdrawalsPage';
 import AdminKycReviewPage from './pages/admin/AdminKycReviewPage';
 import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage';
+import AdminGiftCardRatesPage from './pages/admin/AdminGiftCardRatesPage';
 import AirtimePage from './pages/services/AirtimePage';
 import BillsPage from './pages/services/BillsPage';
 import DataPage from './pages/services/DataPage';
@@ -215,6 +216,12 @@ const adminWithdrawalsRoute = createRoute({
   component: AdminWithdrawalsPage,
 });
 
+const adminGiftCardRatesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/gift-card-rates',
+  component: AdminGiftCardRatesPage,
+});
+
 const airtimeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/services/airtime',
@@ -276,6 +283,7 @@ const routeTree = rootRoute.addChildren([
   historyRoute,
   adminKycRoute,
   adminWithdrawalsRoute,
+  adminGiftCardRatesRoute,
   airtimeRoute,
   billsRoute,
   dataRoute,

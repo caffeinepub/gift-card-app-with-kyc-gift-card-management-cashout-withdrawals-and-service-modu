@@ -21,8 +21,10 @@ import type {
   DocumentType as BackendDocumentType,
   KycStatus as BackendKycStatus,
   ExternalBlob,
+  GiftCardRate as BackendGiftCardRate,
+  GiftCardRateStatus as BackendGiftCardRateStatus,
 } from '../backend';
-import { DocumentType, KycStatus as BackendKycStatusEnum } from '../backend';
+import { DocumentType, KycStatus as BackendKycStatusEnum, GiftCardRateStatus } from '../backend';
 import { Principal } from '@dfinity/principal';
 
 // Note: ExternalBlob is still imported from backend as it's part of blob-storage
@@ -401,6 +403,92 @@ export function useAdminUpdateKycStatus() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'kycRecords', variables.userPrincipal] });
+    },
+  });
+}
+
+// Gift Card Rates
+export function useGetAllGiftCardRates() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<BackendGiftCardRate[]>({
+    queryKey: ['giftCardRates'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllRates();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useGetActiveGiftCardRates() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<BackendGiftCardRate[]>({
+    queryKey: ['giftCardRates', 'active'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.listActiveRates();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useGetActiveRateForBrand(brandName: string) {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<bigint | null>({
+    queryKey: ['giftCardRates', 'brand', brandName],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getActiveRateForBrand(brandName);
+    },
+    enabled: !!actor && !actorFetching && !!brandName,
+  });
+}
+
+export function useCreateGiftCardRate() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { brandName: string; ratePercentage: bigint }) => {
+      if (!actor) throw new Error('Actor not available');
+      const rateId = await actor.createGiftCardRate(data.brandName, data.ratePercentage);
+      return rateId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['giftCardRates'] });
+    },
+  });
+}
+
+export function useUpdateGiftCardRate() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { rateId: string; ratePercentage: bigint }) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.updateGiftCardRate(BigInt(data.rateId), data.ratePercentage);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['giftCardRates'] });
+    },
+  });
+}
+
+export function useSetGiftCardRateStatus() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { rateId: string; status: BackendGiftCardRateStatus }) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.setGiftCardRateStatus(BigInt(data.rateId), data.status);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['giftCardRates'] });
     },
   });
 }

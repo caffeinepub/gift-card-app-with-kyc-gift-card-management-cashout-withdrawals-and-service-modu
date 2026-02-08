@@ -15,6 +15,17 @@ export type DocumentType = { 'votersID' : null } |
   { 'nationalID' : null } |
   { 'driversLicense' : null };
 export type ExternalBlob = Uint8Array;
+export interface GiftCardRate {
+  'id' : GiftCardRateId,
+  'status' : GiftCardRateStatus,
+  'createdAt' : Time,
+  'updatedAt' : Time,
+  'ratePercentage' : bigint,
+  'brandName' : string,
+}
+export type GiftCardRateId = bigint;
+export type GiftCardRateStatus = { 'active' : null } |
+  { 'inactive' : null };
 export interface KycRecord {
   'id' : KycRecordId,
   'status' : KycStatus,
@@ -89,25 +100,34 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'createGiftCardRate' : ActorMethod<[string, bigint], GiftCardRateId>,
   'createPayoutMethod' : ActorMethod<[string, string, string], PayoutMethodId>,
   'createWithdrawalRequest' : ActorMethod<
     [PayoutMethodId, bigint],
     WithdrawalRequestId
   >,
+  'getActiveRateForBrand' : ActorMethod<[string], [] | [bigint]>,
+  'getAllRates' : ActorMethod<[], Array<GiftCardRate>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getKycStatus' : ActorMethod<[], Array<KycRecord>>,
   'getUserKycRecords' : ActorMethod<[Principal], Array<KycRecord>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'listActiveRates' : ActorMethod<[], Array<GiftCardRate>>,
   'listPendingWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
   'listUserPayoutMethods' : ActorMethod<[], Array<PayoutMethod>>,
   'listUserWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setGiftCardRateStatus' : ActorMethod<
+    [GiftCardRateId, { 'active' : null } | { 'inactive' : null }],
+    undefined
+  >,
   'submitKycRecord' : ActorMethod<
     [DocumentType, string, string, [] | [ExternalBlob]],
     KycRecordId
   >,
+  'updateGiftCardRate' : ActorMethod<[GiftCardRateId, bigint], undefined>,
   'updateKycStatus' : ActorMethod<[KycRecordId, KycStatus], undefined>,
   'updateWithdrawalStatus' : ActorMethod<
     [WithdrawalRequestId, WithdrawalStatus],

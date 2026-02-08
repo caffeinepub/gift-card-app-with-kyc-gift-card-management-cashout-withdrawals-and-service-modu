@@ -1,29 +1,38 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
+  "summary": "Set up backend support for gift card rate lookup by creating a `gift_card_rates` database table used to fetch rate by brand and card value.",
+  "architectural_notes": [
+    "Add a `gift_card_rates` table to persist per-brand gift card rates; fields discussed: id, brand_name, rate_percentage, status (active/inactive)."
+  ],
   "known_issues": [],
   "isFixRequest": false,
-  "existing_features": [
-    {
-      "id": "feature-expand-the-nigerian-bank-options-used-for-withdrawal-payout-methods-to-include-kuda-bank-opay-moniepoint-and-palmpay-and-broaden-the-list-to-cover-nigerian-online-digital-banking-options-so-users-can-select-them-during-payout-method-creation",
-      "title": "Expand the Nigerian bank options used for withdrawal payout methods to include Kuda Bank, OPay, Moniepoint, and PalmPay, and broaden the list to cover Nigerian online/digital banking options so users can select them during payout method creation.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    }
-  ],
+  "existing_features": [],
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add Nigerian online banking/payment options for withdrawals (e.g., Kuda, OPay, Moniepoint, PalmPay, and other Nigeria banks)",
+      "summary": "Create `gift_card_rates` database table (id, brand_name, rate_percentage, status active/inactive) to support gift card rate lookup",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Implement backend storage for a gift card rates table named `gift_card_rates` with fields: `id`, `brand_name`, `rate_percentage`, and `status` (active/inactive).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Expose backend methods for admins to create, update, and deactivate/reactivate entries in `gift_card_rates`, and expose query methods to list rates and fetch the active rate for a given `brand_name`.",
+      "reqIds": [
+        "REQ-2"
+      ],
       "status": "pending"
     }
   ],
-  "projectName": "Add Nigerian digital banks and fintechs to withdrawal payout bank list",
+  "projectName": "Add backend support for gift_card_rates (brand rates with active/inactive status)",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

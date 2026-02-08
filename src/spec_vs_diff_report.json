@@ -1,48 +1,60 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T23:36:40.007Z",
-  "summary": "REQ-1 is partially implemented: `frontend/src/config/nigerianBanks.ts` now includes the required new bank/fintech entries and expands the list. However, based on the provided diff summary, there is not enough evidence that the updated list is actually wired as the single source of truth for `NigerianBankSelect` across both the Withdrawals flow and the Send-to-Bank sheet, or that users can complete payout method creation using these new options without validation/UI issues.",
+  "generatedAt": "2026-02-08T00:21:45.865Z",
+  "summary": "REQ-1 (backend storage/type/id counter for gift card rates) appears implemented via new GiftCardRate types, a giftCardRates Map, and a _nextGiftCardRateId counter in backend/main.mo, plus an upgrade migration initializing giftCardRates. REQ-2 (admin CRUD/status + query methods for listing and active-rate lookup) is not evidenced in the provided backend diff excerpt; frontend changes add admin UI and query hooks that were not requested.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "The updated list remains the single source of truth used by `NigerianBankSelect`, and the new entries appear in bank search results when typing queries like \"kuda\", \"opay\", \"monie\", and \"palm\".",
-      "reason": "While the config adds the new entries and introduces `filterBanksByQuery`, the diff summary does not show any changes to `NigerianBankSelect` (or its consumers) confirming it imports/uses this list and filter for search results.",
+      "id": "REQ-2",
+      "requirement": "Expose backend methods for admins to create, update, and deactivate/reactivate entries in gift_card_rates, plus query methods to list rates and fetch the active rate for a given brand_name.",
+      "reason": "The diff shows new GiftCardRate types/state, but does not show any newly added backend methods/endpoints implementing admin create/update/status toggling, listing, or active-rate lookup; the shown backend/main.mo excerpt only includes existing KYC-related methods.",
       "evidence": [
-        "frontend/src/config/nigerianBanks.ts"
-      ]
-    },
-    {
-      "id": "REQ-1",
-      "requirement": "Users can successfully add a payout method selecting any of these new options from the searchable dropdown in both the Withdrawals flow and the Send-to-Bank sheet, with no UI crashes or validation dead-ends.",
-      "reason": "No code changes are shown for the Withdrawals flow UI, the Send-to-Bank sheet UI, or payout-method creation/validation paths. The diff summary only evidences config/test changes, so end-to-end usability in both locations cannot be verified.",
-      "evidence": [
-        "frontend/src/config/nigerianBanks.ts",
-        "frontend/src/config/__tests__/nigerianBanks.test.ts"
+        "backend/main.mo (truncated excerpt shows type/state additions but no gift card rate methods)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added new search normalization and query filtering utilities (`normalizeForSearch`, `filterBanksByQuery`) in the bank config module.",
-      "reason": "REQ-1 asks for expanded bank options and for new entries to appear in search results, but it does not explicitly request adding new exported search/filter functions or normalization behavior within the config module.",
+      "description": "Frontend admin page for managing gift card rates (AdminGiftCardRatesPage) and corresponding routing/imports.",
+      "reason": "BuildRequest is explicitly for backend support; adding a new admin UI page and app route is not requested.",
       "evidence": [
-        "frontend/src/config/nigerianBanks.ts"
+        "frontend/src/pages/admin/AdminGiftCardRatesPage.tsx",
+        "frontend/src/App.tsx"
       ]
     },
     {
-      "description": "Added unit tests for the Nigerian bank config.",
-      "reason": "REQ-1 does not request adding tests; this is additional implementation beyond the stated requirements.",
+      "description": "Frontend React Query hooks for gift card rates CRUD and lookups.",
+      "reason": "BuildRequest only asks for backend storage and backend methods; implementing frontend hook layer is not requested.",
       "evidence": [
-        "frontend/src/config/__tests__/nigerianBanks.test.ts"
+        "frontend/src/hooks/useQueries.ts",
+        "frontend-file-summaries.txt (mentions new gift card rates CRUD hooks)"
+      ]
+    },
+    {
+      "description": "Additional GiftCardRate fields createdAt/updatedAt not specified in requirements.",
+      "reason": "REQ-1 specifies fields: id, brand_name, rate_percentage, status. The diff adds createdAt and updatedAt fields to GiftCardRate.",
+      "evidence": [
+        "backend/main.mo",
+        "backend/migration.mo"
+      ]
+    },
+    {
+      "description": "Added backend/migration.mo upgrade migration (introducing NewActor.giftCardRates) which may be unnecessary given the constraint to create migration.mo only if strictly required.",
+      "reason": "The diff adds a migration module, but the diff summary does not provide evidence that an upgrade migration was strictly required (e.g., existing stable state needing transformation).",
+      "evidence": [
+        "backend/migration.mo",
+        "backend/main.mo (imports Migration and uses (with migration = Migration.run))"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.66,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/config/__tests__/nigerianBanks.test.ts",
-    "frontend/src/config/nigerianBanks.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/admin/AdminGiftCardRatesPage.tsx",
     "project_state.json"
   ]
 }

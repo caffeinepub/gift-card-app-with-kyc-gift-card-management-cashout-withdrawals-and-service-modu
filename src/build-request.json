@@ -1,39 +1,69 @@
 {
   "kind": "build_request",
-  "title": "Add Nigerian digital banks and fintechs to withdrawal payout bank list",
+  "title": "Add backend support for gift_card_rates (brand rates with active/inactive status)",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Expand the Nigerian bank options used for withdrawal payout methods to include Kuda Bank, OPay, Moniepoint, and PalmPay, and broaden the list to cover Nigerian online/digital banking options so users can select them during payout method creation.",
-      "target": "frontend",
+      "text": "Implement backend storage for a gift card rates table named `gift_card_rates` with fields: `id`, `brand_name`, `rate_percentage`, and `status` (active/inactive).",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-1"
         ],
         "quotes": [
-          "Add Kuda bank opay moniepoint ,palm-pay add all Nigeria online banking for payment withdraw"
+          "If you don’t have backend knowledge, tell your developer to create a table called:\n\ngift_card_rates\n\nWith fields:\n\t•\tid\n\t•\tbrand_name\n\t•\trate_percentage\n\t•\tstatus (active/inactive)",
+          "Please go ahead and set it up"
         ]
       },
       "acceptanceCriteria": [
-        "`frontend/src/config/nigerianBanks.ts` includes entries for: \"Kuda Bank\", \"OPay\", \"Moniepoint\", and \"PalmPay\" (spelled as user-facing names).",
-        "The updated list remains the single source of truth used by `NigerianBankSelect`, and the new entries appear in bank search results when typing queries like \"kuda\", \"opay\", \"monie\", and \"palm\".",
-        "Users can successfully add a payout method selecting any of these new options from the searchable dropdown in both the Withdrawals flow and the Send-to-Bank sheet, with no UI crashes or validation dead-ends."
+        "A new `GiftCardRate` (or equivalent) type exists in `backend/main.mo` with fields corresponding to `id`, `brand_name`, `rate_percentage`, and `status` (active/inactive).",
+        "Backend maintains an auto-incrementing id counter for gift card rates, similar to existing `_next...Id` patterns in `backend/main.mo`.",
+        "Gift card rate records are stored in backend state (in-memory Map consistent with the current codebase patterns)."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Expose backend methods for admins to create, update, and deactivate/reactivate entries in `gift_card_rates`, and expose query methods to list rates and fetch the active rate for a given `brand_name`.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Please go ahead and set it up"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Admin-only endpoints are protected with the same admin gating pattern used elsewhere (e.g., `AccessControl.isAdmin(...)`), trapping on unauthorized access.",
+        "There is an admin method to create a rate entry with `brand_name`, `rate_percentage`, and `status`.",
+        "There is an admin method to update an existing rate entry by `id` (at minimum allowing changing `rate_percentage` and `status`).",
+        "There is a query method to list all gift card rate entries (admin-only or public as appropriate, but must be explicitly defined).",
+        "There is a query method to get the active `rate_percentage` for a provided `brand_name` that returns `null`/`?` when the brand has no active rate."
       ]
     }
   ],
   "constraints": [
-    "Use English for all user-facing text.",
-    "Do not edit any files under `frontend/src/components/ui` or other paths listed as immutable in SYSTEM_CONTEXT.",
-    "Keep the existing single-actor Motoko backend architecture; do not introduce additional canisters or external services."
+    "Backend must remain a single-actor Motoko canister; do not introduce additional canisters/services.",
+    "All Motoko logic must live in `backend/main.mo`; create `backend/migration.mo` only if it is strictly required for state upgrades.",
+    "Use English for any user-facing text."
   ],
   "nonGoals": [
-    "Implementing real payment rails, bank transfers, or third-party payout integrations for Kuda/OPay/Moniepoint/PalmPay.",
-    "Adding third-party authentication or wallet integrations.",
-    "Changing backend withdrawal/payout schemas unless strictly required for the bank list update (not expected)."
+    "Do not implement an external SQL database or any non-Internet-Computer database integration.",
+    "Do not redesign the existing gift card UI or replace the existing static NGN tier configuration unless explicitly requested."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

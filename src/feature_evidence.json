@@ -1,26 +1,4 @@
 {
   "kind": "feature_evidence_report",
-  "features": [
-    {
-      "featureId": "feature-expand-the-nigerian-bank-options-used-for-withdrawal-payout-methods-to-include-kuda-bank-opay-moniepoint-and-palmpay-and-broaden-the-list-to-cover-nigerian-online-digital-banking-options-so-users-can-select-them-during-payout-method-creation",
-      "featureTitle": "Expand the Nigerian bank options used for withdrawal payout methods to include Kuda Bank, OPay, Moniepoint, and PalmPay, and broaden the list to cover Nigerian online/digital banking options so users can select them during payout method creation.",
-      "files": [
-        "frontend/src/config/__tests__/nigerianBanks.test.ts",
-        "frontend/src/config/nigerianBanks.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    }
-  ]
+  "features": []
 }
