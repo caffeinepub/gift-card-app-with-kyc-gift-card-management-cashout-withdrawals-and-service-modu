@@ -24,6 +24,8 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const EscrowId = IDL.Nat;
+export const ChatId = IDL.Nat;
 export const GiftCardRateId = IDL.Nat;
 export const PayoutMethodId = IDL.Nat;
 export const WithdrawalRequestId = IDL.Nat;
@@ -35,6 +37,12 @@ export const RateQuote = IDL.Record({
   'createdAt' : Time,
   'ratePercentage' : IDL.Nat,
   'brandName' : IDL.Text,
+});
+export const Message = IDL.Record({
+  'content' : IDL.Text,
+  'sender' : IDL.Principal,
+  'timestamp' : Time,
+  'chatId' : ChatId,
 });
 export const GiftCardRateStatus = IDL.Variant({
   'active' : IDL.Null,
@@ -133,6 +141,9 @@ export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'calculatePayout' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Nat], []),
+  'cancelEscrow' : IDL.Func([EscrowId], [], []),
+  'createChat' : IDL.Func([IDL.Principal], [ChatId], []),
+  'createEscrow' : IDL.Func([ChatId, IDL.Nat, IDL.Principal], [EscrowId], []),
   'createGiftCardRate' : IDL.Func([IDL.Text, IDL.Nat], [GiftCardRateId], []),
   'createPayoutMethod' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text],
@@ -144,8 +155,10 @@ export const idlService = IDL.Service({
       [WithdrawalRequestId],
       [],
     ),
+  'fundEscrow' : IDL.Func([EscrowId], [], []),
   'generateRateQuote' : IDL.Func([IDL.Text, IDL.Nat], [RateQuote], []),
   'getActiveRateForBrand' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Int)], ['query']),
+  'getAllChatMessages' : IDL.Func([ChatId], [IDL.Vec(Message)], []),
   'getAllRates' : IDL.Func([], [IDL.Vec(GiftCardRate)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
@@ -163,13 +176,16 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getWithdrawalConfig' : IDL.Func([], [WithdrawalConfig], ['query']),
+  'hasVerifiedTraderBadge' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isCallerKycVerified' : IDL.Func([], [IDL.Bool], ['query']),
   'listActiveRates' : IDL.Func([], [IDL.Vec(GiftCardRate)], ['query']),
   'listPendingWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], []),
   'listUserPayoutMethods' : IDL.Func([], [IDL.Vec(PayoutMethod)], ['query']),
   'listUserWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], ['query']),
+  'releaseEscrow' : IDL.Func([EscrowId], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'sendMessage' : IDL.Func([ChatId, IDL.Text], [], []),
   'setCoinPriceIndex' : IDL.Func([IDL.Int], [], []),
   'setGiftCardRateStatus' : IDL.Func(
       [
@@ -213,6 +229,8 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const EscrowId = IDL.Nat;
+  const ChatId = IDL.Nat;
   const GiftCardRateId = IDL.Nat;
   const PayoutMethodId = IDL.Nat;
   const WithdrawalRequestId = IDL.Nat;
@@ -224,6 +242,12 @@ export const idlFactory = ({ IDL }) => {
     'createdAt' : Time,
     'ratePercentage' : IDL.Nat,
     'brandName' : IDL.Text,
+  });
+  const Message = IDL.Record({
+    'content' : IDL.Text,
+    'sender' : IDL.Principal,
+    'timestamp' : Time,
+    'chatId' : ChatId,
   });
   const GiftCardRateStatus = IDL.Variant({
     'active' : IDL.Null,
@@ -322,6 +346,9 @@ export const idlFactory = ({ IDL }) => {
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'calculatePayout' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Nat], []),
+    'cancelEscrow' : IDL.Func([EscrowId], [], []),
+    'createChat' : IDL.Func([IDL.Principal], [ChatId], []),
+    'createEscrow' : IDL.Func([ChatId, IDL.Nat, IDL.Principal], [EscrowId], []),
     'createGiftCardRate' : IDL.Func([IDL.Text, IDL.Nat], [GiftCardRateId], []),
     'createPayoutMethod' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text],
@@ -333,12 +360,14 @@ export const idlFactory = ({ IDL }) => {
         [WithdrawalRequestId],
         [],
       ),
+    'fundEscrow' : IDL.Func([EscrowId], [], []),
     'generateRateQuote' : IDL.Func([IDL.Text, IDL.Nat], [RateQuote], []),
     'getActiveRateForBrand' : IDL.Func(
         [IDL.Text],
         [IDL.Opt(IDL.Int)],
         ['query'],
       ),
+    'getAllChatMessages' : IDL.Func([ChatId], [IDL.Vec(Message)], []),
     'getAllRates' : IDL.Func([], [IDL.Vec(GiftCardRate)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
@@ -356,6 +385,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getWithdrawalConfig' : IDL.Func([], [WithdrawalConfig], ['query']),
+    'hasVerifiedTraderBadge' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isCallerKycVerified' : IDL.Func([], [IDL.Bool], ['query']),
     'listActiveRates' : IDL.Func([], [IDL.Vec(GiftCardRate)], ['query']),
@@ -366,7 +396,9 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(WithdrawalRequest)],
         ['query'],
       ),
+    'releaseEscrow' : IDL.Func([EscrowId], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'sendMessage' : IDL.Func([ChatId, IDL.Text], [], []),
     'setCoinPriceIndex' : IDL.Func([IDL.Int], [], []),
     'setGiftCardRateStatus' : IDL.Func(
         [

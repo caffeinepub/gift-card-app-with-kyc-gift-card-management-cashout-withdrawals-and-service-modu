@@ -2,12 +2,15 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-withdrawal-related-user-facing-text-and-timing-indicators-to-reflect-a-5-20-minute-processing-window-in-both-the-withdrawals-page-and-the-send-to-bank-review-screen",
-      "featureTitle": "Update withdrawal-related user-facing text and timing indicators to reflect a 5–20 minute processing window in both the Withdrawals page and the Send to Bank review screen.",
+      "featureId": "feature-add-frontend-pages-components-for-a-trading-chat-experience-thread-creation-select-a-counterparty-by-principal-text-thread-list-and-chat-detail-view-with-message-composer-and-message-list",
+      "featureTitle": "Add frontend pages/components for a trading chat experience: thread creation (select a counterparty by Principal text), thread list, and chat detail view with message composer and message list.",
       "files": [
-        "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
-        "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
-        "frontend/src/utils/withdrawalProcessingWindow.ts"
+        "frontend/src/App.tsx",
+        "frontend/src/components/layout/AppShell.tsx",
+        "frontend/src/hooks/useTradingChat.ts",
+        "frontend/src/pages/DashboardPage.tsx",
+        "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx",
+        "frontend/src/pages/trading-chat/TradingChatThreadsPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -19,16 +22,17 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-2"
+        "REQ-4"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-surface-the-backend-5-20-minute-processing-window-error-to-admins-when-approving-a-withdrawal-so-the-admin-ui-shows-a-helpful-toast-message-instead-of-a-generic-failure",
-      "featureTitle": "Surface the backend 5–20 minute processing-window error to admins when approving a withdrawal so the admin UI shows a helpful toast message instead of a generic failure.",
+      "featureId": "feature-display-a-verified-trader-badge-in-the-chat-ui-wherever-a-participant-identity-is-shown-e-g-header-participant-chip-based-on-verification-status-fetched-from-the-backend",
+      "featureTitle": "Display a “Verified Trader” badge in the chat UI wherever a participant identity is shown (e.g., header/participant chip), based on verification status fetched from the backend.",
       "files": [
-        "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
-        "frontend/src/utils/backendErrorMessage.ts"
+        "frontend/src/components/trading-chat/VerifiedTraderBadge.tsx",
+        "frontend/src/hooks/useTradingChat.ts",
+        "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -40,7 +44,52 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-in-chat-escrow-ui-inside-the-chat-detail-view-create-escrow-view-escrow-status-timeline-and-perform-allowed-actions-fund-release-cancel-with-clear-confirmations-and-error-handling",
+      "featureTitle": "Implement in-chat escrow UI inside the chat detail view: create escrow, view escrow status timeline, and perform allowed actions (fund, release, cancel) with clear confirmations and error handling.",
+      "files": [
+        "frontend/src/components/trading-chat/EscrowPanel.tsx",
+        "frontend/src/hooks/useTradingChat.ts",
+        "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-a-coherent-distinctive-visual-theme-for-the-new-trading-chat-escrow-ui-and-enforce-it-consistently-across-the-new-pages-components-without-changing-app-functionality",
+      "featureTitle": "Apply a coherent, distinctive visual theme for the new Trading Chat + Escrow UI and enforce it consistently across the new pages/components (without changing app functionality).",
+      "files": [
+        "frontend/src/index.css",
+        "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx",
+        "frontend/src/pages/trading-chat/TradingChatThreadsPage.tsx",
+        "frontend/tailwind.config.js"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
       ],
       "confidence": "high"
     }

@@ -1,48 +1,103 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T04:11:51.893Z",
+  "generatedAt": "2026-02-08T22:29:43.334Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 2,
+    "total": 7,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Enforce a backend rule that a pending withdrawal request can only be marked as #paid within a 5 to 20 minute window after it was created.",
+        "summary": "Implement a secure, authenticated 1:1 trading chat system in the backend, where only the two chat participants (and admins) can create/read messages for a given chat thread.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Update withdrawal-related user-facing text and timing indicators to reflect a 5–20 minute processing window in both the Withdrawals page and the Send to Bank review screen.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
-          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
-          "frontend/src/utils/withdrawalProcessingWindow.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
-          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
-          "frontend/src/utils/withdrawalProcessingWindow.ts"
-        ]
+        "summary": "Add a transaction escrow model in the backend that is created and managed from within a chat thread, including escrow lifecycle actions (create, fund, release, cancel) with strict authorization based on chat participants.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Surface the backend 5–20 minute processing-window error to admins when approving a withdrawal so the admin UI shows a helpful toast message instead of a generic failure.",
+        "summary": "Expose a backend query that allows the frontend to determine whether a given principal should display the “Verified Trader” badge, using the app’s verification source of truth (existing KYC verification).",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Add frontend pages/components for a trading chat experience: thread creation (select a counterparty by Principal text), thread list, and chat detail view with message composer and message list.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/backendErrorMessage.ts",
-          "frontend/src/pages/admin/AdminWithdrawalsPage.tsx"
+          "frontend/src/pages/trading-chat/TradingChatThreadsPage.tsx",
+          "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx",
+          "frontend/src/hooks/useTradingChat.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/components/layout/AppShell.tsx",
+          "frontend/src/pages/DashboardPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/utils/backendErrorMessage.ts",
-          "frontend/src/pages/admin/AdminWithdrawalsPage.tsx"
+          "frontend/src/pages/trading-chat/TradingChatThreadsPage.tsx",
+          "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx",
+          "frontend/src/hooks/useTradingChat.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/components/layout/AppShell.tsx",
+          "frontend/src/pages/DashboardPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Display a “Verified Trader” badge in the chat UI wherever a participant identity is shown (e.g., header/participant chip), based on verification status fetched from the backend.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/trading-chat/VerifiedTraderBadge.tsx",
+          "frontend/src/hooks/useTradingChat.ts",
+          "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/trading-chat/VerifiedTraderBadge.tsx",
+          "frontend/src/hooks/useTradingChat.ts",
+          "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Implement in-chat escrow UI inside the chat detail view: create escrow, view escrow status timeline, and perform allowed actions (fund, release, cancel) with clear confirmations and error handling.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/trading-chat/EscrowPanel.tsx",
+          "frontend/src/hooks/useTradingChat.ts",
+          "frontend/src/backend-augment.d.ts",
+          "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/trading-chat/EscrowPanel.tsx",
+          "frontend/src/hooks/useTradingChat.ts",
+          "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Apply a coherent, distinctive visual theme for the new Trading Chat + Escrow UI and enforce it consistently across the new pages/components (without changing app functionality).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js",
+          "frontend/src/pages/trading-chat/TradingChatThreadsPage.tsx",
+          "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js",
+          "frontend/src/pages/trading-chat/TradingChatThreadsPage.tsx",
+          "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx"
         ]
       }
     ]
@@ -54,15 +109,20 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+    "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/components/trading-chat/EscrowPanel.tsx",
+    "frontend/src/components/trading-chat/VerifiedTraderBadge.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
-    "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
-    "frontend/src/utils/backendErrorMessage.ts",
-    "frontend/src/utils/withdrawalProcessingWindow.ts",
+    "frontend/src/hooks/useTradingChat.ts",
+    "frontend/src/index.css",
+    "frontend/src/pages/DashboardPage.tsx",
+    "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx",
+    "frontend/src/pages/trading-chat/TradingChatThreadsPage.tsx",
+    "frontend/tailwind.config.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -33,7 +33,7 @@ export default function CoinPriceIndexCard() {
     try {
       // Store current value as previous before updating
       if (currentIndex !== undefined) {
-        setPreviousValue(currentIndex);
+        setPreviousValue(Number(currentIndex));
         
         // Determine direction
         if (newValue > currentIndex) {

@@ -1,54 +1,76 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T04:11:51.889Z",
-  "summary": "Frontend updates for the 5–20 minute window appear partially implemented (new timing utility and Withdrawals page import; admin page now extracts backend error messages for toasts). However, the backend enforcement of the 5–20 minute #paid approval window is not evidenced in the provided backend/main.mo truncation, and the required SendToBankSheet copy change is not evidenced. The diff summary also indicates multiple unrelated frontend features/changes beyond the request scope.",
+  "generatedAt": "2026-02-08T22:29:43.331Z",
+  "summary": "Core Trading Chat UI, badge component, escrow panel UI, and a new theme token set were added on the frontend, along with navigation entry points. Backend shows new Chat/Escrow types and state maps plus migration state fields, but the diff summary is truncated and does not provide enough evidence that all required backend methods, access controls, and data fields (message ids, escrow timestamps, state-transition validation, KYC boolean query) are fully implemented.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Enforce a backend rule that a pending withdrawal request can only be marked as #paid within a 5 to 20 minute window after it was created, trapping with clear English errors outside that window, while allowing #rejected.",
-      "reason": "backend/main.mo is truncated and does not show any update to updateWithdrawalStatus(requestId, #paid) logic or any trap/error messages enforcing the 5–20 minute window. The only clearly evidenced backend changes are introduction of a WithdrawalConfig and a migration module setting min/max times, which does not itself prove enforcement in the status update path.",
+      "requirement": "Secure, authenticated 1:1 trading chat backend with participant/admin-only access; methods to create/fetch thread, send message, list messages; messages include unique id, thread id, sender, text, timestamp; persisted in canister state.",
+      "reason": "Backend snippet shows Message type and chat maps, and a createChat stub is visible, but the diff is truncated and does not show complete implementations for: (1) list/get messages access-control rejection for non-participants, (2) send message authorization, (3) create-or-fetch-existing thread behavior, and (4) required message fields (unique id is not present in the Message type shown).",
       "evidence": [
-        "backend/main.mo",
-        "backend/migration.mo"
+        "backend/main.mo"
       ]
     },
     {
       "id": "REQ-2",
-      "requirement": "In frontend/src/components/crypto/sheets/SendToBankSheet.tsx, replace the review-screen info text 'within 1-3 business days' with 'within 5–20 minutes'.",
-      "reason": "SendToBankSheet.tsx is truncated and the diff summary does not include the specific text replacement; no explicit evidence shows the 'within 5–20 minutes' copy being present in the review screen.",
+      "requirement": "Escrow backend model attached to chat thread with methods create/fund/release/cancel, strict participant authorization, escrow includes id, thread id, buyer, seller, amount, status, createdAt/updatedAt, validated state transitions, and query/list by thread.",
+      "reason": "Backend snippet shows an Escrow type and an escrowData map, but the diff does not show: required createdAt/updatedAt fields, any escrow lifecycle methods, any server-side state transition validation, or a method to list/query escrows by chat/thread for UI rendering.",
       "evidence": [
-        "frontend/src/components/crypto/sheets/SendToBankSheet.tsx"
+        "backend/main.mo",
+        "frontend/src/components/trading-chat/EscrowPanel.tsx (expects list/actions via hooks)"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Backend query method returning boolean KYC-verified status for an arbitrary Principal, aligned with existing latest-record KYC rules and callable by authenticated users/admins.",
+      "reason": "Frontend adds a hook/component to fetch verification status, but the diff summary does not show any backend query method that accepts a Principal and returns only a boolean aligned with existing KYC logic (consistent with isCallerKycVerified).",
+      "evidence": [
+        "frontend/src/components/trading-chat/VerifiedTraderBadge.tsx",
+        "frontend/src/hooks/useTradingChat.ts (truncated)",
+        "backend/main.mo (truncated; no verification query shown)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Large set of unrelated frontend features/changes (gift card catalog/components/pages, crypto wallet page, betting page, global CSS theme changes, etc.)",
-      "reason": "Not requested by the BuildRequest, which is specifically about withdrawal processing timing enforcement and related UI messaging/error surfacing. The diff summary file 'frontend-file-summaries.txt' describes many additional features outside this scope.",
+      "description": "Added a separate backend migration module and wired it into the actor upgrade path.",
+      "reason": "The BuildRequest did not ask for migrations; it only constrained backend to remain a single Motoko actor in backend/main.mo. A migration module may be reasonable, but it is not explicitly requested.",
       "evidence": [
-        "frontend-file-summaries.txt"
+        "backend/migration.mo",
+        "backend/main.mo (\"with migration = Migration.run\")"
       ]
     },
     {
-      "description": "Introduction of a persistent withdrawal configuration and migration plumbing (_withdrawalConfig and backend/migration.mo)",
-      "reason": "The request only asks to enforce a 5–20 minute rule in backend/main.mo; adding a migration module and config storage is an unrequested architectural addition (even if potentially supportive).",
+      "description": "Frontend stores chat thread list in an in-memory cache because \"backend doesn't have a list method\".",
+      "reason": "BuildRequest did not request a frontend-only cache for threads nor state loss on refresh; it asked for thread list UI and backend-persisted chat state. This cache implementation is an extra behavior and suggests the backend thread-list method may be missing.",
       "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo"
+        "frontend/src/hooks/useTradingChat.ts (\"Store chat threads in memory (since backend doesn't have a list method)\")"
+      ]
+    },
+    {
+      "description": "Unrelated frontend feature work (e.g., \"Complete crypto wallet dashboard page\", betting top-up page, multiple gift card catalog/components updates).",
+      "reason": "These changes are not part of REQ-1 through REQ-7 and appear unrelated to Trading Chat + Verified badge + escrow.",
+      "evidence": [
+        "frontend-file-summaries.txt (entries for CryptoWalletPage.tsx, BettingPage.tsx, gift card catalog/components, etc.)"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.63,
   "changed_files": [
     "backend/main.mo",
     "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
-    "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
-    "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
-    "frontend/src/utils/backendErrorMessage.ts",
-    "frontend/src/utils/withdrawalProcessingWindow.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/components/trading-chat/EscrowPanel.tsx",
+    "frontend/src/components/trading-chat/VerifiedTraderBadge.tsx",
+    "frontend/src/hooks/useTradingChat.ts",
+    "frontend/src/index.css",
+    "frontend/src/pages/DashboardPage.tsx",
+    "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx",
+    "frontend/src/pages/trading-chat/TradingChatThreadsPage.tsx",
+    "frontend/tailwind.config.js",
     "project_state.json"
   ]
 }

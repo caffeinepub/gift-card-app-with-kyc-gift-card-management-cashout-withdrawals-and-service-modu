@@ -22,6 +22,7 @@ export default function WithdrawalsPage() {
 
   const [selectedMethodId, setSelectedMethodId] = useState('');
   const [amount, setAmount] = useState('');
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +38,13 @@ export default function WithdrawalsPage() {
       return;
     }
 
+    // Show confirmation instead of submitting immediately
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmWithdrawal = async () => {
+    const amountNum = parseFloat(amount);
+
     try {
       await createWithdrawal.mutateAsync({
         payoutMethodId: selectedMethodId,
@@ -46,11 +54,18 @@ export default function WithdrawalsPage() {
       toast.success('Withdrawal request submitted successfully');
       setSelectedMethodId('');
       setAmount('');
+      setShowConfirmation(false);
     } catch (error: any) {
       console.error('Withdrawal request error:', error);
       toast.error(error.message || 'Failed to submit withdrawal request');
     }
   };
+
+  const handleCancelConfirmation = () => {
+    setShowConfirmation(false);
+  };
+
+  const selectedMethod = payoutMethods?.find(m => m.id === selectedMethodId);
 
   if (withdrawalsLoading || methodsLoading || kycLoading) {
     return (
@@ -110,56 +125,106 @@ export default function WithdrawalsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="payoutMethod">Payout Method</Label>
-                  <Select
-                    value={selectedMethodId}
-                    onValueChange={setSelectedMethodId}
+              {!showConfirmation ? (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="payoutMethod">Payout Method</Label>
+                    <Select
+                      value={selectedMethodId}
+                      onValueChange={setSelectedMethodId}
+                      disabled={!isKycVerified}
+                    >
+                      <SelectTrigger id="payoutMethod">
+                        <SelectValue placeholder="Select a payout method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {payoutMethods?.map((method) => (
+                          <SelectItem key={method.id} value={method.id}>
+                            {method.bankName} - {method.accountNumber}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {payoutMethods?.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No payout methods available. Add one first.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Amount (USD)</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step="0.01"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="100.00"
+                      disabled={!isKycVerified}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
                     disabled={!isKycVerified}
                   >
-                    <SelectTrigger id="payoutMethod">
-                      <SelectValue placeholder="Select a payout method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {payoutMethods?.map((method) => (
-                        <SelectItem key={method.id} value={method.id}>
-                          {method.bankName} - {method.accountNumber}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {payoutMethods?.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      No payout methods available. Add one first.
-                    </p>
-                  )}
-                </div>
+                    Continue
+                  </Button>
+                </form>
+              ) : (
+                <div className="space-y-6">
+                  <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+                    <h3 className="font-semibold text-lg">Confirm Withdrawal</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Amount</span>
+                        <span className="font-semibold text-lg">
+                          {formatCurrency(parseFloat(amount), 'usd')}
+                        </span>
+                      </div>
+                      {selectedMethod && (
+                        <>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Bank</span>
+                            <span className="font-medium">{selectedMethod.bankName}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Account Number</span>
+                            <span className="font-medium">{selectedMethod.accountNumber}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Account Name</span>
+                            <span className="font-medium">{selectedMethod.accountName}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount (USD)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="100.00"
-                    disabled={!isKycVerified}
-                  />
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={handleCancelConfirmation}
+                      disabled={createWithdrawal.isPending}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      onClick={handleConfirmWithdrawal}
+                      disabled={createWithdrawal.isPending}
+                    >
+                      {createWithdrawal.isPending && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      Confirm Withdrawal
+                    </Button>
+                  </div>
                 </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={createWithdrawal.isPending || !isKycVerified}
-                >
-                  {createWithdrawal.isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Submit Request
-                </Button>
-              </form>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

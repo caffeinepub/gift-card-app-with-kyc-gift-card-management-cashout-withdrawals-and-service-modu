@@ -22,6 +22,7 @@ import {
   Bitcoin,
   Shield,
   Users,
+  MessageSquare,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -78,34 +79,10 @@ export default function DashboardPage() {
       color: 'oklch(0.7 0.15 220)'
     },
     { 
-      id: 'data', 
-      label: 'Data', 
-      icon: Grid3x3, 
-      route: '/services/data',
-      color: 'oklch(0.7 0.15 220)'
-    },
-    { 
-      id: 'betting', 
-      label: 'Betting', 
-      icon: Trophy, 
-      route: '/services/betting',
-      color: 'oklch(0.7 0.15 220)'
-    },
-    { 
       id: 'bills', 
-      label: 'Bills', 
+      label: 'Bills Payment', 
       icon: Receipt, 
       route: '/services/bills',
-      color: 'oklch(0.7 0.15 220)'
-    },
-  ];
-
-  const secondaryShortcuts = [
-    { 
-      id: 'flights', 
-      label: 'Flights', 
-      icon: Plane, 
-      comingSoon: true,
       color: 'oklch(0.7 0.15 220)'
     },
     { 
@@ -113,21 +90,31 @@ export default function DashboardPage() {
       label: 'eSIM', 
       icon: Smartphone, 
       route: '/services/esim',
-      color: 'oklch(0.7 0.15 220)',
+      color: 'oklch(0.7 0.15 220)'
+    },
+    { 
+      id: 'trading-chat', 
+      label: 'Trading Chat', 
+      icon: MessageSquare, 
+      route: '/trading-chat',
+      color: 'oklch(0.65 0.18 160)',
       badge: 'New'
     },
+  ];
+
+  const secondaryShortcuts = [
     { 
-      id: 'crypto-wallets', 
-      label: 'Crypto Wallets', 
+      id: 'crypto', 
+      label: 'Crypto', 
       icon: Bitcoin, 
       route: '/services/crypto',
-      color: 'oklch(0.75 0.18 60)'
+      color: 'oklch(0.7 0.15 220)'
     },
     { 
-      id: '2fa', 
-      label: '2FA', 
+      id: 'kyc', 
+      label: 'KYC', 
       icon: Shield, 
-      comingSoon: true,
+      route: '/kyc',
       color: 'oklch(0.7 0.15 220)'
     },
     { 
@@ -135,109 +122,101 @@ export default function DashboardPage() {
       label: 'Referrals', 
       icon: Users, 
       comingSoon: true,
-      color: 'oklch(0.65 0.15 150)'
+      color: 'oklch(0.7 0.15 220)'
+    },
+    { 
+      id: 'leaderboard', 
+      label: 'Leaderboard', 
+      icon: Trophy, 
+      comingSoon: true,
+      color: 'oklch(0.7 0.15 220)'
     },
   ];
 
-  const formattedBalance = formatCurrency(totalBalance, 'ngn');
-  const maskedBalance = '₦••••••';
-
   return (
-    <div className="min-h-screen pb-24 lg:pb-8">
-      {/* Dark Balance Header */}
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Balance Header */}
       <div 
-        className="relative overflow-hidden rounded-b-[2rem] lg:rounded-3xl mb-6"
+        className="relative rounded-3xl overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, oklch(0.35 0.08 280) 0%, oklch(0.28 0.1 270) 100%)',
+          background: 'linear-gradient(135deg, oklch(0.45 0.15 280) 0%, oklch(0.35 0.12 280) 100%)',
         }}
       >
         <div 
-          className="absolute inset-0 opacity-20"
+          className="absolute inset-0 opacity-10"
           style={{
             backgroundImage: 'url(/assets/generated/dashboard-header-bg.dim_1200x600.png)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
         />
-        <div className="relative px-6 py-12 lg:py-16">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <h1 className="text-5xl lg:text-6xl font-bold text-white tracking-tight">
-              {balanceVisible ? formattedBalance : maskedBalance}
-            </h1>
-            <button
-              onClick={() => setBalanceVisible(!balanceVisible)}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors"
-              aria-label={balanceVisible ? 'Hide balance' : 'Show balance'}
+        <div className="relative p-8 lg:p-10">
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <p className="text-[oklch(0.85_0.05_280)] text-sm font-medium mb-2">
+                Total Balance
+              </p>
+              <div className="flex items-center gap-3">
+                <h1 className="text-4xl lg:text-5xl font-bold text-white">
+                  {balanceVisible ? formatCurrency(totalBalance, 'usd') : '••••••'}
+                </h1>
+                <button
+                  onClick={() => setBalanceVisible(!balanceVisible)}
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                  aria-label={balanceVisible ? 'Hide balance' : 'Show balance'}
+                >
+                  {balanceVisible ? (
+                    <EyeOff className="h-5 w-5 text-[oklch(0.85_0.05_280)]" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-[oklch(0.85_0.05_280)]" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <Badge 
+              variant="secondary" 
+              className="bg-white/20 text-white border-0 backdrop-blur-sm"
             >
-              {balanceVisible ? (
-                <Eye className="h-6 w-6 text-white/80" />
-              ) : (
-                <EyeOff className="h-6 w-6 text-white/80" />
-              )}
-            </button>
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <div className="h-1 w-8 rounded-full bg-white/40" />
-            <div className="h-1 w-1 rounded-full bg-white/20" />
-            <div className="h-1 w-1 rounded-full bg-white/20" />
+              Premium
+            </Badge>
           </div>
         </div>
       </div>
 
-      {/* White Rounded Sheet with Shortcuts */}
-      <div className="px-4 lg:px-0">
-        <Card className="rounded-3xl shadow-lg border-0 bg-card overflow-hidden">
-          <div className="p-6 lg:p-8">
-            {/* Primary Shortcuts Grid */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
-              {shortcuts.map((shortcut) => (
-                <DashboardShortcutTile
-                  key={shortcut.id}
-                  label={shortcut.label}
-                  icon={shortcut.icon}
-                  route={shortcut.route}
-                  comingSoon={shortcut.comingSoon}
-                  color={shortcut.color}
-                  onClick={() => {
-                    if (shortcut.route) {
-                      navigate({ to: shortcut.route });
-                    }
-                  }}
-                />
-              ))}
-            </div>
+      {/* Main Shortcuts Grid */}
+      <Card className="rounded-3xl bg-white dark:bg-card border-0 shadow-sm p-6 lg:p-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {shortcuts.map((shortcut) => (
+            <DashboardShortcutTile
+              key={shortcut.id}
+              label={shortcut.label}
+              icon={shortcut.icon}
+              onClick={() => shortcut.route && navigate({ to: shortcut.route })}
+              comingSoon={shortcut.comingSoon}
+              color={shortcut.color}
+              badge={shortcut.badge}
+            />
+          ))}
+        </div>
+      </Card>
 
-            {/* Secondary Shortcuts Row */}
-            <div className="flex items-center justify-center gap-6 lg:gap-8 mb-8 overflow-x-auto pb-2">
-              {secondaryShortcuts.map((shortcut) => (
-                <DashboardShortcutTile
-                  key={shortcut.id}
-                  label={shortcut.label}
-                  icon={shortcut.icon}
-                  route={shortcut.route}
-                  comingSoon={shortcut.comingSoon}
-                  color={shortcut.color}
-                  badge={shortcut.badge}
-                  size="large"
-                  onClick={() => {
-                    if (shortcut.route) {
-                      navigate({ to: shortcut.route });
-                    }
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Promo Card */}
-            <DashboardPromoCard />
-          </div>
-        </Card>
+      {/* Secondary Shortcuts Row */}
+      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+        {secondaryShortcuts.map((shortcut) => (
+          <DashboardShortcutTile
+            key={shortcut.id}
+            label={shortcut.label}
+            icon={shortcut.icon}
+            onClick={() => shortcut.route && navigate({ to: shortcut.route })}
+            comingSoon={shortcut.comingSoon}
+            size="large"
+            color={shortcut.color}
+          />
+        ))}
       </div>
 
-      {/* Footer */}
-      <footer className="text-center text-sm text-muted-foreground py-8 mt-8">
-        <p>© 2026. Built with ❤️ using <a href="https://caffeine.ai" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">caffeine.ai</a></p>
-      </footer>
+      {/* Promo Card */}
+      <DashboardPromoCard />
     </div>
   );
 }

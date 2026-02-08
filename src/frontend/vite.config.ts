@@ -16,7 +16,10 @@ export default defineConfig({
   define: {
     // Provide process.env shim for compatibility with code expecting it
     'process.env.II_URL': JSON.stringify(process.env.II_URL || 'https://identity.ic0.app'),
-    'process.env.II_DERIVATION_ORIGIN': JSON.stringify(process.env.II_DERIVATION_ORIGIN || undefined),
+    // Handle II_DERIVATION_ORIGIN: when unset, emit the literal `undefined` (not a string)
+    'process.env.II_DERIVATION_ORIGIN': process.env.II_DERIVATION_ORIGIN 
+      ? JSON.stringify(process.env.II_DERIVATION_ORIGIN) 
+      : 'undefined',
   },
   build: {
     outDir: 'dist',

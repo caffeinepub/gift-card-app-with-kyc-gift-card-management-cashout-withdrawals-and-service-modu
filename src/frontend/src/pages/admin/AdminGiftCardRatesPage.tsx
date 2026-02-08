@@ -91,7 +91,7 @@ export default function AdminGiftCardRatesPage() {
   };
 
   const calculateEffectiveRate = (ratePercentage: bigint) => {
-    return (Number(ratePercentage) * coinPriceIndex) / 100;
+    return (Number(ratePercentage) * Number(coinPriceIndex)) / 100;
   };
 
   return (

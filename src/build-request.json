@@ -1,78 +1,165 @@
 {
   "kind": "build_request",
-  "title": "Restrict withdrawal processing window to 5–20 minutes and update UI messaging",
+  "title": "Add secure trading chat with Verified Trader badge and in-chat escrow",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Enforce a backend rule that a pending withdrawal request can only be marked as #paid within a 5 to 20 minute window after it was created.",
+      "text": "Implement a secure, authenticated 1:1 trading chat system in the backend, where only the two chat participants (and admins) can create/read messages for a given chat thread.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "Allow the withdrawal to be made between five minutes to 20 minutes"
+          "👉 Add secure trading chat"
         ]
       },
       "acceptanceCriteria": [
-        "When an admin calls updateWithdrawalStatus(requestId, #paid) less than 5 minutes after the withdrawal request's created timestamp, the backend traps with a clear English error message.",
-        "When an admin calls updateWithdrawalStatus(requestId, #paid) more than 20 minutes after the withdrawal request's created timestamp, the backend traps with a clear English error message.",
-        "When an admin calls updateWithdrawalStatus(requestId, #paid) between 5 minutes and 20 minutes (inclusive) after created, the update succeeds and processedAt/processedBy are set as currently implemented.",
-        "Rejecting a withdrawal (#rejected) is not blocked by the 5–20 minute window (still allowed for pending requests).",
-        "The rule is enforced server-side in backend/main.mo (not only in the frontend)."
+        "Backend exposes canister methods to: create (or fetch existing) 1:1 chat thread between two principals, send a message into a thread, and list messages for a thread.",
+        "All chat methods require the caller to have the #user permission (consistent with existing authorization checks).",
+        "When listing messages for a thread, the backend rejects/traps if the caller is not a participant in that thread (or an admin).",
+        "Messages include: unique id, thread id, sender principal, text content, and timestamp.",
+        "Chat state is persisted in canister state (not frontend localStorage)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Update withdrawal-related user-facing text and timing indicators to reflect a 5–20 minute processing window in both the Withdrawals page and the Send to Bank review screen.",
-      "target": "frontend",
+      "text": "Add a transaction escrow model in the backend that is created and managed from within a chat thread, including escrow lifecycle actions (create, fund, release, cancel) with strict authorization based on chat participants.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "Allow the withdrawal to be made between five minutes to 20 minutes"
+          "👉 Add transaction escrow inside chat"
         ]
       },
       "acceptanceCriteria": [
-        "In frontend/src/components/crypto/sheets/SendToBankSheet.tsx, replace the review-screen info text 'within 1-3 business days' with 'within 5–20 minutes'.",
-        "In frontend/src/pages/withdrawals/WithdrawalsPage.tsx, replace 'Typical processing time: ~10 minutes' with 'Typical processing time: 5–20 minutes'.",
-        "In frontend/src/pages/withdrawals/WithdrawalsPage.tsx, update the pending status helper so it no longer assumes a fixed 10-minute countdown; it should reflect the 5–20 minute window (e.g., show queued/estimated before 5 minutes and show time remaining until 20 minutes, then 'Processing...' after 20 minutes).",
-        "All updated text is in English and matches the 5–20 minute window consistently across these screens."
+        "Backend exposes canister methods to: create an escrow attached to a chat thread, fund an escrow, release escrow to the counterparty, and cancel escrow according to escrow state rules.",
+        "Only chat participants can create/fund/release/cancel escrows for that chat thread.",
+        "Escrow records include: unique id, thread id, buyer principal, seller principal, amount (Nat), status, createdAt timestamp, and updatedAt timestamp.",
+        "Escrow state transitions are validated server-side (e.g., cannot release an unfunded escrow; cannot fund a released/canceled escrow).",
+        "Escrow actions are recorded in backend state and can be listed/queryable by thread (for UI rendering)."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Surface the backend 5–20 minute processing-window error to admins when approving a withdrawal so the admin UI shows a helpful toast message instead of a generic failure.",
-      "target": "frontend",
+      "text": "Expose a backend query that allows the frontend to determine whether a given principal should display the “Verified Trader” badge, using the app’s verification source of truth (existing KYC verification).",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "Allow the withdrawal to be made between five minutes to 20 minutes"
+          "👉 Add “Verified Trader” badge"
         ]
       },
       "acceptanceCriteria": [
-        "In frontend/src/pages/admin/AdminWithdrawalsPage.tsx, if approval fails due to the backend window rule, the toast displays the backend-provided error message (or a clear fallback) indicating the 5–20 minute window.",
-        "If approval fails for any other reason, existing error handling behavior remains intact.",
-        "Reject action behavior remains unchanged."
+        "Backend provides a query method that takes a user Principal and returns a boolean indicating whether that user is KYC-verified (aligned with existing KYC logic).",
+        "Query is callable by authenticated users (and/or admins) and does not expose KYC documents or sensitive fields—only the boolean verification status.",
+        "The logic used matches the backend’s latest-record KYC verification rules (consistent with `isCallerKycVerified`)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Add frontend pages/components for a trading chat experience: thread creation (select a counterparty by Principal text), thread list, and chat detail view with message composer and message list.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "👉 Add secure trading chat"
+        ]
+      },
+      "acceptanceCriteria": [
+        "App navigation includes an entry point to the Trading Chat section from an existing sensible location (e.g., dashboard shortcut tile and/or sidebar).",
+        "Users can start a new chat by entering the counterparty Principal (Text) and opening the thread.",
+        "Chat detail view renders message history and allows sending messages.",
+        "Because realtime transport is not available, the message list updates via polling (e.g., React Query refetch interval) and manual refresh control.",
+        "All user-facing text is in English."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Display a “Verified Trader” badge in the chat UI wherever a participant identity is shown (e.g., header/participant chip), based on verification status fetched from the backend.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "👉 Add “Verified Trader” badge"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The chat header (or participant section) shows the label “Verified Trader” with a distinct badge style when the relevant participant is verified.",
+        "If the verification status is loading, the UI shows a loading state (skeleton or subtle placeholder).",
+        "If the user is not verified, the badge is not shown (or shows an explicit “Not verified” only if there is already a pattern for that in the app’s UI)."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Implement in-chat escrow UI inside the chat detail view: create escrow, view escrow status timeline, and perform allowed actions (fund, release, cancel) with clear confirmations and error handling.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "👉 Add transaction escrow inside chat"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can create an escrow from within the chat by entering an amount and selecting buyer/seller role if required by the backend model.",
+        "Chat shows an escrow card/panel with current status (e.g., Created, Funded, Released, Canceled) and key details (amount, parties).",
+        "UI only enables actions that are valid for the current escrow state and for the current caller’s role/permissions.",
+        "Actions show confirmation dialogs and success/failure toasts with readable English error messages (using existing error-message extraction utilities if present)."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Apply a coherent, distinctive visual theme for the new Trading Chat + Escrow UI and enforce it consistently across the new pages/components (without changing app functionality).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Theme uses a consistent palette, typography, and spacing for chat bubbles, badges, and escrow cards.",
+        "Theme avoids default-looking styles and does not use a blue+purple primary combination unless the existing app already enforces it.",
+        "New UI elements match the existing Tailwind + shadcn composition patterns (do not edit immutable shadcn sources; compose components instead)."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
-    "Do not edit any files under frontend/src/components/ui or other immutablePaths listed in SYSTEM_CONTEXT; compose existing UI components instead.",
-    "Use English for any user-facing text related to this change."
+    "Backend must remain a single Motoko actor in `backend/main.mo` (no additional backend services).",
+    "Do not edit frontend files in immutablePaths (compose shadcn UI components instead of modifying them).",
+    "Do not implement realtime transport (no WebSockets); chat updates must work via polling and/or manual refresh."
   ],
   "nonGoals": [
-    "Do not add new authentication providers or third-party services.",
-    "Do not implement real-time processing/streaming updates (no websockets/push).",
-    "Do not change withdrawal amount calculations, KYC rules, or payout method ownership checks beyond the requested timing-window behavior."
+    "Email/password authentication (only Internet Identity is supported on this platform).",
+    "End-to-end encrypted messaging guarantees (beyond standard authenticated access control).",
+    "On-chain token escrow or external payment processor integration for escrow funding/release."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [
+      "Differentiate the app with secure trading chat, verified trader identity signals, and in-chat escrow."
+    ],
+    "goalsToRemove": [],
+    "preferencesToAdd": [
+      "Use English for all user-facing UI copy."
+    ],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

@@ -11,6 +11,10 @@ import { Loader2, CheckCircle2, Clock, XCircle, AlertCircle, ArrowLeft } from 'l
 import { toast } from 'sonner';
 import { ExternalBlob } from '../backend';
 import DocumentSignatureOverlay from '../components/kyc/DocumentSignatureOverlay';
+import { getLatestKycRecord } from '../utils/kycOrdering';
+import { extractBackendErrorMessage } from '../utils/backendErrorMessage';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
 export default function KycPage() {
   const navigate = useNavigate();
@@ -23,7 +27,8 @@ export default function KycPage() {
   const [hasSignature, setHasSignature] = useState(false);
   const exportSignatureRef = useRef<(() => Promise<Blob | null>) | null>(null);
 
-  const latestRecord = kycRecords && kycRecords.length > 0 ? kycRecords[kycRecords.length - 1] : null;
+  // Use deterministic ordering to get the latest record
+  const latestRecord = kycRecords ? getLatestKycRecord(kycRecords) : null;
   const latestStatus = latestRecord?.status.__kind__;
 
   const canSubmit = !latestStatus || latestStatus === 'rejected' || latestStatus === 'expired';
@@ -32,9 +37,17 @@ export default function KycPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file size (10MB max)
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('File size exceeds 10MB limit. Please choose a smaller file.');
+      e.target.value = ''; // Clear the input
+      return;
+    }
+
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
     if (!validTypes.includes(file.type)) {
       toast.error('Invalid file type. Please upload a JPEG, PNG, or PDF file.');
+      e.target.value = ''; // Clear the input
       return;
     }
 
@@ -50,6 +63,7 @@ export default function KycPage() {
       return;
     }
 
+    // For images, require signature
     if (documentFile.type.startsWith('image/') && !hasSignature) {
       toast.error('Please sign the document before submitting');
       return;
@@ -59,6 +73,7 @@ export default function KycPage() {
       const fileBytes = await documentFile.arrayBuffer();
       const documentBlob = ExternalBlob.fromBytes(new Uint8Array(fileBytes));
 
+      // Prepare signature: explicit null for PDFs, ExternalBlob for signed images
       let signatureBlob: ExternalBlob | null = null;
       if (documentFile.type.startsWith('image/') && exportSignatureRef.current) {
         const signatureData = await exportSignatureRef.current();
@@ -72,17 +87,24 @@ export default function KycPage() {
         documentType,
         idNumber,
         documentUri: documentBlob.getDirectURL(),
-        signature: signatureBlob,
+        signature: signatureBlob, // Always pass explicit value (ExternalBlob or null)
       });
 
       toast.success('KYC document submitted successfully');
+      
+      // Reset form state
       setDocumentType('');
       setIdNumber('');
       setDocumentFile(null);
       setHasSignature(false);
+      
+      // Clear file input
+      const fileInput = document.getElementById('document') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
     } catch (error: any) {
       console.error('KYC submission error:', error);
-      toast.error(error.message || 'Failed to submit KYC document');
+      const errorMessage = extractBackendErrorMessage(error, 'Failed to submit KYC document');
+      toast.error(errorMessage);
     }
   };
 
@@ -239,7 +261,7 @@ export default function KycPage() {
             <div className="space-y-3">
               {kycRecords.map((record) => (
                 <div
-                  key={record.id}
+                  key={record.id.toString()}
                   className="flex items-center justify-between p-3 border rounded-lg"
                 >
                   <div>

@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,7 +16,8 @@ import {
   DollarSign,
   Bell,
   Calendar,
-  Smartphone
+  Smartphone,
+  MessageSquare
 } from 'lucide-react';
 import MobileBottomNavDock from './MobileBottomNavDock';
 import { useRateAlertsEngine } from '../../hooks/useRateAlertsEngine';
@@ -46,6 +47,7 @@ export default function AppShell({ children }: AppShellProps) {
     { icon: CreditCard, label: 'Gift Cards', path: '/gift-cards' },
     { icon: Wallet, label: 'Crypto Wallet', path: '/services/crypto' },
     { icon: DollarSign, label: 'Withdrawals', path: '/withdrawals' },
+    { icon: MessageSquare, label: 'Trading Chat', path: '/trading-chat' },
     { icon: Bell, label: 'Rate Alerts', path: '/rate-alerts' },
     { icon: Calendar, label: 'Rate Calendar', path: '/rate-calendar' },
     { icon: Smartphone, label: 'eSIM', path: '/services/esim' },
@@ -75,7 +77,7 @@ export default function AppShell({ children }: AppShellProps) {
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
               return (
                 <button
                   key={item.path}
@@ -129,7 +131,7 @@ export default function AppShell({ children }: AppShellProps) {
               <nav className="flex flex-col space-y-1 mt-6">
                 {navItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
+                  const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
                   return (
                     <button
                       key={item.path}

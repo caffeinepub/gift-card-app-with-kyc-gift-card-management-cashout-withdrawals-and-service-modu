@@ -5,10 +5,10 @@ import { Skeleton } from '../ui/skeleton';
 import { useMarketRateIndex } from '../../hooks/useMarketRate';
 
 interface CryptoDashboardHeaderProps {
-  balance: string;
+  realMoneyBalance: string;
 }
 
-export default function CryptoDashboardHeader({ balance }: CryptoDashboardHeaderProps) {
+export default function CryptoDashboardHeader({ realMoneyBalance }: CryptoDashboardHeaderProps) {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const { data: marketRate, isLoading: marketRateLoading, isError } = useMarketRateIndex();
 
@@ -62,10 +62,10 @@ export default function CryptoDashboardHeader({ balance }: CryptoDashboardHeader
         </div>
 
         {/* Balance Section */}
-        <p className="text-sm text-white/70 mb-2 font-medium">Total Balance</p>
+        <p className="text-sm text-white/70 mb-2 font-medium">Real money</p>
         <div className="flex items-center gap-3">
           <h2 className="text-4xl font-bold text-white tracking-tight">
-            {balanceVisible ? balance : '••••••'}
+            {balanceVisible ? realMoneyBalance : '••••••'}
           </h2>
           <button
             onClick={() => setBalanceVisible(!balanceVisible)}

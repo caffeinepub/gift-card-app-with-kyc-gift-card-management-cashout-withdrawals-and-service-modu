@@ -23,6 +23,7 @@ export interface WithdrawalConfig {
     minTimeToPaidStatus: Time;
     maxTimeToPaidStatus: Time;
 }
+export type ChatId = bigint;
 export interface PayoutMethod {
     id: PayoutMethodId;
     created: Time;
@@ -58,6 +59,13 @@ export interface RateQuote {
     ratePercentage: bigint;
     brandName: string;
 }
+export interface Message {
+    content: string;
+    sender: Principal;
+    timestamp: Time;
+    chatId: ChatId;
+}
+export type EscrowId = bigint;
 export interface WithdrawalRequest {
     id: WithdrawalRequestId;
     status: WithdrawalStatus;
@@ -101,11 +109,16 @@ export enum WithdrawalStatus {
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     calculatePayout(quoteId: bigint, amount: bigint): Promise<bigint>;
+    cancelEscrow(escrowId: EscrowId): Promise<void>;
+    createChat(partner: Principal): Promise<ChatId>;
+    createEscrow(chatId: ChatId, amount: bigint, seller: Principal): Promise<EscrowId>;
     createGiftCardRate(brandName: string, ratePercentage: bigint): Promise<GiftCardRateId>;
     createPayoutMethod(bankName: string, accountNumber: string, accountName: string): Promise<PayoutMethodId>;
     createWithdrawalRequest(payoutMethodId: PayoutMethodId, amount: bigint): Promise<WithdrawalRequestId>;
+    fundEscrow(escrowId: EscrowId): Promise<void>;
     generateRateQuote(brandName: string, ratePercentage: bigint): Promise<RateQuote>;
     getActiveRateForBrand(brandName: string): Promise<bigint | null>;
+    getAllChatMessages(chatId: ChatId): Promise<Array<Message>>;
     getAllRates(): Promise<Array<GiftCardRate>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -118,13 +131,16 @@ export interface backendInterface {
     getUserKycRecords(user: Principal): Promise<Array<KycRecord>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     getWithdrawalConfig(): Promise<WithdrawalConfig>;
+    hasVerifiedTraderBadge(user: Principal): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     isCallerKycVerified(): Promise<boolean>;
     listActiveRates(): Promise<Array<GiftCardRate>>;
     listPendingWithdrawals(): Promise<Array<WithdrawalRequest>>;
     listUserPayoutMethods(): Promise<Array<PayoutMethod>>;
     listUserWithdrawals(): Promise<Array<WithdrawalRequest>>;
+    releaseEscrow(escrowId: EscrowId): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    sendMessage(chatId: ChatId, content: string): Promise<void>;
     setCoinPriceIndex(priceIndex: bigint): Promise<void>;
     setGiftCardRateStatus(rateId: GiftCardRateId, status: GiftCardRateStatus): Promise<void>;
     setWithdrawalConfig(minTime: Time, maxTime: Time): Promise<void>;

@@ -10,10 +10,12 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export type ChatId = bigint;
 export type DocumentType = { 'votersID' : null } |
   { 'passport' : null } |
   { 'nationalID' : null } |
   { 'driversLicense' : null };
+export type EscrowId = bigint;
 export type ExternalBlob = Uint8Array;
 export interface GiftCardRate {
   'id' : GiftCardRateId,
@@ -43,6 +45,12 @@ export type KycStatus = { 'verified' : null } |
   { 'pending' : null } |
   { 'unverified' : null } |
   { 'rejected' : null };
+export interface Message {
+  'content' : string,
+  'sender' : Principal,
+  'timestamp' : Time,
+  'chatId' : ChatId,
+}
 export interface PayoutMethod {
   'id' : PayoutMethodId,
   'created' : Time,
@@ -113,14 +121,19 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'calculatePayout' : ActorMethod<[bigint, bigint], bigint>,
+  'cancelEscrow' : ActorMethod<[EscrowId], undefined>,
+  'createChat' : ActorMethod<[Principal], ChatId>,
+  'createEscrow' : ActorMethod<[ChatId, bigint, Principal], EscrowId>,
   'createGiftCardRate' : ActorMethod<[string, bigint], GiftCardRateId>,
   'createPayoutMethod' : ActorMethod<[string, string, string], PayoutMethodId>,
   'createWithdrawalRequest' : ActorMethod<
     [PayoutMethodId, bigint],
     WithdrawalRequestId
   >,
+  'fundEscrow' : ActorMethod<[EscrowId], undefined>,
   'generateRateQuote' : ActorMethod<[string, bigint], RateQuote>,
   'getActiveRateForBrand' : ActorMethod<[string], [] | [bigint]>,
+  'getAllChatMessages' : ActorMethod<[ChatId], Array<Message>>,
   'getAllRates' : ActorMethod<[], Array<GiftCardRate>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
@@ -133,13 +146,16 @@ export interface _SERVICE {
   'getUserKycRecords' : ActorMethod<[Principal], Array<KycRecord>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'getWithdrawalConfig' : ActorMethod<[], WithdrawalConfig>,
+  'hasVerifiedTraderBadge' : ActorMethod<[Principal], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isCallerKycVerified' : ActorMethod<[], boolean>,
   'listActiveRates' : ActorMethod<[], Array<GiftCardRate>>,
   'listPendingWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
   'listUserPayoutMethods' : ActorMethod<[], Array<PayoutMethod>>,
   'listUserWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
+  'releaseEscrow' : ActorMethod<[EscrowId], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'sendMessage' : ActorMethod<[ChatId, string], undefined>,
   'setCoinPriceIndex' : ActorMethod<[bigint], undefined>,
   'setGiftCardRateStatus' : ActorMethod<
     [GiftCardRateId, { 'active' : null } | { 'inactive' : null }],

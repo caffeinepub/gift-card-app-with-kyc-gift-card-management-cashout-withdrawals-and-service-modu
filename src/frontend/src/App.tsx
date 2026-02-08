@@ -29,6 +29,8 @@ import CableTvBillsPage from './pages/services/CableTvBillsPage';
 import EsimPage from './pages/services/EsimPage';
 import RateAlertsPage from './pages/RateAlertsPage';
 import RateCalendarPage from './pages/RateCalendarPage';
+import TradingChatThreadsPage from './pages/trading-chat/TradingChatThreadsPage';
+import TradingChatDetailPage from './pages/trading-chat/TradingChatDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -219,6 +221,18 @@ const rateCalendarRoute = createRoute({
   component: RateCalendarPage,
 });
 
+const tradingChatThreadsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/trading-chat',
+  component: TradingChatThreadsPage,
+});
+
+const tradingChatDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/trading-chat/$chatId',
+  component: TradingChatDetailPage,
+});
+
 const adminKycRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/kyc',
@@ -304,6 +318,8 @@ const routeTree = rootRoute.addChildren([
   historyRoute,
   rateAlertsRoute,
   rateCalendarRoute,
+  tradingChatThreadsRoute,
+  tradingChatDetailRoute,
   adminKycRoute,
   adminWithdrawalsRoute,
   adminGiftCardRatesRoute,

@@ -1,24 +1,42 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
+  "summary": "Building a Nigeria-focused betting/trading web app with user accounts, payments (data and bills), and differentiated trading features like secure chat, verified badges, and in-chat escrow.",
   "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "User reports they can’t log in to their account (login failure details unknown)."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-update-withdrawal-related-user-facing-text-and-timing-indicators-to-reflect-a-5-20-minute-processing-window-in-both-the-withdrawals-page-and-the-send-to-bank-review-screen",
-      "title": "Update withdrawal-related user-facing text and timing indicators to reflect a 5–20 minute processing window in both the Withdrawals page and the Send to Bank review screen.",
+      "id": "feature-add-frontend-pages-components-for-a-trading-chat-experience-thread-creation-select-a-counterparty-by-principal-text-thread-list-and-chat-detail-view-with-message-composer-and-message-list",
+      "title": "Add frontend pages/components for a trading chat experience: thread creation (select a counterparty by Principal text), thread list, and chat detail view with message composer and message list.",
       "reqIds": [
-        "REQ-2"
+        "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-surface-the-backend-5-20-minute-processing-window-error-to-admins-when-approving-a-withdrawal-so-the-admin-ui-shows-a-helpful-toast-message-instead-of-a-generic-failure",
-      "title": "Surface the backend 5–20 minute processing-window error to admins when approving a withdrawal so the admin UI shows a helpful toast message instead of a generic failure.",
+      "id": "feature-display-a-verified-trader-badge-in-the-chat-ui-wherever-a-participant-identity-is-shown-e-g-header-participant-chip-based-on-verification-status-fetched-from-the-backend",
+      "title": "Display a “Verified Trader” badge in the chat UI wherever a participant identity is shown (e.g., header/participant chip), based on verification status fetched from the backend.",
       "reqIds": [
-        "REQ-3"
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-in-chat-escrow-ui-inside-the-chat-detail-view-create-escrow-view-escrow-status-timeline-and-perform-allowed-actions-fund-release-cancel-with-clear-confirmations-and-error-handling",
+      "title": "Implement in-chat escrow UI inside the chat detail view: create escrow, view escrow status timeline, and perform allowed actions (fund, release, cancel) with clear confirmations and error handling.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-coherent-distinctive-visual-theme-for-the-new-trading-chat-escrow-ui-and-enforce-it-consistently-across-the-new-pages-components-without-changing-app-functionality",
+      "title": "Apply a coherent, distinctive visual theme for the new Trading Chat + Escrow UI and enforce it consistently across the new pages/components (without changing app functionality).",
+      "reqIds": [
+        "REQ-7"
       ],
       "version": 1
     }
@@ -26,20 +44,66 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Restrict/allow withdrawals to be made only within a 5 to 20 minute window",
+      "summary": "Allow website account creation with email and password",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Enforce a backend rule that a pending withdrawal request can only be marked as #paid within a 5 to 20 minute window after it was created.",
+      "summary": "Support buying mobile data across networks in Nigeria",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Add bills payment functionality",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Add secure trading chat",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Add “Verified Trader” badge",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Add transaction escrow inside chat",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Implement a secure, authenticated 1:1 trading chat system in the backend, where only the two chat participants (and admins) can create/read messages for a given chat thread.",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Add a transaction escrow model in the backend that is created and managed from within a chat thread, including escrow lifecycle actions (create, fund, release, cancel) with strict authorization based on chat participants.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Expose a backend query that allows the frontend to determine whether a given principal should display the “Verified Trader” badge, using the app’s verification source of truth (existing KYC verification).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
     }
   ],
-  "projectName": "Restrict withdrawal processing window to 5–20 minutes and update UI messaging",
+  "projectName": "Add secure trading chat with Verified Trader badge and in-chat escrow",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

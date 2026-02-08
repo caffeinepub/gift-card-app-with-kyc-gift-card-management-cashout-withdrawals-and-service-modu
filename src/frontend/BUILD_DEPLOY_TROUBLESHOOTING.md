@@ -58,8 +58,11 @@ The application uses Internet Identity for authentication. The following environ
   - Set in `.env` file or as environment variable
 
 - **`II_DERIVATION_ORIGIN`** (optional): Alternative origin for Internet Identity derivation
-  - Only needed for specific deployment scenarios
+  - Only needed for specific deployment scenarios (e.g., custom domains)
+  - Can be omitted for most deployments
   - Consult Internet Identity documentation for usage
 
 ### Example `.env` file:
+
+Create a `.env` file in the `frontend/` directory with the following content:
 

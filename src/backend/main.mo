@@ -5,13 +5,14 @@ import Principal "mo:core/Principal";
 import Time "mo:core/Time";
 import Nat "mo:core/Nat";
 import Int "mo:core/Int";
-
+import Array "mo:core/Array";
+import Text "mo:core/Text";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
 import AccessControl "authorization/access-control";
-
 import Migration "migration";
+
 (with migration = Migration.run)
 actor {
   public type UserProfile = {
@@ -22,6 +23,8 @@ actor {
   public type WithdrawalRequestId = Nat;
   public type KycRecordId = Nat;
   public type GiftCardRateId = Nat;
+  public type ChatId = Nat;
+  public type EscrowId = Nat;
 
   type DocumentType = {
     #driversLicense;
@@ -104,11 +107,36 @@ actor {
     maxTimeToPaidStatus : Time.Time;
   };
 
+  public type Message = {
+    sender : Principal;
+    content : Text;
+    timestamp : Time.Time;
+    chatId : ChatId;
+  };
+
+  public type EscrowStatus = {
+    #created;
+    #funded;
+    #released;
+    #cancelled;
+  };
+
+  public type Escrow = {
+    escrowId : EscrowId;
+    buyer : Principal;
+    seller : Principal;
+    amount : Nat;
+    status : EscrowStatus;
+    chatId : ChatId;
+  };
+
   var _nextKycRecordId : KycRecordId = 0;
   var _nextPayoutMethodId : PayoutMethodId = 0;
   var _nextWithdrawalRequestId : WithdrawalRequestId = 0;
   var _nextGiftCardRateId : GiftCardRateId = 0;
-  var _nextRateQuoteId : Nat = 0;
+  var _nextGiftCardRateQuoteId : Nat = 0;
+  var _nextChatId : Nat = 0;
+  var _nextEscrowId : Nat = 0;
 
   var _coinPriceIndex : Int = 100;
 
@@ -117,6 +145,9 @@ actor {
     maxTimeToPaidStatus = 1_200_000_000_000;
   };
 
+  let chatHistory = Map.empty<ChatId, [Message]>();
+  let chatParticipants = Map.empty<ChatId, (Principal, Principal)>();
+  let escrowData = Map.empty<EscrowId, Escrow>();
   let rateQuotes = Map.empty<Nat, RateQuote>();
   let userProfiles = Map.empty<Principal, UserProfile>();
   let payoutMethods = Map.empty<PayoutMethodId, PayoutMethod>();
@@ -128,7 +159,150 @@ actor {
   include MixinAuthorization(accessControlState);
   include MixinStorage();
 
-  // KYC
+  public shared ({ caller }) func createChat(partner : Principal) : async ChatId {
+    if (not canChatWithUser(caller, partner)) {
+      Runtime.trap("Unauthorized: Cannot open chat with this user");
+    };
+
+    let chatId = _nextChatId;
+    _nextChatId += 1;
+
+    chatParticipants.add(chatId, (caller, partner));
+    chatHistory.add(chatId, []);
+    chatId;
+  };
+
+  func verifyChatParticipant(caller : Principal, chatId : ChatId) {
+    let chat = switch (chatParticipants.get(chatId)) {
+      case (null) { Runtime.trap("Chat does not exist") };
+      case (?participants) { participants };
+    };
+    if (AccessControl.isAdmin(accessControlState, caller)) {
+      return;
+    };
+    if (caller != chat.0 and caller != chat.1) {
+      Runtime.trap("Unauthorized: Not a participant in this chat.");
+    };
+  };
+
+  public shared ({ caller }) func sendMessage(chatId : ChatId, content : Text) : async () {
+    verifyChatParticipant(caller, chatId);
+
+    switch (chatHistory.get(chatId)) {
+      case (null) { Runtime.trap("Chat does not exist") };
+      case (?_) { () };
+    };
+
+    let message : Message = {
+      sender = caller;
+      content;
+      timestamp = Time.now();
+      chatId;
+    };
+
+    let reversedHistory = switch (chatHistory.get(chatId)) {
+      case (null) { Runtime.trap("Chat does not exist") };
+      case (?reversedHistory) {
+        var newHistory = [message];
+        if (reversedHistory.size() > 0) {
+          newHistory := [message].concat(reversedHistory);
+        };
+        newHistory;
+      };
+    };
+    chatHistory.add(chatId, reversedHistory);
+  };
+
+  public shared ({ caller }) func getAllChatMessages(chatId : ChatId) : async [Message] {
+    verifyChatParticipant(caller, chatId);
+    switch (chatHistory.get(chatId)) {
+      case (null) { [] };
+      case (?messages) { messages };
+    };
+  };
+
+  public shared ({ caller }) func createEscrow(chatId : ChatId, amount : Nat, seller : Principal) : async EscrowId {
+    verifyChatParticipant(caller, chatId);
+
+    let chat = switch (chatParticipants.get(chatId)) {
+      case (null) { Runtime.trap("Chat does not exist") };
+      case (?participants) { participants };
+    };
+
+    if (seller != chat.0 and seller != chat.1) {
+      Runtime.trap("Ordered seller is not a participant in this chat");
+    };
+
+    if (seller == caller) {
+      Runtime.trap("Cannot create an escrow where the buyer is also the seller");
+    };
+
+    let escrowId = _nextEscrowId;
+    _nextEscrowId += 1;
+
+    let escrow : Escrow = {
+      escrowId;
+      buyer = caller;
+      seller;
+      amount;
+      status = #created;
+      chatId;
+    };
+
+    escrowData.add(escrowId, escrow);
+    escrowId;
+  };
+
+  public shared ({ caller }) func fundEscrow(escrowId : EscrowId) : async () {
+    let escrow = switch (escrowData.get(escrowId)) {
+      case (null) { Runtime.trap("Escrow does not exist") };
+      case (?escrow) { escrow };
+    };
+
+    if (escrow.buyer != caller) {
+      Runtime.trap("Unauthorized: Only the buyer can fund the escrow");
+    };
+    escrowData.add(escrowId, { escrow with status = #funded });
+  };
+
+  public shared ({ caller }) func releaseEscrow(escrowId : EscrowId) : async () {
+    let escrow = switch (escrowData.get(escrowId)) {
+      case (null) { Runtime.trap("Escrow does not exist") };
+      case (?escrow) { escrow };
+    };
+
+    if (escrow.status != #funded) {
+      Runtime.trap("Invalid escrow. Cannot release a currently unfunded escrow");
+    };
+
+    if (caller != escrow.buyer) {
+      Runtime.trap("Unauthorized: Only the buyer can release the escrow");
+    };
+
+    escrowData.add(escrowId, { escrow with status = #released });
+  };
+
+  public shared ({ caller }) func cancelEscrow(escrowId : EscrowId) : async () {
+    let escrow = switch (escrowData.get(escrowId)) {
+      case (null) { Runtime.trap("Escrow does not exist") };
+      case (?escrow) { escrow };
+    };
+
+    if (escrow.status != #created) {
+      Runtime.trap("Invalid escrow. Only created escrows can be canceled");
+    };
+
+    if (caller != escrow.seller and caller != escrow.buyer) {
+      Runtime.trap("Unauthorized: Cancel not permitted");
+    };
+
+    escrowData.add(escrowId, { escrow with status = #cancelled });
+  };
+
+  public query ({ caller }) func hasVerifiedTraderBadge(user : Principal) : async Bool {
+    isUserKycVerified(user);
+  };
+
   public shared ({ caller }) func submitKycRecord(documentType : DocumentType, idNumber : Text, documentURI : Text, signature : ?Storage.ExternalBlob) : async KycRecordId {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can submit KYC records");
@@ -207,31 +381,45 @@ actor {
     kycRecords.add(recordId, record);
   };
 
-  // KYC VERIFICATION HELPER
+  func findLatestKycRecord(records : [KycRecord]) : ?KycRecord {
+    if (records.size() == 0) { return null };
+    var newest = records[0];
+    for (record in records.values()) {
+      if (record.submittedAt > newest.submittedAt) {
+        newest := record;
+      } else if (record.submittedAt == newest.submittedAt) {
+        if (Nat.compare(record.id, newest.id) == #greater) {
+          newest := record;
+        };
+      };
+    };
+    ?newest;
+  };
+
   func isUserKycVerified(user : Principal) : Bool {
     let userKycRecords = kycRecords.values().filter(
       func(record) { record.user == user }
     ).toArray();
 
-    if (userKycRecords.size() <= 0) {
-      return false;
-    };
-
-    let latestRecord = userKycRecords.foldLeft(?userKycRecords[0], func(acc, record) { ?record });
-
-    switch (latestRecord) {
+    switch (findLatestKycRecord(userKycRecords)) {
+      case (null) { false };
       case (?record) {
         switch (record.status) {
           case (#verified) { true };
           case (_) { false };
         };
       };
-      case (null) { false };
     };
   };
 
-  // NEW ENDPOINT: Returns whether authenticated user currently has a valid KYC record
+  func canChatWithUser(caller : Principal, other : Principal) : Bool {
+    isUserKycVerified(caller) and isUserKycVerified(other);
+  };
+
   public query ({ caller }) func isCallerKycVerified() : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can check KYC verification status");
+    };
     isUserKycVerified(caller);
   };
 
@@ -512,8 +700,8 @@ actor {
       Runtime.trap("Unauthorized: Only users can generate rate quotes");
     };
 
-    let quoteId = _nextRateQuoteId;
-    _nextRateQuoteId += 1;
+    let quoteId = _nextGiftCardRateQuoteId;
+    _nextGiftCardRateQuoteId += 1;
 
     let effectiveRate = (ratePercentage * _coinPriceIndex.toNat()) / 100;
 

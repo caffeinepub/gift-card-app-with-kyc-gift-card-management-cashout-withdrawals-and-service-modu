@@ -26,6 +26,7 @@ import type {
 } from '../backend';
 import { DocumentType, KycStatus as BackendKycStatusEnum, GiftCardRateStatus } from '../backend';
 import { Principal } from '@dfinity/principal';
+import { sortKycRecordsByNewest } from '../utils/kycOrdering';
 
 // Note: ExternalBlob is still imported from backend as it's part of blob-storage
 // All other types are now local since backend only provides authorization
@@ -218,11 +219,7 @@ export function useCreatePayoutMethod() {
   return useMutation({
     mutationFn: async (data: { bankName: string; accountName: string; accountNumber: string }) => {
       if (!actor) throw new Error('Actor not available');
-      const methodId = await actor.createPayoutMethod(
-        data.bankName,
-        data.accountNumber,
-        data.accountName
-      );
+      const methodId = await actor.createPayoutMethod(data.bankName, data.accountNumber, data.accountName);
       return methodId.toString();
     },
     onSuccess: () => {
@@ -248,19 +245,16 @@ export function useGetWithdrawals() {
         user: req.owner,
         payoutMethodId: req.payoutMethodId.toString(),
         amount: req.amount,
-        currency: { __kind__: 'ngn' as const, ngn: null },
+        currency: { __kind__: 'usd', usd: null } as Currency,
         status: mapBackendWithdrawalStatus(req.status),
         createdAt: req.created,
-        processedAt: req.processedAt ? req.processedAt : null,
-        processedBy: req.processedBy ? req.processedBy : null,
+        processedAt: req.processedAt || null,
+        processedBy: req.processedBy || null,
       }));
     },
     enabled: !!actor && !actorFetching,
   });
 }
-
-// Aliases for compatibility
-export const useGetWithdrawalRequests = useGetWithdrawals;
 
 export function useCreateWithdrawal() {
   const { actor } = useActor();
@@ -269,11 +263,7 @@ export function useCreateWithdrawal() {
   return useMutation({
     mutationFn: async (data: { payoutMethodId: string; amount: bigint }) => {
       if (!actor) throw new Error('Actor not available');
-      const requestId = await actor.createWithdrawalRequest(
-        BigInt(data.payoutMethodId),
-        data.amount
-      );
-      return requestId.toString();
+      await actor.createWithdrawalRequest(BigInt(data.payoutMethodId), data.amount);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['withdrawals'] });
@@ -284,7 +274,112 @@ export function useCreateWithdrawal() {
 // Alias for compatibility
 export const useRequestWithdrawal = useCreateWithdrawal;
 
-// Admin - Pending Withdrawals
+// KYC
+export function useGetKycStatus() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<KycRecord[]>({
+    queryKey: ['kycStatus'],
+    queryFn: async () => {
+      if (!actor) return [];
+      const backendRecords = await actor.getKycStatus();
+      const mapped: KycRecord[] = backendRecords.map((record: BackendKycRecord) => ({
+        id: record.id.toString(),
+        user: record.user,
+        documentType: mapBackendDocumentType(record.documentType),
+        idNumber: record.idNumber,
+        documentUri: record.documentURI,
+        uploadedBy: record.user,
+        status: mapBackendKycStatus(record.status),
+        signatureUri: record.signature ? record.signature.getDirectURL() : null,
+        submittedAt: record.submittedAt,
+        verifiedAt: record.verifiedAt || null,
+        externalId: null,
+      }));
+      // Apply deterministic sorting
+      return sortKycRecordsByNewest(mapped);
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useSubmitKyc() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      documentType: string;
+      idNumber: string;
+      documentUri: string;
+      signature: ExternalBlob | null;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      const backendDocType = mapFrontendDocumentType(data.documentType);
+      
+      // Always pass an explicit signature argument (null when not provided)
+      await actor.submitKycRecord(
+        backendDocType,
+        data.idNumber,
+        data.documentUri,
+        data.signature
+      );
+    },
+    onSuccess: () => {
+      // Invalidate both KYC status and verification check
+      queryClient.invalidateQueries({ queryKey: ['kycStatus'] });
+      queryClient.invalidateQueries({ queryKey: ['isCallerKycVerified'] });
+    },
+  });
+}
+
+// Admin KYC operations
+export function useGetUserKycRecords() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (userPrincipal: string) => {
+      if (!actor) throw new Error('Actor not available');
+      const principal = Principal.fromText(userPrincipal);
+      const backendRecords = await actor.getUserKycRecords(principal);
+      const mapped: KycRecord[] = backendRecords.map((record: BackendKycRecord) => ({
+        id: record.id.toString(),
+        user: record.user,
+        documentType: mapBackendDocumentType(record.documentType),
+        idNumber: record.idNumber,
+        documentUri: record.documentURI,
+        uploadedBy: record.user,
+        status: mapBackendKycStatus(record.status),
+        signatureUri: record.signature ? record.signature.getDirectURL() : null,
+        submittedAt: record.submittedAt,
+        verifiedAt: record.verifiedAt || null,
+        externalId: null,
+      }));
+      // Apply deterministic sorting
+      return sortKycRecordsByNewest(mapped);
+    },
+  });
+}
+
+// Alias for compatibility
+export const useAdminGetUserKycRecords = useGetUserKycRecords;
+
+export function useUpdateKycStatus() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (data: { recordId: string; status: KycStatus }) => {
+      if (!actor) throw new Error('Actor not available');
+      const backendStatus = mapFrontendKycStatus(data.status);
+      await actor.updateKycStatus(BigInt(data.recordId), backendStatus);
+    },
+  });
+}
+
+// Alias for compatibility
+export const useAdminUpdateKycStatus = useUpdateKycStatus;
+
+// Admin Withdrawals
 export function useGetPendingWithdrawals() {
   const { actor, isFetching: actorFetching } = useActor();
 
@@ -298,11 +393,11 @@ export function useGetPendingWithdrawals() {
         user: req.owner,
         payoutMethodId: req.payoutMethodId.toString(),
         amount: req.amount,
-        currency: { __kind__: 'ngn' as const, ngn: null },
+        currency: { __kind__: 'usd', usd: null } as Currency,
         status: mapBackendWithdrawalStatus(req.status),
         createdAt: req.created,
-        processedAt: req.processedAt ? req.processedAt : null,
-        processedBy: req.processedBy ? req.processedBy : null,
+        processedAt: req.processedAt || null,
+        processedBy: req.processedBy || null,
       }));
     },
     enabled: !!actor && !actorFetching,
@@ -319,10 +414,8 @@ export function useUpdateWithdrawalStatus() {
   return useMutation({
     mutationFn: async (data: { requestId: string; status: Variant_paid_rejected }) => {
       if (!actor) throw new Error('Actor not available');
-      await actor.updateWithdrawalStatus(
-        BigInt(data.requestId),
-        mapFrontendStatusToBackend(data.status)
-      );
+      const backendStatus = mapFrontendStatusToBackend(data.status);
+      await actor.updateWithdrawalStatus(BigInt(data.requestId), backendStatus);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pendingWithdrawals'] });
@@ -334,114 +427,7 @@ export function useUpdateWithdrawalStatus() {
 // Alias for compatibility
 export const useAdminUpdateWithdrawalStatus = useUpdateWithdrawalStatus;
 
-// KYC
-export function useGetKycStatus() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<KycRecord[]>({
-    queryKey: ['kycStatus'],
-    queryFn: async () => {
-      if (!actor) return [];
-      const backendRecords = await actor.getKycStatus();
-      return backendRecords.map((record: BackendKycRecord) => ({
-        id: record.id.toString(),
-        documentType: mapBackendDocumentType(record.documentType),
-        idNumber: record.idNumber,
-        documentUri: record.documentURI,
-        signatureUri: record.signature ? record.signature.getDirectURL() : undefined,
-        uploadedBy: record.user,
-        status: mapBackendKycStatus(record.status),
-        submittedAt: record.submittedAt,
-        verifiedAt: record.verifiedAt ? record.verifiedAt : null,
-        externalId: null,
-      }));
-    },
-    enabled: !!actor && !actorFetching,
-  });
-}
-
-// Alias for compatibility
-export const useGetKycRecords = useGetKycStatus;
-
-export function useSubmitKyc() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: {
-      documentType: string;
-      idNumber: string;
-      documentUri: string;
-      signature?: ExternalBlob | null;
-    }) => {
-      if (!actor) throw new Error('Actor not available');
-      const backendDocType = mapFrontendDocumentType(data.documentType);
-      const recordId = await actor.submitKycRecord(
-        backendDocType,
-        data.idNumber,
-        data.documentUri,
-        data.signature ?? null
-      );
-      return recordId.toString();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kycStatus'] });
-      queryClient.invalidateQueries({ queryKey: ['isCallerKycVerified'] });
-    },
-  });
-}
-
-// Admin - KYC Review
-export function useGetUserKycRecords() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (userPrincipal: string) => {
-      if (!actor) throw new Error('Actor not available');
-      const principal = Principal.fromText(userPrincipal);
-      const backendRecords = await actor.getUserKycRecords(principal);
-      return backendRecords.map((record: BackendKycRecord) => ({
-        id: record.id.toString(),
-        user: record.user.toString(),
-        documentType: mapBackendDocumentType(record.documentType),
-        idNumber: record.idNumber,
-        documentUri: record.documentURI,
-        signatureUri: record.signature ? record.signature.getDirectURL() : undefined,
-        uploadedBy: record.user,
-        status: mapBackendKycStatus(record.status),
-        submittedAt: record.submittedAt,
-        verifiedAt: record.verifiedAt ? record.verifiedAt : null,
-        externalId: null,
-      }));
-    },
-  });
-}
-
-// Alias for compatibility
-export const useAdminGetUserKycRecords = useGetUserKycRecords;
-
-export function useUpdateKycStatus() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: { recordId: string; status: KycStatus }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.updateKycStatus(
-        BigInt(data.recordId),
-        mapFrontendKycStatus(data.status)
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kycStatus'] });
-    },
-  });
-}
-
-// Alias for compatibility
-export const useAdminUpdateKycStatus = useUpdateKycStatus;
-
-// Gift Card Rates (Admin)
+// Gift Card Rates
 export function useGetAllGiftCardRates() {
   const { actor, isFetching: actorFetching } = useActor();
 
@@ -475,11 +461,7 @@ export function useCreateGiftCardRate() {
   return useMutation({
     mutationFn: async (data: { brandName: string; ratePercentage: number }) => {
       if (!actor) throw new Error('Actor not available');
-      const rateId = await actor.createGiftCardRate(
-        data.brandName,
-        BigInt(data.ratePercentage)
-      );
-      return rateId.toString();
+      await actor.createGiftCardRate(data.brandName, BigInt(data.ratePercentage));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['giftCardRates'] });
@@ -495,10 +477,7 @@ export function useUpdateGiftCardRate() {
   return useMutation({
     mutationFn: async (data: { rateId: string; ratePercentage: number }) => {
       if (!actor) throw new Error('Actor not available');
-      await actor.updateGiftCardRate(
-        BigInt(data.rateId),
-        BigInt(data.ratePercentage)
-      );
+      await actor.updateGiftCardRate(BigInt(data.rateId), BigInt(data.ratePercentage));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['giftCardRates'] });
@@ -514,10 +493,7 @@ export function useSetGiftCardRateStatus() {
   return useMutation({
     mutationFn: async (data: { rateId: string; status: BackendGiftCardRateStatus }) => {
       if (!actor) throw new Error('Actor not available');
-      await actor.setGiftCardRateStatus(
-        BigInt(data.rateId),
-        data.status
-      );
+      await actor.setGiftCardRateStatus(BigInt(data.rateId), data.status);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['giftCardRates'] });
@@ -552,61 +528,28 @@ export function useSetCoinPriceIndex() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coinPriceIndex'] });
-      // Invalidate gift card rates as they depend on the coin price index
-      queryClient.invalidateQueries({ queryKey: ['giftCardRates'] });
-      queryClient.invalidateQueries({ queryKey: ['activeGiftCardRates'] });
     },
   });
 }
 
-// Mock Gift Card queries (stubbed - backend not implemented yet)
-export function useGetGiftCards() {
+// Mock Gift Card CRUD (for frontend-only features)
+export function useGetUserGiftCards() {
   return useQuery<GiftCard[]>({
     queryKey: ['giftCards'],
     queryFn: async () => {
-      // Mock data for now
       return [];
     },
   });
 }
 
-export function useGetGiftCard(id: string) {
-  return useQuery<GiftCard | null>({
-    queryKey: ['giftCard', id],
-    queryFn: async () => {
-      // Mock data for now
-      return null;
-    },
-  });
-}
-
-export function useCreateGiftCard() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: Partial<GiftCard>) => {
-      // Mock implementation
-      throw new Error('Gift card creation is not yet implemented in the backend');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['giftCards'] });
-    },
-  });
-}
-
 // Alias for compatibility
-export const useAddGiftCard = useCreateGiftCard;
+export const useGetGiftCards = useGetUserGiftCards;
 
-export function useUpdateGiftCard() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: { id: string; updates: Partial<GiftCard> }) => {
-      // Mock implementation
-      throw new Error('Gift card update is not yet implemented in the backend');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['giftCards'] });
+export function useGetUserTags() {
+  return useQuery<Map<string, number>>({
+    queryKey: ['userTags'],
+    queryFn: async () => {
+      return new Map();
     },
   });
 }
@@ -616,8 +559,7 @@ export function useUpdateGiftCardStatus() {
 
   return useMutation({
     mutationFn: async (data: { cardId: string; status: GiftCardStatus }) => {
-      // Mock implementation
-      throw new Error('Gift card status update is not yet implemented in the backend');
+      throw new Error('Gift card CRUD not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['giftCards'] });
@@ -625,27 +567,24 @@ export function useUpdateGiftCardStatus() {
   });
 }
 
-export function useDeleteGiftCard() {
+// Mock hooks for gift card operations (not yet implemented in backend)
+export function useGetGiftCard() {
+  return useMutation({
+    mutationFn: async (cardId: string) => {
+      throw new Error('Gift card CRUD not yet implemented in backend');
+    },
+  });
+}
+
+export function useAddGiftCard() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      // Mock implementation
-      throw new Error('Gift card deletion is not yet implemented in the backend');
+    mutationFn: async (data: any) => {
+      throw new Error('Gift card CRUD not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['giftCards'] });
-    },
-  });
-}
-
-// User Tags (stubbed - backend not implemented yet)
-export function useGetUserTags() {
-  return useQuery<Map<string, number>>({
-    queryKey: ['userTags'],
-    queryFn: async () => {
-      // Return empty map for now
-      return new Map<string, number>();
     },
   });
 }

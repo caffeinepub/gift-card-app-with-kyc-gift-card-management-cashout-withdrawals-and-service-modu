@@ -1,53 +1,137 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Update withdrawal UI to reflect 5–20 minute processing window and improve admin error messaging",
+  "title": "Trading Chat UI with Verified Trader badge and in-chat escrow",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Update withdrawal UI copy and pending timing indicator logic to match the 5–20 minute processing window.",
+      "id": "REQ-4",
+      "summary": "Add Trading Chat section with thread creation, thread list, and 1:1 chat detail view with polling-based message updates.",
       "acceptanceCriteria": [
-        "In frontend/src/components/crypto/sheets/SendToBankSheet.tsx, replace the review-screen info text 'within 1-3 business days' with 'within 5–20 minutes'.",
-        "In frontend/src/pages/withdrawals/WithdrawalsPage.tsx, replace 'Typical processing time: ~10 minutes' with 'Typical processing time: 5–20 minutes'.",
-        "In frontend/src/pages/withdrawals/WithdrawalsPage.tsx, update the pending status helper so it no longer assumes a fixed 10-minute countdown; it should reflect the 5–20 minute window (e.g., show queued/estimated before 5 minutes and show time remaining until 20 minutes, then 'Processing...' after 20 minutes).",
-        "All updated text is in English and matches the 5–20 minute window consistently across these screens."
+        "App navigation includes an entry point to the Trading Chat section from an existing sensible location (e.g., dashboard shortcut tile and/or sidebar).",
+        "Users can start a new chat by entering the counterparty Principal (Text) and opening the thread.",
+        "Chat detail view renders message history and allows sending messages.",
+        "Because realtime transport is not available, the message list updates via polling (e.g., React Query refetch interval) and manual refresh control.",
+        "All user-facing text is in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
-          "operation": "modify",
-          "description": "Update the review-screen informational text to say withdrawals are processed within 5–20 minutes (English only)."
-        },
-        {
-          "path": "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
-          "operation": "modify",
-          "description": "Update the processing-time copy to 'Typical processing time: 5–20 minutes' and replace the fixed 10-minute pending countdown helper with logic that reflects: before 5 minutes show queued/estimated; between 5–20 minutes show time remaining until 20 minutes; after 20 minutes show 'Processing...'."
-        },
-        {
-          "path": "frontend/src/utils/withdrawalProcessingWindow.ts",
+          "path": "frontend/src/pages/trading-chat/TradingChatThreadsPage.tsx",
           "operation": "create",
-          "description": "Add a small utility for computing user-facing pending-withdrawal timing labels based on a 5–20 minute window (e.g., phase + label), to keep WithdrawalsPage logic clear and consistent."
+          "description": "Create the Trading Chat threads page that includes: (1) a thread creation form (counterparty Principal as text), and (2) a thread list UI that navigates into a selected thread. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx",
+          "operation": "create",
+          "description": "Create the chat detail view that renders message history and a message composer, supports manual refresh, and uses polling for message updates via React Query refetchInterval. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useTradingChat.ts",
+          "operation": "create",
+          "description": "Add React Query hooks for Trading Chat flows: create/fetch 1:1 thread, list messages with polling, and send message; include safe actor availability gating (enabled only when actor is ready) consistent with existing patterns. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register new Trading Chat routes (threads page and chat detail page) in the TanStack Router route tree so the pages are navigable. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/layout/AppShell.tsx",
+          "operation": "modify",
+          "description": "Add a 'Trading Chat' entry in the existing sidebar/mobile menu navigation (navItems) that links to the Trading Chat threads page. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/DashboardPage.tsx",
+          "operation": "modify",
+          "description": "Add a new DashboardShortcutTile entry that navigates into the Trading Chat section (serves as an additional entry point). Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-3",
-      "summary": "Show backend-provided 5–20 minute window trap errors as a helpful toast when admins approve withdrawals.",
+      "id": "REQ-5",
+      "summary": "Show a Verified Trader badge in the chat UI based on backend verification status with loading placeholder behavior.",
       "acceptanceCriteria": [
-        "In frontend/src/pages/admin/AdminWithdrawalsPage.tsx, if approval fails due to the backend window rule, the toast displays the backend-provided error message (or a clear fallback) indicating the 5–20 minute window.",
-        "If approval fails for any other reason, existing error handling behavior remains intact.",
-        "Reject action behavior remains unchanged."
+        "The chat header (or participant section) shows the label “Verified Trader” with a distinct badge style when the relevant participant is verified.",
+        "If the verification status is loading, the UI shows a loading state (skeleton or subtle placeholder).",
+        "If the user is not verified, the badge is not shown (or shows an explicit “Not verified” only if there is already a pattern for that in the app’s UI)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/utils/backendErrorMessage.ts",
+          "path": "frontend/src/components/trading-chat/VerifiedTraderBadge.tsx",
           "operation": "create",
-          "description": "Implement a helper to extract a clean, user-displayable message from backend call failures (including trapped errors), preserving the backend-provided English message when present and providing a safe fallback string."
+          "description": "Create a reusable VerifiedTraderBadge component that calls the backend verification boolean for a given Principal, shows a subtle skeleton/placeholder while loading, and renders a distinct badge only when verified. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
+          "path": "frontend/src/hooks/useTradingChat.ts",
           "operation": "modify",
-          "description": "Update approve-withdrawal error handling to use the backendErrorMessage helper so that when the backend rejects approval due to the 5–20 minute rule, the toast shows the backend-provided message (or a clear 5–20 minute fallback). Keep non-window errors and reject behavior unchanged."
+          "description": "Add a React Query hook to fetch verification status for an arbitrary Principal (for rendering the Verified Trader badge in chat UI), with caching keyed by principal string and actor readiness gating. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx",
+          "operation": "modify",
+          "description": "Wire VerifiedTraderBadge into the chat header/participant identity area wherever the counterparty identity is shown. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Implement in-chat escrow panel inside chat detail with escrow creation, status rendering, and allowed lifecycle actions with confirmations and toasts.",
+      "acceptanceCriteria": [
+        "Users can create an escrow from within the chat by entering an amount and selecting buyer/seller role if required by the backend model.",
+        "Chat shows an escrow card/panel with current status (e.g., Created, Funded, Released, Canceled) and key details (amount, parties).",
+        "UI only enables actions that are valid for the current escrow state and for the current caller’s role/permissions.",
+        "Actions show confirmation dialogs and success/failure toasts with readable English error messages (using existing error-message extraction utilities if present)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/trading-chat/EscrowPanel.tsx",
+          "operation": "create",
+          "description": "Create an EscrowPanel component for the chat detail view: escrow creation form (amount + buyer/seller role selection as needed), escrow status/timeline display, and action buttons (fund/release/cancel) with confirmation dialogs and robust empty/loading/error states. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useTradingChat.ts",
+          "operation": "modify",
+          "description": "Add React Query hooks/mutations for escrow actions (create/fund/release/cancel) and for loading escrow records associated with a chat thread (as supported by the backend); ensure UI state only enables valid actions based on returned status/role. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/backend-augment.d.ts",
+          "operation": "modify",
+          "description": "Extend frontend TypeScript declarations (declaration merging) to include any escrow record types and thread-escrow query methods required by the EscrowPanel UI to compile once the backend provides them (no backend implementation here). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx",
+          "operation": "modify",
+          "description": "Embed the EscrowPanel in the chat detail view and connect it to the active chat thread context; ensure success/failure toasts are shown and errors use extractBackendErrorMessage for readable English messages. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Apply a cohesive, distinctive visual theme for Trading Chat and Escrow UI consistent with Tailwind + shadcn composition patterns.",
+      "acceptanceCriteria": [
+        "Theme uses a consistent palette, typography, and spacing for chat bubbles, badges, and escrow cards.",
+        "Theme avoids default-looking styles and does not use a blue+purple primary combination unless the existing app already enforces it.",
+        "New UI elements match the existing Tailwind + shadcn composition patterns (do not edit immutable shadcn sources; compose components instead)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add Trading Chat-specific theme tokens (CSS variables and/or utility-friendly values) for chat surfaces, chat bubbles (sent/received), badge styling, and escrow card accents; keep styling coherent with the existing design system and avoid a blue+purple primary combo unless already enforced. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Extend Tailwind theme configuration (colors/radii/shadows as needed) to support a distinctive Trading Chat + Escrow look while remaining consistent with existing Tailwind + shadcn composition patterns. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/trading-chat/TradingChatThreadsPage.tsx",
+          "operation": "modify",
+          "description": "Apply the new theme consistently to the Trading Chat threads page (cards, inputs, empty states, and list rows) using composed shadcn components and Tailwind classes. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/trading-chat/TradingChatDetailPage.tsx",
+          "operation": "modify",
+          "description": "Apply the new theme consistently to chat bubbles, header chips, message list spacing, and the embedded EscrowPanel; ensure the UI does not look default and stays consistent with existing layout patterns. Verify the component's usage instructions before implementing."
         }
       ]
     }
