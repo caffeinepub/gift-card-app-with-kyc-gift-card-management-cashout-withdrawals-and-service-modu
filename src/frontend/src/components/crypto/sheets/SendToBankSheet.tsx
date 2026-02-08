@@ -96,16 +96,8 @@ export default function SendToBankSheet({ open, onOpenChange }: SendToBankSheetP
 
   const handleConfirm = async () => {
     try {
-      const currencyObj: Currency = 
-        currency === 'usd' ? { __kind__: 'usd', usd: null } :
-        currency === 'kes' ? { __kind__: 'kes', kes: null } :
-        currency === 'ngn' ? { __kind__: 'ngn', ngn: null } :
-        currency === 'inr' ? { __kind__: 'inr', inr: null } :
-        { __kind__: 'custom', custom: currency };
-
       await requestWithdrawal.mutateAsync({
         amount: BigInt(Math.floor(parseFloat(amount) * 100)),
-        currency: currencyObj,
         payoutMethodId: selectedMethodId,
       });
 

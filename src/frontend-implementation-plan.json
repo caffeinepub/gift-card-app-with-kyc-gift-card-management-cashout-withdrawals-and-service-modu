@@ -1,6 +1,29 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Frontend plan: Gift card rates backend support (no frontend changes required)",
-  "requirements": []
+  "title": "Gate withdrawal requests behind KYC verification (frontend)",
+  "requirements": [
+    {
+      "id": "REQ-3",
+      "summary": "Block withdrawal request submission in the Withdrawals UI unless the user is KYC-verified, and provide a clear call-to-action to complete KYC.",
+      "acceptanceCriteria": [
+        "On the Withdrawals page, if the user is not KYC-verified, the Request Withdrawal form cannot be submitted (submit button disabled and/or form replaced by an explanatory panel).",
+        "The Withdrawals page displays an English message explaining that KYC verification is required before withdrawals and includes a button/link that navigates the user to the existing KYC page.",
+        "If the user is KYC-verified, the Withdrawals page behaves as it did previously (can select payout method, enter amount, and submit).",
+        "If the user attempts to withdraw through any existing UI path and the backend rejects due to KYC gating, the user sees the backend error message surfaced in a toast or inline error in English."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add a new React Query hook (e.g., useIsCallerKycVerified) that calls the backend actor method isCallerKycVerified() and exposes loading/error states for UI gating on withdrawals."
+        },
+        {
+          "path": "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+          "operation": "modify",
+          "description": "Use the new KYC-verified hook to gate the Request Withdrawal UI: when not verified, replace or disable the submit path and show an English explanatory panel with a navigation link/button to the existing /kyc route; when verified, keep the existing withdrawal request behavior. Also add a defensive check in the submit handler to prevent submission when unverified and surface backend rejection messages in English (toast/inline) if they occur."
+        }
+      ]
+    }
+  ]
 }

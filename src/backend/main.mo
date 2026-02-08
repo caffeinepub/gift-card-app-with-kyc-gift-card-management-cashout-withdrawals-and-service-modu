@@ -3,14 +3,15 @@ import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import Time "mo:core/Time";
+import Array "mo:core/Array";
 import Nat "mo:core/Nat";
-import Migration "migration";
+import Int "mo:core/Int";
+
 import MixinAuthorization "authorization/MixinAuthorization";
 import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
 import AccessControl "authorization/access-control";
 
-(with migration = Migration.run)
 actor {
   public type UserProfile = {
     name : Text;
@@ -88,11 +89,24 @@ actor {
     updatedAt : Time.Time;
   };
 
+  public type RateQuote = {
+    id : Nat;
+    brandName : Text;
+    ratePercentage : Nat;
+    coinPriceIndex : Int;
+    effectiveRate : Nat;
+    createdAt : Time.Time;
+  };
+
   var _nextKycRecordId : KycRecordId = 0;
   var _nextPayoutMethodId : PayoutMethodId = 0;
   var _nextWithdrawalRequestId : WithdrawalRequestId = 0;
   var _nextGiftCardRateId : GiftCardRateId = 0;
+  var _nextRateQuoteId : Nat = 0;
 
+  var _coinPriceIndex : Int = 100;
+
+  let rateQuotes = Map.empty<Nat, RateQuote>();
   let userProfiles = Map.empty<Principal, UserProfile>();
   let payoutMethods = Map.empty<PayoutMethodId, PayoutMethod>();
   let withdrawalRequests = Map.empty<WithdrawalRequestId, WithdrawalRequest>();
@@ -182,6 +196,34 @@ actor {
     kycRecords.add(recordId, record);
   };
 
+  // KYC VERIFICATION HELPER
+  func isUserKycVerified(user : Principal) : Bool {
+    let userKycRecords = kycRecords.values().filter(
+      func(record) { record.user == user }
+    ).toArray();
+
+    if (userKycRecords.size() <= 0) {
+      return false;
+    };
+
+    let latestRecord = userKycRecords.foldLeft(?userKycRecords[0], func(acc, record) { ?record });
+
+    switch (latestRecord) {
+      case (?record) {
+        switch (record.status) {
+          case (#verified) { true };
+          case (_) { false };
+        };
+      };
+      case (null) { false };
+    };
+  };
+
+  // NEW ENDPOINT: Returns whether authenticated user currently has a valid KYC record
+  public query ({ caller }) func isCallerKycVerified() : async Bool {
+    isUserKycVerified(caller);
+  };
+
   // USER PROFILE
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -240,6 +282,10 @@ actor {
   public shared ({ caller }) func createWithdrawalRequest(payoutMethodId : PayoutMethodId, amount : Nat) : async WithdrawalRequestId {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create withdrawal requests");
+    };
+
+    if (not isUserKycVerified(caller)) {
+      Runtime.trap("Withdrawal denied: User has not passed KYC verification");
     };
 
     switch (payoutMethods.get(payoutMethodId)) {
@@ -370,6 +416,22 @@ actor {
     giftCardRates.add(rateId, updatedRate);
   };
 
+  // Price Index
+  public shared ({ caller }) func setCoinPriceIndex(priceIndex : Int) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can perform this action");
+    };
+
+    _coinPriceIndex := priceIndex;
+  };
+
+  public query ({ caller }) func getCoinPriceIndex() : async Int {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view coin price index");
+    };
+    _coinPriceIndex;
+  };
+
   public query ({ caller }) func getAllRates() : async [GiftCardRate] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view gift card rates");
@@ -377,7 +439,7 @@ actor {
     giftCardRates.values().toArray();
   };
 
-  public query ({ caller }) func getActiveRateForBrand(brandName : Text) : async ?Nat {
+  public query ({ caller }) func getActiveRateForBrand(brandName : Text) : async ?Int {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view gift card rates");
     };
@@ -389,7 +451,7 @@ actor {
     if (activeRates.size() == 0) {
       null;
     } else {
-      ?activeRates[activeRates.size() - 1].ratePercentage;
+      ?((activeRates[activeRates.size() - 1].ratePercentage * _coinPriceIndex) / 100);
     };
   };
 
@@ -401,5 +463,39 @@ actor {
     giftCardRates.values().filter(
       func(rate) { rate.status == #active }
     ).toArray();
+  };
+
+  public shared ({ caller }) func generateRateQuote(brandName : Text, ratePercentage : Nat) : async RateQuote {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can generate rate quotes");
+    };
+
+    let quoteId = _nextRateQuoteId;
+    _nextRateQuoteId += 1;
+
+    let effectiveRate = (ratePercentage * _coinPriceIndex.toNat()) / 100;
+
+    let newQuote : RateQuote = {
+      id = quoteId;
+      brandName;
+      ratePercentage;
+      coinPriceIndex = _coinPriceIndex;
+      effectiveRate;
+      createdAt = Time.now();
+    };
+
+    rateQuotes.add(quoteId, newQuote);
+    newQuote;
+  };
+
+  public shared ({ caller }) func calculatePayout(quoteId : Nat, amount : Nat) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can calculate payouts");
+    };
+
+    switch (rateQuotes.get(quoteId)) {
+      case (null) { Runtime.trap("Invalid quote: Not found") };
+      case (?quote) { (amount * quote.effectiveRate) / 100 };
+    };
   };
 };

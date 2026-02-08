@@ -1,11 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Add backend support for managing per-brand gift card rates with active/inactive status.
+**Goal:** Require users to be KYC-verified before they can create withdrawal requests, with clear backend enforcement and frontend gating.
 
 **Planned changes:**
-- Add a `gift_card_rates` data model in `backend/main.mo` with fields: `id`, `brand_name`, `rate_percentage`, `status` (active/inactive), stored in backend state with an auto-incrementing id counter.
-- Implement admin-only backend methods to create, update, and deactivate/reactivate gift card rate entries.
-- Implement query methods to list gift card rate entries (explicitly defined as admin-only or public) and to fetch the active `rate_percentage` for a given `brand_name` (returning null when none is active).
+- Enforce a KYC gate in the backend `createWithdrawalRequest` so only users whose latest KYC record is **verified** can create withdrawals; otherwise return clear English error messages.
+- Add a protected backend query that returns whether the authenticated caller is currently eligible to withdraw (true only if latest KYC record is verified), using the same logic as withdrawal creation.
+- Update the Withdrawals UI to block/disable withdrawal requests for non-verified users, show an English explanation, and provide a link/button to navigate to the existing KYC page; surface backend KYC errors in English if encountered.
 
-**User-visible outcome:** Admins can manage brand-specific gift card rates (including toggling active/inactive), and the system can retrieve the active rate for a given brand when needed.
+**User-visible outcome:** Users who are not KYC-verified cannot request withdrawals and are prompted to complete KYC; verified users can withdraw as before.

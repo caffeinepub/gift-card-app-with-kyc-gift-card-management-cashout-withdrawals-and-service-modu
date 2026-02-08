@@ -27,11 +27,19 @@ export const UserRole = IDL.Variant({
 export const GiftCardRateId = IDL.Nat;
 export const PayoutMethodId = IDL.Nat;
 export const WithdrawalRequestId = IDL.Nat;
+export const Time = IDL.Int;
+export const RateQuote = IDL.Record({
+  'id' : IDL.Nat,
+  'effectiveRate' : IDL.Nat,
+  'coinPriceIndex' : IDL.Int,
+  'createdAt' : Time,
+  'ratePercentage' : IDL.Nat,
+  'brandName' : IDL.Text,
+});
 export const GiftCardRateStatus = IDL.Variant({
   'active' : IDL.Null,
   'inactive' : IDL.Null,
 });
-export const Time = IDL.Int;
 export const GiftCardRate = IDL.Record({
   'id' : GiftCardRateId,
   'status' : GiftCardRateStatus,
@@ -120,6 +128,7 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'calculatePayout' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Nat], []),
   'createGiftCardRate' : IDL.Func([IDL.Text, IDL.Nat], [GiftCardRateId], []),
   'createPayoutMethod' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text],
@@ -131,10 +140,12 @@ export const idlService = IDL.Service({
       [WithdrawalRequestId],
       [],
     ),
-  'getActiveRateForBrand' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Nat)], ['query']),
+  'generateRateQuote' : IDL.Func([IDL.Text, IDL.Nat], [RateQuote], []),
+  'getActiveRateForBrand' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Int)], ['query']),
   'getAllRates' : IDL.Func([], [IDL.Vec(GiftCardRate)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getCoinPriceIndex' : IDL.Func([], [IDL.Int], ['query']),
   'getKycStatus' : IDL.Func([], [IDL.Vec(KycRecord)], ['query']),
   'getUserKycRecords' : IDL.Func(
       [IDL.Principal],
@@ -147,11 +158,13 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'isCallerKycVerified' : IDL.Func([], [IDL.Bool], ['query']),
   'listActiveRates' : IDL.Func([], [IDL.Vec(GiftCardRate)], ['query']),
   'listPendingWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], []),
   'listUserPayoutMethods' : IDL.Func([], [IDL.Vec(PayoutMethod)], ['query']),
   'listUserWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'setCoinPriceIndex' : IDL.Func([IDL.Int], [], []),
   'setGiftCardRateStatus' : IDL.Func(
       [
         GiftCardRateId,
@@ -196,11 +209,19 @@ export const idlFactory = ({ IDL }) => {
   const GiftCardRateId = IDL.Nat;
   const PayoutMethodId = IDL.Nat;
   const WithdrawalRequestId = IDL.Nat;
+  const Time = IDL.Int;
+  const RateQuote = IDL.Record({
+    'id' : IDL.Nat,
+    'effectiveRate' : IDL.Nat,
+    'coinPriceIndex' : IDL.Int,
+    'createdAt' : Time,
+    'ratePercentage' : IDL.Nat,
+    'brandName' : IDL.Text,
+  });
   const GiftCardRateStatus = IDL.Variant({
     'active' : IDL.Null,
     'inactive' : IDL.Null,
   });
-  const Time = IDL.Int;
   const GiftCardRate = IDL.Record({
     'id' : GiftCardRateId,
     'status' : GiftCardRateStatus,
@@ -289,6 +310,7 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'calculatePayout' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Nat], []),
     'createGiftCardRate' : IDL.Func([IDL.Text, IDL.Nat], [GiftCardRateId], []),
     'createPayoutMethod' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text],
@@ -300,14 +322,16 @@ export const idlFactory = ({ IDL }) => {
         [WithdrawalRequestId],
         [],
       ),
+    'generateRateQuote' : IDL.Func([IDL.Text, IDL.Nat], [RateQuote], []),
     'getActiveRateForBrand' : IDL.Func(
         [IDL.Text],
-        [IDL.Opt(IDL.Nat)],
+        [IDL.Opt(IDL.Int)],
         ['query'],
       ),
     'getAllRates' : IDL.Func([], [IDL.Vec(GiftCardRate)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getCoinPriceIndex' : IDL.Func([], [IDL.Int], ['query']),
     'getKycStatus' : IDL.Func([], [IDL.Vec(KycRecord)], ['query']),
     'getUserKycRecords' : IDL.Func(
         [IDL.Principal],
@@ -320,6 +344,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'isCallerKycVerified' : IDL.Func([], [IDL.Bool], ['query']),
     'listActiveRates' : IDL.Func([], [IDL.Vec(GiftCardRate)], ['query']),
     'listPendingWithdrawals' : IDL.Func([], [IDL.Vec(WithdrawalRequest)], []),
     'listUserPayoutMethods' : IDL.Func([], [IDL.Vec(PayoutMethod)], ['query']),
@@ -329,6 +354,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'setCoinPriceIndex' : IDL.Func([IDL.Int], [], []),
     'setGiftCardRateStatus' : IDL.Func(
         [
           GiftCardRateId,

@@ -15,27 +15,35 @@ function AdminKycReviewContent() {
   const [userPrincipal, setUserPrincipal] = useState('');
   const [searchedPrincipal, setSearchedPrincipal] = useState('');
 
-  const { data: kycRecords, isLoading, error } = useAdminGetUserKycRecords(searchedPrincipal);
+  const getUserKycRecords = useAdminGetUserKycRecords();
   const updateKycStatus = useAdminUpdateKycStatus();
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userPrincipal.trim()) {
       toast.error('Please enter a user Principal ID');
       return;
     }
     setSearchedPrincipal(userPrincipal.trim());
+    try {
+      await getUserKycRecords.mutateAsync(userPrincipal.trim());
+    } catch (error: any) {
+      toast.error(`Failed to fetch KYC records: ${error.message || 'Unknown error'}`);
+    }
   };
 
   const handleUpdateStatus = async (recordId: string, statusKind: 'verified' | 'rejected') => {
     try {
       const newStatus: KycStatus = { __kind__: statusKind };
       await updateKycStatus.mutateAsync({
-        userPrincipal: searchedPrincipal,
         recordId,
-        newStatus,
+        status: newStatus,
       });
       toast.success(`KYC ${statusKind} successfully`);
+      // Refetch records after update
+      if (searchedPrincipal) {
+        await getUserKycRecords.mutateAsync(searchedPrincipal);
+      }
     } catch (error: any) {
       toast.error(`Failed to update KYC status: ${error.message || 'Unknown error'}`);
       console.error(error);
@@ -75,6 +83,10 @@ function AdminKycReviewContent() {
         return 'destructive';
     }
   };
+
+  const kycRecords = getUserKycRecords.data || [];
+  const isLoading = getUserKycRecords.isPending;
+  const error = getUserKycRecords.error;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -142,7 +154,7 @@ function AdminKycReviewContent() {
             </Alert>
           )}
 
-          {!isLoading && !error && kycRecords && kycRecords.length === 0 && (
+          {!isLoading && !error && kycRecords.length === 0 && (
             <Card>
               <CardContent className="py-8 text-center">
                 <p className="text-muted-foreground">No KYC records found for this user.</p>
@@ -150,57 +162,61 @@ function AdminKycReviewContent() {
             </Card>
           )}
 
-          {!isLoading && !error && kycRecords && kycRecords.length > 0 && (
+          {!isLoading && !error && kycRecords.length > 0 && (
             <div className="space-y-4">
               {kycRecords.map((record: any) => (
-                <Card key={record.recordId || record.idNumber}>
+                <Card key={record.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <FileText className="h-5 w-5" />
-                          {record.documentType}
-                        </CardTitle>
+                        <CardTitle className="text-lg">KYC Record #{record.id}</CardTitle>
                         <CardDescription className="mt-1">
-                          ID: {record.idNumber}
+                          Submitted {new Date(Number(record.submittedAt) / 1_000_000).toLocaleDateString()}
                         </CardDescription>
                       </div>
-                      <Badge variant={getStatusVariant(record.status)} className="flex items-center gap-1">
-                        {getStatusIcon(record.status)}
-                        {record.status.__kind__.toUpperCase()}
+                      <Badge variant={getStatusVariant(record.status)}>
+                        <span className="flex items-center gap-1">
+                          {getStatusIcon(record.status)}
+                          {record.status.__kind__}
+                        </span>
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-3">
                       <div>
-                        <Label className="text-xs text-muted-foreground">Document Type</Label>
-                        <p className="text-sm font-medium mt-1">{record.documentType}</p>
+                        <p className="text-sm font-medium text-muted-foreground">Document Type</p>
+                        <p className="text-sm">{record.documentType}</p>
                       </div>
                       <div>
-                        <Label className="text-xs text-muted-foreground">ID Number</Label>
-                        <p className="text-sm font-mono mt-1">{record.idNumber}</p>
+                        <p className="text-sm font-medium text-muted-foreground">ID Number</p>
+                        <p className="text-sm font-mono">{record.idNumber}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">User Principal</p>
+                        <p className="text-sm font-mono break-all">{record.user}</p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="flex gap-2">
                       <Button
                         variant="outline"
-                        className="w-full"
+                        size="sm"
                         onClick={() => handleViewDocument(record.documentUri)}
                       >
-                        <ExternalLink className="mr-2 h-4 w-4" />
+                        <FileText className="mr-2 h-4 w-4" />
                         View Document
+                        <ExternalLink className="ml-2 h-3 w-3" />
                       </Button>
-
                       {record.signatureUri && (
                         <Button
                           variant="outline"
-                          className="w-full"
+                          size="sm"
                           onClick={() => handleViewSignature(record.signatureUri)}
                         >
                           <FileSignature className="mr-2 h-4 w-4" />
                           View Signature
+                          <ExternalLink className="ml-2 h-3 w-3" />
                         </Button>
                       )}
                     </div>
@@ -208,9 +224,10 @@ function AdminKycReviewContent() {
                     {record.status.__kind__ === 'pending' && (
                       <div className="flex gap-2 pt-2">
                         <Button
-                          onClick={() => handleUpdateStatus(record.recordId, 'verified')}
-                          disabled={updateKycStatus.isPending}
+                          variant="default"
                           className="flex-1"
+                          onClick={() => handleUpdateStatus(record.id, 'verified')}
+                          disabled={updateKycStatus.isPending}
                         >
                           {updateKycStatus.isPending ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -220,10 +237,10 @@ function AdminKycReviewContent() {
                           Approve
                         </Button>
                         <Button
-                          onClick={() => handleUpdateStatus(record.recordId, 'rejected')}
-                          disabled={updateKycStatus.isPending}
                           variant="destructive"
                           className="flex-1"
+                          onClick={() => handleUpdateStatus(record.id, 'rejected')}
+                          disabled={updateKycStatus.isPending}
                         >
                           {updateKycStatus.isPending ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -233,14 +250,6 @@ function AdminKycReviewContent() {
                           Reject
                         </Button>
                       </div>
-                    )}
-
-                    {record.status.__kind__ !== 'pending' && (
-                      <Alert className="bg-muted/50">
-                        <AlertDescription className="text-sm">
-                          This KYC record has already been processed and cannot be modified.
-                        </AlertDescription>
-                      </Alert>
                     )}
                   </CardContent>
                 </Card>

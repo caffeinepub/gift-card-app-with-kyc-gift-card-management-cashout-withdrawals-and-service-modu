@@ -1,45 +1,56 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T00:21:45.868Z",
+  "generatedAt": "2026-02-08T01:05:50.558Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 0,
+    "total": 3,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Implement backend storage for a gift card rates table named `gift_card_rates` with fields: `id`, `brand_name`, `rate_percentage`, and `status` (active/inactive).",
+        "summary": "Enforce KYC verification on the backend so a user can only create a withdrawal request when their latest KYC record status is verified.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Expose backend methods for admins to create, update, and deactivate/reactivate entries in `gift_card_rates`, and expose query methods to list rates and fetch the active rate for a given `brand_name`.",
+        "summary": "Expose a backend query that returns whether the caller is currently KYC-verified (based on the latest KYC record), to support frontend gating and UX messaging.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Update the Withdrawals UI to block withdrawal requests unless the user is KYC-verified, and provide a clear call-to-action to complete KYC verification.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx"
+        ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/admin/AdminGiftCardRatesPage.tsx",
+    "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

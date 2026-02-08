@@ -1,23 +1,32 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Set up backend support for gift card rate lookup by creating a `gift_card_rates` database table used to fetch rate by brand and card value.",
+  "summary": "Project includes a withdrawal flow requiring KYC verification so users can verify their account before withdrawing money.",
   "architectural_notes": [
-    "Add a `gift_card_rates` table to persist per-brand gift card rates; fields discussed: id, brand_name, rate_percentage, status (active/inactive)."
+    "Withdrawal flow must enforce KYC status (block/hold withdrawals until user is verified)."
   ],
   "known_issues": [],
   "isFixRequest": false,
-  "existing_features": [],
+  "existing_features": [
+    {
+      "id": "feature-update-the-withdrawals-ui-to-block-withdrawal-requests-unless-the-user-is-kyc-verified-and-provide-a-clear-call-to-action-to-complete-kyc-verification",
+      "title": "Update the Withdrawals UI to block withdrawal requests unless the user is KYC-verified, and provide a clear call-to-action to complete KYC verification.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    }
+  ],
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Create `gift_card_rates` database table (id, brand_name, rate_percentage, status active/inactive) to support gift card rate lookup",
+      "summary": "Add KYC verification for users; require verified account status before allowing withdrawals",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Implement backend storage for a gift card rates table named `gift_card_rates` with fields: `id`, `brand_name`, `rate_percentage`, and `status` (active/inactive).",
+      "summary": "Enforce KYC verification on the backend so a user can only create a withdrawal request when their latest KYC record status is verified.",
       "reqIds": [
         "REQ-1"
       ],
@@ -25,14 +34,14 @@
     },
     {
       "id": "AR-3",
-      "summary": "Expose backend methods for admins to create, update, and deactivate/reactivate entries in `gift_card_rates`, and expose query methods to list rates and fetch the active rate for a given `brand_name`.",
+      "summary": "Expose a backend query that returns whether the caller is currently KYC-verified (based on the latest KYC record), to support frontend gating and UX messaging.",
       "reqIds": [
         "REQ-2"
       ],
       "status": "pending"
     }
   ],
-  "projectName": "Add backend support for gift_card_rates (brand rates with active/inactive status)",
+  "projectName": "Require KYC verification before users can withdraw",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

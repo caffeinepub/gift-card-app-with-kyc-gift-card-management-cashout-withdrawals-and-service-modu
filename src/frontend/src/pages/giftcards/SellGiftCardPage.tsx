@@ -1,18 +1,16 @@
 import { useParams, useNavigate } from '@tanstack/react-router';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useGetGiftCard } from '../../hooks/useQueries';
+import { useSellGiftCardQuote, useCalculatePayout } from '../../hooks/useSellGiftCardQuote';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { ArrowLeft, AlertCircle, DollarSign, TrendingDown, Percent, Building2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle, DollarSign, Lock, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
-import { calculateConversion, CONVERSION_CONFIG } from '../../config/finance';
-import { VENDORS, selectBestVendor } from '../../config/vendors';
-import { getBrandRateTable, findMatchingTier } from '../../config/giftCardRatesNGN';
+import { getBrandRateTable } from '../../config/giftCardRatesNGN';
 import GiftCardRateTable from '../../components/giftcards/GiftCardRateTable';
 import NGNRateInlineSummary from '../../components/giftcards/NGNRateInlineSummary';
 import { toast } from 'sonner';
@@ -25,7 +23,6 @@ export default function SellGiftCardPage() {
   const faceValue = card ? Number(card.amount) / 100 : 0;
   
   const [amount, setAmount] = useState<string>(faceValue.toString());
-  const [selectedVendorId, setSelectedVendorId] = useState<string>('');
 
   // Parse amount as number
   const parsedAmount = useMemo(() => {
@@ -33,47 +30,67 @@ export default function SellGiftCardPage() {
     return isNaN(num) || num <= 0 ? 0 : num;
   }, [amount]);
 
-  // Get rate table for this brand
+  // Get rate table for this brand (for display only)
   const rateTable = useMemo(() => {
     if (!card) return null;
     return getBrandRateTable(card.brand);
   }, [card]);
 
-  // Find matching tier for entered amount
-  const matchedTier = useMemo(() => {
-    if (!rateTable || parsedAmount <= 0) return null;
-    return findMatchingTier(parsedAmount, rateTable);
-  }, [parsedAmount, rateTable]);
+  // Prepare quote params
+  const quoteParams = useMemo(() => {
+    if (!card || parsedAmount <= 0) return null;
+    return {
+      brandName: card.brand,
+      amount: parsedAmount,
+    };
+  }, [card, parsedAmount]);
 
-  // Select best vendor when amount changes
-  const bestVendor = useMemo(() => {
-    return selectBestVendor(parsedAmount, CONVERSION_CONFIG.fee);
-  }, [parsedAmount]);
+  // Fetch backend quote with rate snapshot
+  const { 
+    data: quote, 
+    isLoading: quoteLoading, 
+    error: quoteError,
+    refetch: refetchQuote 
+  } = useSellGiftCardQuote(quoteParams);
 
-  // Set default vendor on mount or when best vendor changes
-  useMemo(() => {
-    if (!selectedVendorId && bestVendor) {
-      setSelectedVendorId(bestVendor.id);
+  // Calculate payout mutation
+  const calculatePayoutMutation = useCalculatePayout();
+
+  // Calculate payout when quote is available
+  const [payout, setPayout] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (quote && parsedAmount > 0) {
+      calculatePayoutMutation.mutate(
+        { quoteId: quote.id, amount: parsedAmount },
+        {
+          onSuccess: (calculatedPayout) => {
+            setPayout(calculatedPayout);
+          },
+          onError: (error) => {
+            console.error('Failed to calculate payout:', error);
+            setPayout(null);
+          },
+        }
+      );
+    } else {
+      setPayout(null);
     }
-  }, [bestVendor, selectedVendorId]);
-
-  // Get selected vendor
-  const selectedVendor = useMemo(() => {
-    return VENDORS.find(v => v.id === selectedVendorId) || bestVendor;
-  }, [selectedVendorId, bestVendor]);
-
-  // Calculate conversion with selected vendor
-  const conversion = useMemo(() => {
-    if (parsedAmount <= 0) {
-      return { gross: 0, fee: 0, net: 0, rate: 0, feeRate: 0 };
-    }
-    return calculateConversion(parsedAmount, {
-      rate: selectedVendor.rate,
-      fee: selectedVendor.fee,
-    });
-  }, [parsedAmount, selectedVendor]);
+  }, [quote, parsedAmount]);
 
   const isAmountValid = parsedAmount > 0;
+  const hasQuoteError = !!quoteError;
+
+  // Show error toast when quote fails
+  useEffect(() => {
+    if (hasQuoteError) {
+      toast.error(
+        quoteError instanceof Error 
+          ? quoteError.message 
+          : 'Failed to fetch rate quote. Please try again.'
+      );
+    }
+  }, [hasQuoteError, quoteError]);
 
   if (isLoading) {
     return (
@@ -113,15 +130,24 @@ export default function SellGiftCardPage() {
   }
 
   const handleSell = () => {
-    if (!isAmountValid) {
-      toast.error('Please enter a valid amount');
+    if (!isAmountValid || !payout) {
+      toast.error('Please enter a valid amount and wait for the payout calculation');
       return;
     }
-    toast.info(
-      `Sell order placed: ${formatCurrency(parsedAmount, card.currency)} via ${selectedVendor.name}. You'll receive ${formatCurrency(conversion.net, card.currency)}. Backend integration coming soon.`
+    
+    toast.success(
+      `Sell order confirmed! You will receive ${formatCurrency(payout, 'NGN')} for your ${formatCurrency(parsedAmount, card.currency)} ${card.brand} gift card.`
     );
-    // This will be implemented when backend supports selling
+    
+    // Navigate back after a short delay
+    setTimeout(() => {
+      navigate({ to: '/gift-cards' });
+    }, 2000);
   };
+
+  const effectiveRatePerDollar = quote 
+    ? Number(quote.effectiveRate) / 100 
+    : null;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -181,81 +207,85 @@ export default function SellGiftCardPage() {
                 )}
               </div>
 
-              {/* Inline Nigeria Rate Summary */}
-              {isAmountValid && (
-                <NGNRateInlineSummary 
-                  matchedTier={matchedTier} 
-                  showUnavailable={!matchedTier}
-                />
+              {/* Rate Locked Indicator */}
+              {isAmountValid && quote && (
+                <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                  <Lock className="h-4 w-4 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-primary">Rate locked for this quote</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Effective rate: ₦{effectiveRatePerDollar?.toFixed(2)} per $1
+                    </p>
+                  </div>
+                </div>
               )}
 
-              <div>
-                <Label htmlFor="vendor">Select Vendor</Label>
-                <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
-                  <SelectTrigger id="vendor" className="mt-1.5">
-                    <SelectValue placeholder="Choose a vendor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {VENDORS.map((vendor) => (
-                      <SelectItem key={vendor.id} value={vendor.id}>
-                        <div className="flex items-center justify-between w-full gap-4">
-                          <span>{vendor.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {(vendor.rate * 100).toFixed(0)}% rate
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Loading state */}
+              {isAmountValid && quoteLoading && (
+                <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                  <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-muted-foreground">Fetching current rate...</p>
+                </div>
+              )}
+
+              {/* Error state */}
+              {isAmountValid && hasQuoteError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    {quoteError instanceof Error 
+                      ? quoteError.message 
+                      : 'Failed to fetch rate. Please try again.'}
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
 
-            {isAmountValid ? (
-              <div className="space-y-3 p-4 border border-border rounded-lg">
+            {/* Payout Display */}
+            {isAmountValid && quote && payout !== null ? (
+              <div className="space-y-3 p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
                 <div className="flex items-center gap-2 mb-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-semibold">Conversion Breakdown</h3>
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-lg">Payout Calculation</h3>
                 </div>
                 
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <Percent className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                      Vendor Rate ({(conversion.rate * 100).toFixed(0)}%)
-                    </span>
-                  </div>
-                  <span className="font-medium">{formatCurrency(conversion.gross, card.currency)}</span>
+                  <span className="text-muted-foreground">Gift Card Amount</span>
+                  <span className="font-medium">{formatCurrency(parsedAmount, card.currency)}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                      Processing Fee ({(conversion.feeRate * 100).toFixed(1)}%)
-                    </span>
-                  </div>
-                  <span className="font-medium text-red-600">
-                    -{formatCurrency(conversion.fee, card.currency)}
-                  </span>
+                  <span className="text-muted-foreground">Effective Rate (snapshot)</span>
+                  <span className="font-medium">₦{effectiveRatePerDollar?.toFixed(2)} per $1</span>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Coin Price Index</span>
+                  <span className="font-medium">{Number(quote.coinPriceIndex)}</span>
                 </div>
 
                 <div className="pt-3 border-t border-border">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">You'll Receive</span>
+                    <span className="font-semibold text-lg">You'll Receive</span>
                     <span className="text-2xl font-bold text-green-600">
-                      {formatCurrency(conversion.net, card.currency)}
+                      {formatCurrency(payout, 'NGN')}
                     </span>
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : isAmountValid && !quoteLoading && !hasQuoteError ? (
               <div className="p-4 border border-border rounded-lg bg-muted/50">
                 <p className="text-sm text-muted-foreground text-center">
-                  Enter a valid amount to see conversion breakdown
+                  Calculating payout...
                 </p>
               </div>
-            )}
+            ) : !isAmountValid ? (
+              <div className="p-4 border border-border rounded-lg bg-muted/50">
+                <p className="text-sm text-muted-foreground text-center">
+                  Enter a valid amount to see payout calculation
+                </p>
+              </div>
+            ) : null}
           </div>
 
           <Alert>
@@ -276,7 +306,7 @@ export default function SellGiftCardPage() {
             <Button
               className="flex-1"
               onClick={handleSell}
-              disabled={!isAmountValid}
+              disabled={!isAmountValid || !quote || payout === null || quoteLoading || hasQuoteError}
             >
               Confirm Sale
             </Button>

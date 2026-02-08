@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useGetWithdrawalRequests, useRequestWithdrawal, useGetPayoutMethods, useAddPayoutMethod } from '../../hooks/useQueries';
+import { useNavigate } from '@tanstack/react-router';
+import { useGetWithdrawalRequests, useRequestWithdrawal, useGetPayoutMethods, useAddPayoutMethod, useIsCallerKycVerified } from '../../hooks/useQueries';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -8,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Badge } from '../../components/ui/badge';
 import { Skeleton } from '../../components/ui/skeleton';
-import { Wallet, Plus, Loader2, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
+import { Wallet, Plus, Loader2, Clock, CheckCircle, XCircle, AlertCircle, ShieldCheck } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
 import { toast } from 'sonner';
 import type { WithdrawalRequest } from '../../types/app-types';
@@ -16,8 +18,10 @@ import { Currency } from '../../types/app-types';
 import NigerianBankSelect from '../../components/payout/NigerianBankSelect';
 
 export default function WithdrawalsPage() {
+  const navigate = useNavigate();
   const { data: withdrawals = [], isLoading: withdrawalsLoading } = useGetWithdrawalRequests();
   const { data: payoutMethods = [], isLoading: methodsLoading } = useGetPayoutMethods();
+  const { data: isKycVerified = false, isLoading: kycLoading } = useIsCallerKycVerified();
   const requestWithdrawal = useRequestWithdrawal();
   const addPayoutMethod = useAddPayoutMethod();
 
@@ -32,22 +36,20 @@ export default function WithdrawalsPage() {
   const handleWithdrawalRequest = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Defensive check - should not be reachable if UI is properly gated
+    if (!isKycVerified) {
+      toast.error('KYC verification required before withdrawals');
+      return;
+    }
+
     if (!amount || !selectedMethod) {
       toast.error('Please fill in all fields');
       return;
     }
 
     try {
-      const currencyObj: Currency = 
-        currency === 'usd' ? { __kind__: 'usd', usd: null } :
-        currency === 'kes' ? { __kind__: 'kes', kes: null } :
-        currency === 'ngn' ? { __kind__: 'ngn', ngn: null } :
-        currency === 'inr' ? { __kind__: 'inr', inr: null } :
-        { __kind__: 'custom', custom: currency };
-
       await requestWithdrawal.mutateAsync({
         amount: BigInt(Math.floor(parseFloat(amount) * 100)),
-        currency: currencyObj,
         payoutMethodId: selectedMethod,
       });
 
@@ -153,68 +155,93 @@ export default function WithdrawalsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleWithdrawalRequest} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="100.00"
-                    required
-                  />
+              {kycLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger id="currency">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="usd">USD - US Dollar</SelectItem>
-                      <SelectItem value="ngn">NGN - Nigerian Naira</SelectItem>
-                      <SelectItem value="kes">KES - Kenyan Shilling</SelectItem>
-                      <SelectItem value="inr">INR - Indian Rupee</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="method">Payout Method</Label>
-                  {methodsLoading ? (
-                    <Skeleton className="h-10 w-full" />
-                  ) : payoutMethods.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No payout methods available. Add one in the Payout Methods tab.
+              ) : !isKycVerified ? (
+                <Alert>
+                  <ShieldCheck className="h-4 w-4" />
+                  <AlertTitle>KYC Verification Required</AlertTitle>
+                  <AlertDescription className="space-y-3">
+                    <p>
+                      You must complete KYC verification before you can request withdrawals.
+                      This helps us ensure the security of your account and comply with financial regulations.
                     </p>
-                  ) : (
-                    <Select value={selectedMethod} onValueChange={setSelectedMethod}>
-                      <SelectTrigger id="method">
-                        <SelectValue placeholder="Select payout method" />
+                    <Button
+                      onClick={() => navigate({ to: '/kyc' })}
+                      className="w-full sm:w-auto"
+                    >
+                      Complete KYC Verification
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <form onSubmit={handleWithdrawalRequest} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Amount</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step="0.01"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="100.00"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">Currency</Label>
+                    <Select value={currency} onValueChange={setCurrency}>
+                      <SelectTrigger id="currency">
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {payoutMethods.map((method) => (
-                          <SelectItem key={method.id} value={method.id}>
-                            {method.bankName} - {method.accountNumber}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="usd">USD - US Dollar</SelectItem>
+                        <SelectItem value="ngn">NGN - Nigerian Naira</SelectItem>
+                        <SelectItem value="kes">KES - Kenyan Shilling</SelectItem>
+                        <SelectItem value="inr">INR - Indian Rupee</SelectItem>
                       </SelectContent>
                     </Select>
-                  )}
-                </div>
+                  </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={requestWithdrawal.isPending || payoutMethods.length === 0}
-                >
-                  {requestWithdrawal.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Submit Request
-                </Button>
-              </form>
+                  <div className="space-y-2">
+                    <Label htmlFor="method">Payout Method</Label>
+                    {methodsLoading ? (
+                      <Skeleton className="h-10 w-full" />
+                    ) : payoutMethods.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No payout methods available. Add one in the Payout Methods tab.
+                      </p>
+                    ) : (
+                      <Select value={selectedMethod} onValueChange={setSelectedMethod}>
+                        <SelectTrigger id="method">
+                          <SelectValue placeholder="Select payout method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {payoutMethods.map((method) => (
+                            <SelectItem key={method.id} value={method.id}>
+                              {method.bankName} - {method.accountNumber}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={requestWithdrawal.isPending || payoutMethods.length === 0}
+                  >
+                    {requestWithdrawal.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Submit Request
+                  </Button>
+                </form>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -333,43 +360,35 @@ export default function WithdrawalsPage() {
                 </div>
               ) : withdrawals.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
-                  No withdrawal requests yet. Submit one in the Request tab.
+                  No withdrawal requests yet.
                 </p>
               ) : (
                 <div className="space-y-3">
                   {withdrawals.map((withdrawal) => {
                     const statusStr = getStatusString(withdrawal);
-                    const method = payoutMethods.find(m => m.id === withdrawal.payoutMethodId);
-
                     return (
                       <div
                         key={withdrawal.id}
                         className="border rounded-lg p-4 space-y-2"
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <p className="font-medium text-lg">
-                              {formatAmount(withdrawal.amount)}
-                            </p>
-                            {method && (
-                              <p className="text-sm text-muted-foreground">
-                                {method.bankName} - {method.accountNumber}
-                              </p>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                              {formatDate(Number(withdrawal.createdAt) / 1_000_000)}
-                            </p>
-                          </div>
-                          <Badge variant={getStatusVariant(statusStr)} className="flex items-center gap-1">
-                            {getStatusIcon(statusStr)}
-                            {statusStr}
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-lg">
+                            {formatAmount(withdrawal.amount)}
+                          </p>
+                          <Badge variant={getStatusVariant(statusStr)}>
+                            <span className="flex items-center gap-1">
+                              {getStatusIcon(statusStr)}
+                              {statusStr}
+                            </span>
                           </Badge>
                         </div>
-                        {withdrawal.processedAt && (
-                          <p className="text-xs text-muted-foreground">
-                            Processed {formatDate(Number(withdrawal.processedAt) / 1_000_000)}
-                          </p>
-                        )}
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>Payout Method ID: {withdrawal.payoutMethodId}</p>
+                          <p>Requested: {formatDate(Number(withdrawal.createdAt) / 1_000_000)}</p>
+                          {withdrawal.processedAt && (
+                            <p>Processed: {formatDate(Number(withdrawal.processedAt) / 1_000_000)}</p>
+                          )}
+                        </div>
                       </div>
                     );
                   })}

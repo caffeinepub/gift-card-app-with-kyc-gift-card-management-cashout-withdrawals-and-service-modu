@@ -52,6 +52,14 @@ export interface PayoutMethod {
   'accountNumber' : string,
 }
 export type PayoutMethodId = bigint;
+export interface RateQuote {
+  'id' : bigint,
+  'effectiveRate' : bigint,
+  'coinPriceIndex' : bigint,
+  'createdAt' : Time,
+  'ratePercentage' : bigint,
+  'brandName' : string,
+}
 export type Time = bigint;
 export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
@@ -100,25 +108,30 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'calculatePayout' : ActorMethod<[bigint, bigint], bigint>,
   'createGiftCardRate' : ActorMethod<[string, bigint], GiftCardRateId>,
   'createPayoutMethod' : ActorMethod<[string, string, string], PayoutMethodId>,
   'createWithdrawalRequest' : ActorMethod<
     [PayoutMethodId, bigint],
     WithdrawalRequestId
   >,
+  'generateRateQuote' : ActorMethod<[string, bigint], RateQuote>,
   'getActiveRateForBrand' : ActorMethod<[string], [] | [bigint]>,
   'getAllRates' : ActorMethod<[], Array<GiftCardRate>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getCoinPriceIndex' : ActorMethod<[], bigint>,
   'getKycStatus' : ActorMethod<[], Array<KycRecord>>,
   'getUserKycRecords' : ActorMethod<[Principal], Array<KycRecord>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'isCallerKycVerified' : ActorMethod<[], boolean>,
   'listActiveRates' : ActorMethod<[], Array<GiftCardRate>>,
   'listPendingWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
   'listUserPayoutMethods' : ActorMethod<[], Array<PayoutMethod>>,
   'listUserWithdrawals' : ActorMethod<[], Array<WithdrawalRequest>>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setCoinPriceIndex' : ActorMethod<[bigint], undefined>,
   'setGiftCardRateStatus' : ActorMethod<
     [GiftCardRateId, { 'active' : null } | { 'inactive' : null }],
     undefined

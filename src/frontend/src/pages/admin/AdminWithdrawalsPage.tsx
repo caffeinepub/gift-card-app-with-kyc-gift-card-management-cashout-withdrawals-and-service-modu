@@ -19,7 +19,7 @@ export default function AdminWithdrawalsPage() {
     try {
       await updateStatus.mutateAsync({
         requestId,
-        newStatus: 'paid',
+        status: 'paid',
       });
       toast.success('Withdrawal approved');
     } catch (error: any) {
@@ -36,7 +36,7 @@ export default function AdminWithdrawalsPage() {
     try {
       await updateStatus.mutateAsync({
         requestId,
-        newStatus: 'rejected',
+        status: 'rejected',
       });
       toast.success('Withdrawal rejected');
     } catch (error: any) {

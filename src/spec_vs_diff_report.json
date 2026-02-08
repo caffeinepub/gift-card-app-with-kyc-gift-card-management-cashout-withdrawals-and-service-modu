@@ -1,60 +1,42 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T00:21:45.865Z",
-  "summary": "REQ-1 (backend storage/type/id counter for gift card rates) appears implemented via new GiftCardRate types, a giftCardRates Map, and a _nextGiftCardRateId counter in backend/main.mo, plus an upgrade migration initializing giftCardRates. REQ-2 (admin CRUD/status + query methods for listing and active-rate lookup) is not evidenced in the provided backend diff excerpt; frontend changes add admin UI and query hooks that were not requested.",
+  "generatedAt": "2026-02-08T01:05:50.555Z",
+  "summary": "Frontend Withdrawals page appears to add a KYC verification gate via a new `useIsCallerKycVerified` hook and shows user-facing English errors. However, the diff summary does not provide clear evidence that the backend now enforces the KYC gate inside `createWithdrawalRequest`, nor that a new authenticated backend query exists to return the caller’s KYC-withdrawable eligibility.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "Expose backend methods for admins to create, update, and deactivate/reactivate entries in gift_card_rates, plus query methods to list rates and fetch the active rate for a given brand_name.",
-      "reason": "The diff shows new GiftCardRate types/state, but does not show any newly added backend methods/endpoints implementing admin create/update/status toggling, listing, or active-rate lookup; the shown backend/main.mo excerpt only includes existing KYC-related methods.",
+      "id": "REQ-1",
+      "requirement": "Enforce KYC verification on the backend so a user can only create a withdrawal request when their latest KYC record status is verified.",
+      "reason": "The provided `backend/main.mo` excerpt shows KYC record types and `submitKycRecord`/`getKycStatus`, but does not show any change to `createWithdrawalRequest` to check latest KYC status and trap with the required English error messages when not verified. Because the backend file is truncated, this requirement cannot be confirmed from the diff summary.",
       "evidence": [
-        "backend/main.mo (truncated excerpt shows type/state additions but no gift card rate methods)"
+        "backend/main.mo (truncated; no visible `createWithdrawalRequest` gating logic)"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Expose a backend query that returns whether the caller is currently KYC-verified (based on the latest KYC record).",
+      "reason": "Frontend code imports/uses `useIsCallerKycVerified`, but the backend diff excerpt does not show a corresponding new query method that returns a boolean/simple eligibility status, nor its authentication guard. With the backend diff truncated, existence/logic cannot be verified from the summary.",
+      "evidence": [
+        "backend/main.mo (truncated; no visible boolean KYC-eligibility query)",
+        "frontend/src/pages/withdrawals/WithdrawalsPage.tsx (uses `useIsCallerKycVerified`)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Frontend admin page for managing gift card rates (AdminGiftCardRatesPage) and corresponding routing/imports.",
-      "reason": "BuildRequest is explicitly for backend support; adding a new admin UI page and app route is not requested.",
+      "description": "Broad refactor/expansion of frontend React Query hooks and type-mapping utilities beyond the requested KYC-withdrawal gating (e.g., mappings for gift cards, document types, withdrawal status conversions, and other unrelated queries).",
+      "reason": "BuildRequest only asks for a KYC-withdrawal gate and a backend query for KYC eligibility; the diff shows additional/generalized mapping helpers and commentary indicating wider backend/frontend type changes.",
       "evidence": [
-        "frontend/src/pages/admin/AdminGiftCardRatesPage.tsx",
-        "frontend/src/App.tsx"
-      ]
-    },
-    {
-      "description": "Frontend React Query hooks for gift card rates CRUD and lookups.",
-      "reason": "BuildRequest only asks for backend storage and backend methods; implementing frontend hook layer is not requested.",
-      "evidence": [
-        "frontend/src/hooks/useQueries.ts",
-        "frontend-file-summaries.txt (mentions new gift card rates CRUD hooks)"
-      ]
-    },
-    {
-      "description": "Additional GiftCardRate fields createdAt/updatedAt not specified in requirements.",
-      "reason": "REQ-1 specifies fields: id, brand_name, rate_percentage, status. The diff adds createdAt and updatedAt fields to GiftCardRate.",
-      "evidence": [
-        "backend/main.mo",
-        "backend/migration.mo"
-      ]
-    },
-    {
-      "description": "Added backend/migration.mo upgrade migration (introducing NewActor.giftCardRates) which may be unnecessary given the constraint to create migration.mo only if strictly required.",
-      "reason": "The diff adds a migration module, but the diff summary does not provide evidence that an upgrade migration was strictly required (e.g., existing stable state needing transformation).",
-      "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo (imports Migration and uses (with migration = Migration.run))"
+        "frontend/src/hooks/useQueries.ts (truncated; multiple mapping helpers and non-KYC-related logic)"
       ]
     }
   ],
-  "confidence": 0.66,
+  "confidence": 0.58,
   "changed_files": [
     "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/admin/AdminGiftCardRatesPage.tsx",
+    "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
     "project_state.json"
   ]
 }
