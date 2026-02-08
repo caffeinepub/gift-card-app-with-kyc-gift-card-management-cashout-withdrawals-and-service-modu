@@ -16,6 +16,7 @@ import { useGetPayoutMethods, useAddPayoutMethod, useRequestWithdrawal } from '.
 import { toast } from 'sonner';
 import type { Currency } from '../../../types/app-types';
 import NigerianBankSelect from '../../payout/NigerianBankSelect';
+import { addLocalTransaction } from '../../../state/localTransactions';
 
 interface SendToBankSheetProps {
   open: boolean;
@@ -99,6 +100,23 @@ export default function SendToBankSheet({ open, onOpenChange }: SendToBankSheetP
       await requestWithdrawal.mutateAsync({
         amount: BigInt(Math.floor(parseFloat(amount) * 100)),
         payoutMethodId: selectedMethodId,
+      });
+
+      // Log local transaction for immediate display in activity
+      const selectedMethod = payoutMethods.find(m => m.id === selectedMethodId);
+      addLocalTransaction({
+        id: `withdrawal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: 'withdrawal',
+        description: `Withdrawal to bank (${selectedMethod?.bankName || 'Bank'})`,
+        amount: parseFloat(amount),
+        currency: currency as 'ngn' | 'usd',
+        status: 'pending',
+        timestamp: BigInt(Date.now()),
+        metadata: {
+          direction: 'send',
+          payoutMethodId: selectedMethodId,
+          bankName: selectedMethod?.bankName,
+        },
       });
 
       toast.success('Withdrawal request submitted successfully');
@@ -327,7 +345,7 @@ export default function SendToBankSheet({ open, onOpenChange }: SendToBankSheetP
 
                 <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
                   <p className="text-sm text-blue-900 dark:text-blue-100">
-                    Your withdrawal request will be reviewed and processed within 1-3 business days.
+                    Your withdrawal request will be reviewed and processed within 5–20 minutes.
                   </p>
                 </div>
               </div>

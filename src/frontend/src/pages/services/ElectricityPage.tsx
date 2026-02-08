@@ -1,81 +1,78 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { Badge } from '../../components/ui/badge';
-import { Alert, AlertDescription } from '../../components/ui/alert';
-import { Zap, Loader2, Info } from 'lucide-react';
+import { Card, CardContent } from '../../components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { addLocalTransaction } from '../../state/localTransactions';
 
 export default function ElectricityPage() {
+  const navigate = useNavigate();
   const [meterNumber, setMeterNumber] = useState('');
   const [amount, setAmount] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!meterNumber || !amount) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    addLocalTransaction({
-      type: 'bills',
+    const transaction = {
+      id: `electricity-${Date.now()}`,
+      type: 'electricity' as const,
+      description: `Electricity - ${meterNumber}`,
       amount: parseFloat(amount),
-      currency: 'USD',
-      description: `Electricity bill payment for meter ${meterNumber}`,
-      status: 'pending',
-    });
+      currency: 'usd' as const,
+      status: 'pending' as const,
+      timestamp: BigInt(Date.now() * 1000000),
+      metadata: {
+        accountId: meterNumber,
+      },
+    };
 
-    toast.success('Electricity payment logged (placeholder)');
-    setMeterNumber('');
-    setAmount('');
-    setIsProcessing(false);
+    addLocalTransaction(transaction);
+    toast.success('Electricity payment successful');
+    navigate({ to: '/' });
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Zap className="h-8 w-8" />
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate({ to: '/services/bills' })}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
         <div>
-          <h1 className="text-3xl font-bold">Electricity</h1>
-          <p className="text-muted-foreground mt-1">
-            Pay your electricity bills
+          <h1 className="text-2xl font-bold">Electricity Bill</h1>
+          <p className="text-sm text-muted-foreground">
+            Pay your electricity bill
           </p>
         </div>
       </div>
 
       <Alert>
-        <Info className="h-4 w-4" />
+        <AlertCircle className="h-5 w-5" />
+        <AlertTitle>Coming Soon</AlertTitle>
         <AlertDescription>
-          <Badge variant="secondary" className="mr-2">Coming Soon</Badge>
-          This is a placeholder. Real electricity provider integration will be added in a future update.
+          Electricity bill payment is currently under development. Check back soon!
         </AlertDescription>
       </Alert>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Pay Electricity Bill</CardTitle>
-          <CardDescription>
-            Top up your electricity meter
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="meter">Meter Number</Label>
               <Input
                 id="meter"
+                type="text"
+                placeholder="Enter meter number"
                 value={meterNumber}
                 onChange={(e) => setMeterNumber(e.target.value)}
-                placeholder="Enter your meter number"
-                disabled={isProcessing}
+                required
               />
             </div>
 
@@ -85,26 +82,15 @@ export default function ElectricityPage() {
                 id="amount"
                 type="number"
                 step="0.01"
+                placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="50.00"
-                disabled={isProcessing}
+                required
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                'Pay Bill'
-              )}
+            <Button type="submit" className="w-full">
+              Pay Bill
             </Button>
           </form>
         </CardContent>

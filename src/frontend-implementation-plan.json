@@ -1,27 +1,53 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Gate withdrawal requests behind KYC verification (frontend)",
+  "title": "Update withdrawal UI to reflect 5–20 minute processing window and improve admin error messaging",
   "requirements": [
     {
-      "id": "REQ-3",
-      "summary": "Block withdrawal request submission in the Withdrawals UI unless the user is KYC-verified, and provide a clear call-to-action to complete KYC.",
+      "id": "REQ-2",
+      "summary": "Update withdrawal UI copy and pending timing indicator logic to match the 5–20 minute processing window.",
       "acceptanceCriteria": [
-        "On the Withdrawals page, if the user is not KYC-verified, the Request Withdrawal form cannot be submitted (submit button disabled and/or form replaced by an explanatory panel).",
-        "The Withdrawals page displays an English message explaining that KYC verification is required before withdrawals and includes a button/link that navigates the user to the existing KYC page.",
-        "If the user is KYC-verified, the Withdrawals page behaves as it did previously (can select payout method, enter amount, and submit).",
-        "If the user attempts to withdraw through any existing UI path and the backend rejects due to KYC gating, the user sees the backend error message surfaced in a toast or inline error in English."
+        "In frontend/src/components/crypto/sheets/SendToBankSheet.tsx, replace the review-screen info text 'within 1-3 business days' with 'within 5–20 minutes'.",
+        "In frontend/src/pages/withdrawals/WithdrawalsPage.tsx, replace 'Typical processing time: ~10 minutes' with 'Typical processing time: 5–20 minutes'.",
+        "In frontend/src/pages/withdrawals/WithdrawalsPage.tsx, update the pending status helper so it no longer assumes a fixed 10-minute countdown; it should reflect the 5–20 minute window (e.g., show queued/estimated before 5 minutes and show time remaining until 20 minutes, then 'Processing...' after 20 minutes).",
+        "All updated text is in English and matches the 5–20 minute window consistently across these screens."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
           "operation": "modify",
-          "description": "Add a new React Query hook (e.g., useIsCallerKycVerified) that calls the backend actor method isCallerKycVerified() and exposes loading/error states for UI gating on withdrawals."
+          "description": "Update the review-screen informational text to say withdrawals are processed within 5–20 minutes (English only)."
         },
         {
           "path": "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
           "operation": "modify",
-          "description": "Use the new KYC-verified hook to gate the Request Withdrawal UI: when not verified, replace or disable the submit path and show an English explanatory panel with a navigation link/button to the existing /kyc route; when verified, keep the existing withdrawal request behavior. Also add a defensive check in the submit handler to prevent submission when unverified and surface backend rejection messages in English (toast/inline) if they occur."
+          "description": "Update the processing-time copy to 'Typical processing time: 5–20 minutes' and replace the fixed 10-minute pending countdown helper with logic that reflects: before 5 minutes show queued/estimated; between 5–20 minutes show time remaining until 20 minutes; after 20 minutes show 'Processing...'."
+        },
+        {
+          "path": "frontend/src/utils/withdrawalProcessingWindow.ts",
+          "operation": "create",
+          "description": "Add a small utility for computing user-facing pending-withdrawal timing labels based on a 5–20 minute window (e.g., phase + label), to keep WithdrawalsPage logic clear and consistent."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Show backend-provided 5–20 minute window trap errors as a helpful toast when admins approve withdrawals.",
+      "acceptanceCriteria": [
+        "In frontend/src/pages/admin/AdminWithdrawalsPage.tsx, if approval fails due to the backend window rule, the toast displays the backend-provided error message (or a clear fallback) indicating the 5–20 minute window.",
+        "If approval fails for any other reason, existing error handling behavior remains intact.",
+        "Reject action behavior remains unchanged."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/backendErrorMessage.ts",
+          "operation": "create",
+          "description": "Implement a helper to extract a clean, user-displayable message from backend call failures (including trapped errors), preserving the backend-provided English message when present and providing a safe fallback string."
+        },
+        {
+          "path": "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
+          "operation": "modify",
+          "description": "Update approve-withdrawal error handling to use the backendErrorMessage helper so that when the backend rejects approval due to the 5–20 minute rule, the toast shows the backend-provided message (or a clear 5–20 minute fallback). Keep non-window errors and reject behavior unchanged."
         }
       ]
     }

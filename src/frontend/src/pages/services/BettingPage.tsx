@@ -1,242 +1,136 @@
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
+import { Card, CardContent } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { ArrowLeft, Loader2, Trophy } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { addLocalTransaction } from '../../state/localTransactions';
 import { BETTING_PROVIDERS, AMOUNT_CHIPS } from '../../config/betting';
 
-type Step = 'details' | 'review';
-
 export default function BettingPage() {
-  const [step, setStep] = useState<Step>('details');
+  const navigate = useNavigate();
   const [provider, setProvider] = useState('');
   const [accountId, setAccountId] = useState('');
   const [amount, setAmount] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  const isValid = provider && accountId.trim() && amount && parseFloat(amount) > 0;
-
-  const handleAmountChipClick = (chipAmount: number) => {
-    setAmount(chipAmount.toString());
+  const handleQuickAmount = (value: number) => {
+    setAmount(value.toString());
   };
 
-  const handleContinue = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isValid) {
+    if (!provider || !accountId || !amount) {
       toast.error('Please fill in all fields');
       return;
     }
 
-    setStep('review');
-  };
-
-  const handleConfirm = async () => {
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    addLocalTransaction({
-      type: 'betting',
+    const transaction = {
+      id: `betting-${Date.now()}`,
+      type: 'betting' as const,
+      description: `${provider} Top-up - ${accountId}`,
       amount: parseFloat(amount),
-      currency: 'NGN',
-      description: `${provider} betting top-up for ${accountId}`,
-      status: 'pending',
-    });
+      currency: 'ngn' as const,
+      status: 'pending' as const,
+      timestamp: BigInt(Date.now() * 1000000),
+      metadata: {
+        provider,
+        accountId,
+      },
+    };
 
-    toast.success('Betting top-up successful');
-    
-    // Reset form and step
-    setProvider('');
-    setAccountId('');
-    setAmount('');
-    setStep('details');
-    setIsProcessing(false);
-  };
-
-  const handleBack = () => {
-    if (step === 'review') {
-      setStep('details');
-    } else {
-      window.history.back();
-    }
+    addLocalTransaction(transaction);
+    toast.success('Betting account top-up successful');
+    navigate({ to: '/' });
   };
 
   return (
-    <div className="min-h-screen bg-background pb-safe">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b">
-        <div className="flex items-center justify-between px-4 py-4">
+    <div className="min-h-screen bg-gradient-to-b from-[oklch(0.35_0.08_280)] to-[oklch(0.25_0.08_280)] pb-24">
+      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+        <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleBack}
-            className="h-10 w-10"
-            disabled={isProcessing}
+            onClick={() => navigate({ to: '/services/bills' })}
+            className="text-white hover:bg-white/10"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold absolute left-1/2 -translate-x-1/2">
-            {step === 'details' ? 'Betting Top-Up' : 'Review & Confirm'}
-          </h1>
-          <div className="w-10" /> {/* Spacer for centering */}
+          <div className="text-center flex-1">
+            <h1 className="text-2xl font-bold text-white">Betting Top-up</h1>
+          </div>
         </div>
-      </div>
 
-      {/* Details Step */}
-      {step === 'details' && (
-        <form onSubmit={handleContinue} className="px-4 py-6 space-y-6">
-          {/* Provider Selector */}
-          <div className="space-y-2">
-            <Label htmlFor="provider" className="text-sm font-medium">
-              Betting Provider
-            </Label>
-            <Select value={provider} onValueChange={setProvider} disabled={isProcessing}>
-              <SelectTrigger id="provider" className="w-full h-14 bg-muted/50 border-0 text-base">
-                <SelectValue placeholder="Select betting provider" />
-              </SelectTrigger>
-              <SelectContent>
-                {BETTING_PROVIDERS.map((prov) => (
-                  <SelectItem key={prov} value={prov}>
-                    {prov}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <Card>
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="provider">Betting Provider</Label>
+                <Select value={provider} onValueChange={setProvider}>
+                  <SelectTrigger id="provider">
+                    <SelectValue placeholder="Select provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BETTING_PROVIDERS.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Betting Account ID Input */}
-          <div className="space-y-2">
-            <Label htmlFor="accountId" className="text-sm font-medium">
-              Betting Account ID
-            </Label>
-            <div className="relative">
-              <Input
-                id="accountId"
-                type="text"
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                placeholder="Enter your betting account ID"
-                disabled={isProcessing}
-                className="h-14 bg-muted/50 border-0 text-base pr-12"
-              />
-              <Trophy className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            </div>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="accountId">Account ID / User ID</Label>
+                <Input
+                  id="accountId"
+                  type="text"
+                  placeholder="Enter your account ID"
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  required
+                />
+              </div>
 
-          {/* Wallet Balance */}
-          <div className="text-sm text-muted-foreground">
-            Wallet Bal: <span className="text-primary">₦0.00</span>
-          </div>
-
-          {/* Amount Input with NGN currency */}
-          <div className="space-y-2">
-            <Label htmlFor="amount" className="text-sm font-medium">
-              Amount
-            </Label>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount (₦)</Label>
                 <Input
                   id="amount"
                   type="number"
-                  step="0.01"
+                  placeholder="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  disabled={isProcessing}
-                  className="h-14 bg-muted/50 border-0 text-base"
+                  required
                 />
               </div>
-              <div className="flex items-center justify-center h-14 px-4 bg-muted/50 rounded-lg">
-                <span className="text-base font-medium text-muted-foreground">NGN</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Amount Quick-Pick Chips */}
-          <div className="flex flex-wrap gap-2">
-            {AMOUNT_CHIPS.map((chipAmount) => (
-              <button
-                key={chipAmount}
-                type="button"
-                onClick={() => handleAmountChipClick(chipAmount)}
-                disabled={isProcessing}
-                className="px-4 py-2.5 bg-muted/50 hover:bg-muted rounded-full text-sm font-medium transition-colors disabled:opacity-50"
-              >
-                ₦{chipAmount.toLocaleString()}
-              </button>
-            ))}
-          </div>
-
-          {/* Continue Button */}
-          <div className="pt-8">
-            <Button
-              type="submit"
-              disabled={!isValid || isProcessing}
-              className="w-full h-14 text-base rounded-full bg-primary/20 hover:bg-primary/30 text-primary disabled:opacity-50"
-            >
-              Continue
-            </Button>
-          </div>
-        </form>
-      )}
-
-      {/* Review Step */}
-      {step === 'review' && (
-        <div className="px-4 py-6 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Transaction Summary</CardTitle>
-              <CardDescription>
-                Please review your betting top-up details
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between py-3 border-b">
-                <span className="text-muted-foreground">Provider</span>
-                <span className="font-medium">{provider}</span>
+              <div className="space-y-2">
+                <Label>Quick Select</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {AMOUNT_CHIPS.map((value) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleQuickAmount(value)}
+                      className="h-12"
+                    >
+                      ₦{value.toLocaleString()}
+                    </Button>
+                  ))}
+                </div>
               </div>
-              <div className="flex justify-between py-3 border-b">
-                <span className="text-muted-foreground">Account ID</span>
-                <span className="font-medium">{accountId}</span>
-              </div>
-              <div className="flex justify-between py-3 border-b">
-                <span className="text-muted-foreground">Amount</span>
-                <span className="font-semibold text-lg">₦{parseFloat(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Action Buttons */}
-          <div className="space-y-3 pt-4">
-            <Button
-              onClick={handleConfirm}
-              disabled={isProcessing}
-              className="w-full h-14 text-base rounded-full"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                'Confirm Top-Up'
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setStep('details')}
-              disabled={isProcessing}
-              className="w-full h-14 text-base rounded-full"
-            >
-              Back to Edit
-            </Button>
-          </div>
-        </div>
-      )}
+              <Button type="submit" className="w-full h-12 text-base">
+                Continue
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

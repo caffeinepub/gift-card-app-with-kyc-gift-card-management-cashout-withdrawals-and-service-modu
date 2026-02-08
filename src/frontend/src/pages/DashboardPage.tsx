@@ -29,8 +29,7 @@ export default function DashboardPage() {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const {
     isLoading,
-    balance,
-    currency,
+    totalBalance,
   } = useDashboardData();
 
   if (isLoading) {
@@ -61,7 +60,7 @@ export default function DashboardPage() {
       id: 'rate-alerts', 
       label: 'Rate Alerts', 
       icon: Bell, 
-      comingSoon: true,
+      route: '/rate-alerts',
       color: 'oklch(0.7 0.15 220)'
     },
     { 
@@ -113,7 +112,7 @@ export default function DashboardPage() {
       id: 'esim', 
       label: 'eSIM', 
       icon: Smartphone, 
-      comingSoon: true,
+      route: '/services/esim',
       color: 'oklch(0.7 0.15 220)',
       badge: 'New'
     },
@@ -140,7 +139,7 @@ export default function DashboardPage() {
     },
   ];
 
-  const formattedBalance = formatCurrency(Number(balance), currency);
+  const formattedBalance = formatCurrency(totalBalance, 'ngn');
   const maskedBalance = '₦••••••';
 
   return (

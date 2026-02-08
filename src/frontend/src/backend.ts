@@ -97,6 +97,10 @@ export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
 }
 export type GiftCardRateId = bigint;
+export interface WithdrawalConfig {
+    minTimeToPaidStatus: Time;
+    maxTimeToPaidStatus: Time;
+}
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
@@ -199,9 +203,14 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCoinPriceIndex(): Promise<bigint>;
+    /**
+     * / ADDED: This should be used for the Crypto Star Indicator Frontend
+     */
+    getCryptoStarIndex(): Promise<bigint>;
     getKycStatus(): Promise<Array<KycRecord>>;
     getUserKycRecords(user: Principal): Promise<Array<KycRecord>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getWithdrawalConfig(): Promise<WithdrawalConfig>;
     isCallerAdmin(): Promise<boolean>;
     isCallerKycVerified(): Promise<boolean>;
     listActiveRates(): Promise<Array<GiftCardRate>>;
@@ -211,6 +220,7 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setCoinPriceIndex(priceIndex: bigint): Promise<void>;
     setGiftCardRateStatus(rateId: GiftCardRateId, status: GiftCardRateStatus): Promise<void>;
+    setWithdrawalConfig(minTime: Time, maxTime: Time): Promise<void>;
     submitKycRecord(documentType: DocumentType, idNumber: string, documentURI: string, signature: ExternalBlob | null): Promise<KycRecordId>;
     updateGiftCardRate(rateId: GiftCardRateId, ratePercentage: bigint): Promise<void>;
     updateKycStatus(recordId: KycRecordId, status: KycStatus): Promise<void>;
@@ -471,6 +481,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getCryptoStarIndex(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCryptoStarIndex();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCryptoStarIndex();
+            return result;
+        }
+    }
     async getKycStatus(): Promise<Array<KycRecord>> {
         if (this.processError) {
             try {
@@ -511,6 +535,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getUserProfile(arg0);
             return from_candid_opt_n16(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getWithdrawalConfig(): Promise<WithdrawalConfig> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getWithdrawalConfig();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getWithdrawalConfig();
+            return result;
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -636,6 +674,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.setGiftCardRateStatus(arg0, to_candid_variant_n35(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async setWithdrawalConfig(arg0: Time, arg1: Time): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setWithdrawalConfig(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setWithdrawalConfig(arg0, arg1);
             return result;
         }
     }

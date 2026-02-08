@@ -8,13 +8,13 @@ interface CryptoActivityRowProps {
 
 export default function CryptoActivityRow({ transaction }: CryptoActivityRowProps) {
   const getIcon = () => {
-    if (transaction.direction === 'sent') {
+    if (transaction.metadata?.direction === 'send') {
       return <ArrowUpRight className="h-5 w-5 text-red-500" />;
     }
-    if (transaction.direction === 'received') {
+    if (transaction.metadata?.direction === 'receive') {
       return <ArrowDownLeft className="h-5 w-5 text-green-500" />;
     }
-    if (transaction.direction === 'swap') {
+    if (transaction.metadata?.fromAsset && transaction.metadata?.toAsset) {
       return <ArrowLeftRight className="h-5 w-5 text-blue-500" />;
     }
     return <ArrowUpRight className="h-5 w-5 text-muted-foreground" />;
@@ -33,8 +33,9 @@ export default function CryptoActivityRow({ transaction }: CryptoActivityRowProp
     }
   };
 
-  const formatTimestamp = (timestamp: number) => {
-    const date = new Date(timestamp);
+  const formatTimestamp = (timestamp: bigint | number) => {
+    const timestampMs = typeof timestamp === 'bigint' ? Number(timestamp) / 1000000 : timestamp;
+    const date = new Date(timestampMs);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -63,8 +64,8 @@ export default function CryptoActivityRow({ transaction }: CryptoActivityRowProp
       </div>
       <div className="text-right flex-shrink-0">
         <p className="font-medium text-sm">
-          {transaction.direction === 'received' ? '+' : '-'}
-          {transaction.amount} {transaction.asset || transaction.currency}
+          {transaction.metadata?.direction === 'receive' ? '+' : '-'}
+          {transaction.amount} {transaction.metadata?.asset || transaction.currency.toUpperCase()}
         </p>
         <Badge className={`text-[10px] px-1.5 py-0 h-5 ${getStatusColor()}`}>
           {transaction.status}

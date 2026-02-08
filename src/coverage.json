@@ -1,56 +1,68 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T01:05:50.558Z",
+  "generatedAt": "2026-02-08T04:11:51.893Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 3,
-    "implemented": 1,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Enforce KYC verification on the backend so a user can only create a withdrawal request when their latest KYC record status is verified.",
+        "summary": "Enforce a backend rule that a pending withdrawal request can only be marked as #paid within a 5 to 20 minute window after it was created.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Expose a backend query that returns whether the caller is currently KYC-verified (based on the latest KYC record), to support frontend gating and UX messaging.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "summary": "Update withdrawal-related user-facing text and timing indicators to reflect a 5–20 minute processing window in both the Withdrawals page and the Send to Bank review screen.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+          "frontend/src/utils/withdrawalProcessingWindow.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+          "frontend/src/utils/withdrawalProcessingWindow.ts"
+        ]
       },
       {
         "id": "REQ-3",
-        "summary": "Update the Withdrawals UI to block withdrawal requests unless the user is KYC-verified, and provide a clear call-to-action to complete KYC verification.",
+        "summary": "Surface the backend 5–20 minute processing-window error to admins when approving a withdrawal so the admin UI shows a helpful toast message instead of a generic failure.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx"
+          "frontend/src/utils/backendErrorMessage.ts",
+          "frontend/src/pages/admin/AdminWithdrawalsPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/withdrawals/WithdrawalsPage.tsx"
+          "frontend/src/utils/backendErrorMessage.ts",
+          "frontend/src/pages/admin/AdminWithdrawalsPage.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
+    "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
     "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+    "frontend/src/utils/backendErrorMessage.ts",
+    "frontend/src/utils/withdrawalProcessingWindow.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

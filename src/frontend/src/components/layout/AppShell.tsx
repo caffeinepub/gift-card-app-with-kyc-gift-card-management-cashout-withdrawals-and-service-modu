@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
@@ -13,9 +13,13 @@ import {
   LogOut,
   Shield,
   Wallet,
-  DollarSign
+  DollarSign,
+  Bell,
+  Calendar,
+  Smartphone
 } from 'lucide-react';
 import MobileBottomNavDock from './MobileBottomNavDock';
+import { useRateAlertsEngine } from '../../hooks/useRateAlertsEngine';
 
 interface AppShellProps {
   children: ReactNode;
@@ -28,6 +32,9 @@ export default function AppShell({ children }: AppShellProps) {
   const queryClient = useQueryClient();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Mount rate alerts engine at app-shell level
+  useRateAlertsEngine();
+
   const handleLogout = async () => {
     await clear();
     queryClient.clear();
@@ -37,11 +44,14 @@ export default function AppShell({ children }: AppShellProps) {
   const navItems = [
     { icon: Home, label: 'Dashboard', path: '/' },
     { icon: CreditCard, label: 'Gift Cards', path: '/gift-cards' },
-    { icon: Wallet, label: 'Crypto Wallet', path: '/crypto-wallet' },
+    { icon: Wallet, label: 'Crypto Wallet', path: '/services/crypto' },
     { icon: DollarSign, label: 'Withdrawals', path: '/withdrawals' },
+    { icon: Bell, label: 'Rate Alerts', path: '/rate-alerts' },
+    { icon: Calendar, label: 'Rate Calendar', path: '/rate-calendar' },
+    { icon: Smartphone, label: 'eSIM', path: '/services/esim' },
     { icon: History, label: 'History', path: '/history' },
     { icon: Settings, label: 'Settings', path: '/settings' },
-    { icon: Shield, label: 'Admin', path: '/admin', adminOnly: true },
+    { icon: Shield, label: 'Admin', path: '/admin/kyc', adminOnly: true },
   ];
 
   const handleNavigation = (path: string) => {

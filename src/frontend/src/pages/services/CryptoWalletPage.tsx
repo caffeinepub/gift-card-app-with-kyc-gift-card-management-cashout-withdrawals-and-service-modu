@@ -53,12 +53,11 @@ const mockTokens = [
   },
 ];
 
-// Assets for sheets (without balance/usdValue)
+// Assets for sheets (with symbol and balance)
 const mockAssets = mockTokens.map(token => ({
-  id: token.id,
+  symbol: token.ticker,
   name: token.name,
-  ticker: token.ticker,
-  icon: token.icon,
+  balance: token.balance,
 }));
 
 export default function CryptoWalletPage() {

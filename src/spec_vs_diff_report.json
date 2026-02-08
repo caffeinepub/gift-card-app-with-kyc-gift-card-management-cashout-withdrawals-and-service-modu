@@ -1,42 +1,54 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T01:05:50.555Z",
-  "summary": "Frontend Withdrawals page appears to add a KYC verification gate via a new `useIsCallerKycVerified` hook and shows user-facing English errors. However, the diff summary does not provide clear evidence that the backend now enforces the KYC gate inside `createWithdrawalRequest`, nor that a new authenticated backend query exists to return the caller’s KYC-withdrawable eligibility.",
+  "generatedAt": "2026-02-08T04:11:51.889Z",
+  "summary": "Frontend updates for the 5–20 minute window appear partially implemented (new timing utility and Withdrawals page import; admin page now extracts backend error messages for toasts). However, the backend enforcement of the 5–20 minute #paid approval window is not evidenced in the provided backend/main.mo truncation, and the required SendToBankSheet copy change is not evidenced. The diff summary also indicates multiple unrelated frontend features/changes beyond the request scope.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Enforce KYC verification on the backend so a user can only create a withdrawal request when their latest KYC record status is verified.",
-      "reason": "The provided `backend/main.mo` excerpt shows KYC record types and `submitKycRecord`/`getKycStatus`, but does not show any change to `createWithdrawalRequest` to check latest KYC status and trap with the required English error messages when not verified. Because the backend file is truncated, this requirement cannot be confirmed from the diff summary.",
+      "requirement": "Enforce a backend rule that a pending withdrawal request can only be marked as #paid within a 5 to 20 minute window after it was created, trapping with clear English errors outside that window, while allowing #rejected.",
+      "reason": "backend/main.mo is truncated and does not show any update to updateWithdrawalStatus(requestId, #paid) logic or any trap/error messages enforcing the 5–20 minute window. The only clearly evidenced backend changes are introduction of a WithdrawalConfig and a migration module setting min/max times, which does not itself prove enforcement in the status update path.",
       "evidence": [
-        "backend/main.mo (truncated; no visible `createWithdrawalRequest` gating logic)"
+        "backend/main.mo",
+        "backend/migration.mo"
       ]
     },
     {
       "id": "REQ-2",
-      "requirement": "Expose a backend query that returns whether the caller is currently KYC-verified (based on the latest KYC record).",
-      "reason": "Frontend code imports/uses `useIsCallerKycVerified`, but the backend diff excerpt does not show a corresponding new query method that returns a boolean/simple eligibility status, nor its authentication guard. With the backend diff truncated, existence/logic cannot be verified from the summary.",
+      "requirement": "In frontend/src/components/crypto/sheets/SendToBankSheet.tsx, replace the review-screen info text 'within 1-3 business days' with 'within 5–20 minutes'.",
+      "reason": "SendToBankSheet.tsx is truncated and the diff summary does not include the specific text replacement; no explicit evidence shows the 'within 5–20 minutes' copy being present in the review screen.",
       "evidence": [
-        "backend/main.mo (truncated; no visible boolean KYC-eligibility query)",
-        "frontend/src/pages/withdrawals/WithdrawalsPage.tsx (uses `useIsCallerKycVerified`)"
+        "frontend/src/components/crypto/sheets/SendToBankSheet.tsx"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Broad refactor/expansion of frontend React Query hooks and type-mapping utilities beyond the requested KYC-withdrawal gating (e.g., mappings for gift cards, document types, withdrawal status conversions, and other unrelated queries).",
-      "reason": "BuildRequest only asks for a KYC-withdrawal gate and a backend query for KYC eligibility; the diff shows additional/generalized mapping helpers and commentary indicating wider backend/frontend type changes.",
+      "description": "Large set of unrelated frontend features/changes (gift card catalog/components/pages, crypto wallet page, betting page, global CSS theme changes, etc.)",
+      "reason": "Not requested by the BuildRequest, which is specifically about withdrawal processing timing enforcement and related UI messaging/error surfacing. The diff summary file 'frontend-file-summaries.txt' describes many additional features outside this scope.",
       "evidence": [
-        "frontend/src/hooks/useQueries.ts (truncated; multiple mapping helpers and non-KYC-related logic)"
+        "frontend-file-summaries.txt"
+      ]
+    },
+    {
+      "description": "Introduction of a persistent withdrawal configuration and migration plumbing (_withdrawalConfig and backend/migration.mo)",
+      "reason": "The request only asks to enforce a 5–20 minute rule in backend/main.mo; adding a migration module and config storage is an unrequested architectural addition (even if potentially supportive).",
+      "evidence": [
+        "backend/migration.mo",
+        "backend/main.mo"
       ]
     }
   ],
-  "confidence": 0.58,
+  "confidence": 0.62,
   "changed_files": [
     "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/components/crypto/sheets/SendToBankSheet.tsx",
+    "frontend/src/pages/admin/AdminWithdrawalsPage.tsx",
     "frontend/src/pages/withdrawals/WithdrawalsPage.tsx",
+    "frontend/src/utils/backendErrorMessage.ts",
+    "frontend/src/utils/withdrawalProcessingWindow.ts",
     "project_state.json"
   ]
 }

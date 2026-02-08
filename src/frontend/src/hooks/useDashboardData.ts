@@ -1,82 +1,44 @@
-import { useGetCallerUserProfile } from './useCurrentUserProfile';
-import { useGetKycRecords, useGetGiftCards, useGetWithdrawalRequests, useGetUserTags } from './useQueries';
+import { useGetGiftCards } from './useQueries';
+import type { LocalTransaction } from '../types/app-types';
 import { getLocalTransactions } from '../state/localTransactions';
-import type { WithdrawalRequest, Transaction } from '../types/app-types';
 
 export function useDashboardData() {
-  const { data: profile, isLoading: profileLoading } = useGetCallerUserProfile();
-  const { data: kycRecords = [], isLoading: kycLoading } = useGetKycRecords();
-  const { data: giftCards = [], isLoading: cardsLoading } = useGetGiftCards();
-  const { data: withdrawals = [], isLoading: withdrawalsLoading } = useGetWithdrawalRequests();
-  const { data: userTags = [], isLoading: tagsLoading } = useGetUserTags();
+  const { data: giftCards = [], isLoading: giftCardsLoading } = useGetGiftCards();
 
-  const isLoading = profileLoading || kycLoading || cardsLoading || withdrawalsLoading || tagsLoading;
-
-  // KYC status
-  const latestKyc = kycRecords[kycRecords.length - 1];
-  const kycStatus = latestKyc?.status || null;
-
-  // Balance
-  const wallets = profile?.wallets || [];
-  const primaryWallet = wallets[0];
-  const balance = primaryWallet?.balance || BigInt(0);
-  const currency = primaryWallet?.currency || { __kind__: 'usd' as const, usd: null };
-
-  // Gift cards stats
-  const totalCards = giftCards.length;
-  const availableCards = giftCards.filter(c => c.status.__kind__ === 'available').length;
-  const totalValue = giftCards.reduce((sum, card) => sum + Number(card.amount), 0);
-
-  // Pending withdrawals - properly handle the status type
-  const pendingWithdrawals = withdrawals.filter((w: WithdrawalRequest) => {
-    const status = w.status as any;
-    if (typeof status === 'object' && status !== null && '__kind__' in status) {
-      return status.__kind__ === 'pending';
-    }
-    return false;
-  });
-
-  // Recent transactions (combine backend + local)
-  const backendTransactions = primaryWallet?.transactions || [];
   const localTransactions = getLocalTransactions();
-  
-  const allTransactions = [
-    ...backendTransactions.map((t: Transaction) => {
-      const status = t.status as any;
-      const statusStr = typeof status === 'object' && status !== null && '__kind__' in status 
-        ? status.__kind__ 
-        : String(status);
-      
-      return {
-        id: t.id,
-        type: t.kind.__kind__,
-        amount: Number(t.amount),
-        currency: t.currency,
-        description: t.description,
-        timestamp: Number(t.timestamp),
-        status: statusStr,
-        isLocal: false,
-      };
-    }),
-    ...localTransactions.map(t => ({
-      ...t,
-      isLocal: true,
-    })),
-  ].sort((a, b) => b.timestamp - a.timestamp).slice(0, 10);
 
-  // Convert tags array to Map for easy lookup
-  const tagsMap = new Map(userTags);
+  const recentActivity = [
+    ...localTransactions.map(tx => ({
+      id: tx.id,
+      description: tx.description,
+      amount: tx.amount,
+      timestamp: tx.timestamp,
+      status: tx.status,
+    })),
+  ].sort((a, b) => {
+    const aTime = typeof a.timestamp === 'bigint' ? Number(a.timestamp) : a.timestamp;
+    const bTime = typeof b.timestamp === 'bigint' ? Number(b.timestamp) : b.timestamp;
+    return bTime - aTime;
+  }).slice(0, 10);
+
+  const totalBalance = giftCards.reduce((sum, card) => {
+    if (card.status.__kind__ === 'available') {
+      return sum + Number(card.amount);
+    }
+    return sum;
+  }, 0);
+
+  const availableCards = giftCards.filter(card => card.status.__kind__ === 'available').length;
+  const pendingCards = giftCards.filter(card => card.status.__kind__ === 'pending').length;
+
+  const tagCounts = new Map<string, number>();
 
   return {
-    isLoading,
-    kycStatus,
-    balance,
-    currency,
-    totalCards,
+    totalBalance,
     availableCards,
-    totalValue,
-    pendingWithdrawals: pendingWithdrawals.length,
-    recentTransactions: allTransactions,
-    tagsMap,
+    pendingCards,
+    recentActivity,
+    tags: tagCounts,
+    isLoading: giftCardsLoading,
   };
 }

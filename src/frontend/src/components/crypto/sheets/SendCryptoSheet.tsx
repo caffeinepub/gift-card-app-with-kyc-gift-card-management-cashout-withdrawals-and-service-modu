@@ -1,93 +1,73 @@
 import { useState } from 'react';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../../ui/sheet';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { addLocalTransaction } from '../../../state/localTransactions';
-
-interface CryptoAsset {
-  id: string;
-  name: string;
-  ticker: string;
-  icon: string;
-}
 
 interface SendCryptoSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  assets: CryptoAsset[];
-  preselectedAsset?: CryptoAsset;
+  assets: Array<{ symbol: string; name: string; balance: string }>;
 }
 
-export default function SendCryptoSheet({ 
-  open, 
-  onOpenChange, 
-  assets,
-  preselectedAsset 
-}: SendCryptoSheetProps) {
-  const [selectedAssetId, setSelectedAssetId] = useState(preselectedAsset?.id || '');
+export default function SendCryptoSheet({ open, onOpenChange, assets }: SendCryptoSheetProps) {
+  const [selectedAsset, setSelectedAsset] = useState('');
   const [address, setAddress] = useState('');
   const [amount, setAmount] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  const selectedAsset = assets.find(a => a.id === selectedAssetId);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!address || !amount || !selectedAsset) {
+    if (!selectedAsset || !address || !amount) {
       toast.error('Please fill in all fields');
       return;
     }
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    addLocalTransaction({
-      type: 'crypto',
+    const transaction = {
+      id: `send-${Date.now()}`,
+      type: 'crypto' as const,
+      description: `Send ${selectedAsset}`,
       amount: parseFloat(amount),
-      currency: 'USD',
-      description: `Send ${selectedAsset.name} to ${address.slice(0, 8)}...`,
-      status: 'pending',
-      asset: selectedAsset.ticker,
-      direction: 'sent',
-    });
+      currency: 'usd' as const,
+      status: 'pending' as const,
+      timestamp: BigInt(Date.now() * 1000000),
+      metadata: {
+        asset: selectedAsset,
+        direction: 'send' as const,
+      },
+    };
 
-    // Dispatch custom event for same-tab updates
-    window.dispatchEvent(new Event('localTransactionAdded'));
-
-    toast.success(`${selectedAsset.name} sent successfully`);
+    addLocalTransaction(transaction);
+    toast.success('Transaction submitted');
+    
+    setSelectedAsset('');
     setAddress('');
     setAmount('');
-    setSelectedAssetId('');
-    setIsProcessing(false);
     onOpenChange(false);
   };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-3xl">
+      <SheetContent side="bottom" className="h-[90vh]">
         <SheetHeader>
           <SheetTitle>Send Crypto</SheetTitle>
-          <SheetDescription>
-            Enter the destination address and amount to send
-          </SheetDescription>
+          <SheetDescription>Send cryptocurrency to another wallet</SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-6">
           <div className="space-y-2">
-            <Label htmlFor="send-asset">Asset</Label>
-            <Select value={selectedAssetId} onValueChange={setSelectedAssetId}>
-              <SelectTrigger id="send-asset">
-                <SelectValue placeholder="Select asset" />
+            <Label htmlFor="asset">Select Asset</Label>
+            <Select value={selectedAsset} onValueChange={setSelectedAsset}>
+              <SelectTrigger id="asset">
+                <SelectValue placeholder="Choose asset" />
               </SelectTrigger>
               <SelectContent>
                 {assets.map((asset) => (
-                  <SelectItem key={asset.id} value={asset.id}>
-                    {asset.name} ({asset.ticker})
+                  <SelectItem key={asset.symbol} value={asset.symbol}>
+                    {asset.name} ({asset.symbol})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -95,42 +75,31 @@ export default function SendCryptoSheet({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="send-address">Destination Address</Label>
+            <Label htmlFor="address">Recipient Address</Label>
             <Input
-              id="send-address"
+              id="address"
+              placeholder="Enter wallet address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Enter wallet address"
-              disabled={isProcessing}
+              required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="send-amount">Amount</Label>
+            <Label htmlFor="amount">Amount</Label>
             <Input
-              id="send-amount"
+              id="amount"
               type="number"
               step="0.00000001"
+              placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              disabled={isProcessing}
+              required
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              'Send'
-            )}
+          <Button type="submit" className="w-full">
+            Send
           </Button>
         </form>
       </SheetContent>

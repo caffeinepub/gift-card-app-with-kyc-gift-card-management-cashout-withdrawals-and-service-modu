@@ -65,6 +65,10 @@ export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface WithdrawalConfig {
+  'minTimeToPaidStatus' : Time,
+  'maxTimeToPaidStatus' : Time,
+}
 export interface WithdrawalRequest {
   'id' : WithdrawalRequestId,
   'status' : WithdrawalStatus,
@@ -121,9 +125,14 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getCoinPriceIndex' : ActorMethod<[], bigint>,
+  /**
+   * / ADDED: This should be used for the Crypto Star Indicator Frontend
+   */
+  'getCryptoStarIndex' : ActorMethod<[], bigint>,
   'getKycStatus' : ActorMethod<[], Array<KycRecord>>,
   'getUserKycRecords' : ActorMethod<[Principal], Array<KycRecord>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getWithdrawalConfig' : ActorMethod<[], WithdrawalConfig>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isCallerKycVerified' : ActorMethod<[], boolean>,
   'listActiveRates' : ActorMethod<[], Array<GiftCardRate>>,
@@ -136,6 +145,7 @@ export interface _SERVICE {
     [GiftCardRateId, { 'active' : null } | { 'inactive' : null }],
     undefined
   >,
+  'setWithdrawalConfig' : ActorMethod<[Time, Time], undefined>,
   'submitKycRecord' : ActorMethod<
     [DocumentType, string, string, [] | [ExternalBlob]],
     KycRecordId

@@ -8,6 +8,7 @@ import { Wallet, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
 import { toast } from 'sonner';
 import AdminRouteGuard from '../../components/admin/AdminRouteGuard';
+import { extractBackendErrorMessage } from '../../utils/backendErrorMessage';
 
 export default function AdminWithdrawalsPage() {
   const { data: pendingWithdrawals = [], isLoading } = useAdminGetPendingWithdrawals();
@@ -23,7 +24,10 @@ export default function AdminWithdrawalsPage() {
       });
       toast.success('Withdrawal approved');
     } catch (error: any) {
-      const errorMessage = error?.message || 'Failed to approve withdrawal';
+      const errorMessage = extractBackendErrorMessage(
+        error,
+        'Failed to approve withdrawal'
+      );
       toast.error(errorMessage);
       console.error(error);
     } finally {
@@ -40,7 +44,10 @@ export default function AdminWithdrawalsPage() {
       });
       toast.success('Withdrawal rejected');
     } catch (error: any) {
-      const errorMessage = error?.message || 'Failed to reject withdrawal';
+      const errorMessage = extractBackendErrorMessage(
+        error,
+        'Failed to reject withdrawal'
+      );
       toast.error(errorMessage);
       console.error(error);
     } finally {

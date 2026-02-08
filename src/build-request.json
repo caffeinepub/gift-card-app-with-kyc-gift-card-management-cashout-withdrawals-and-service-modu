@@ -1,74 +1,75 @@
 {
   "kind": "build_request",
-  "title": "Require KYC verification before users can withdraw",
+  "title": "Restrict withdrawal processing window to 5–20 minutes and update UI messaging",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Enforce KYC verification on the backend so a user can only create a withdrawal request when their latest KYC record status is verified.",
+      "text": "Enforce a backend rule that a pending withdrawal request can only be marked as #paid within a 5 to 20 minute window after it was created.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Build KYC verification for users so they can verify the account before withdraw money"
+          "Allow the withdrawal to be made between five minutes to 20 minutes"
         ]
       },
       "acceptanceCriteria": [
-        "Calling createWithdrawalRequest for a user with no KYC records traps with a clear English error message indicating KYC is required before withdrawals.",
-        "Calling createWithdrawalRequest for a user whose latest KYC record is pending/rejected/expired/unverified traps with a clear English error message indicating the account is not verified for withdrawals.",
-        "Calling createWithdrawalRequest for a user whose latest KYC record is verified succeeds and creates a pending withdrawal request as before.",
-        "Admin endpoints (listPendingWithdrawals, updateWithdrawalStatus) and user endpoints (listUserWithdrawals, listUserPayoutMethods) continue to function without behavior changes other than the new KYC gate on withdrawal creation."
+        "When an admin calls updateWithdrawalStatus(requestId, #paid) less than 5 minutes after the withdrawal request's created timestamp, the backend traps with a clear English error message.",
+        "When an admin calls updateWithdrawalStatus(requestId, #paid) more than 20 minutes after the withdrawal request's created timestamp, the backend traps with a clear English error message.",
+        "When an admin calls updateWithdrawalStatus(requestId, #paid) between 5 minutes and 20 minutes (inclusive) after created, the update succeeds and processedAt/processedBy are set as currently implemented.",
+        "Rejecting a withdrawal (#rejected) is not blocked by the 5–20 minute window (still allowed for pending requests).",
+        "The rule is enforced server-side in backend/main.mo (not only in the frontend)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Expose a backend query that returns whether the caller is currently KYC-verified (based on the latest KYC record), to support frontend gating and UX messaging.",
-      "target": "backend",
+      "text": "Update withdrawal-related user-facing text and timing indicators to reflect a 5–20 minute processing window in both the Withdrawals page and the Send to Bank review screen.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Build KYC verification for users so they can verify the account before withdraw money"
+          "Allow the withdrawal to be made between five minutes to 20 minutes"
         ]
       },
       "acceptanceCriteria": [
-        "A new query method exists that returns a boolean (or equivalent simple status) indicating if the caller can withdraw (true only when the latest KYC record is verified).",
-        "The method is protected so only authenticated users can call it (consistent with other user queries in backend/main.mo).",
-        "The method’s result matches the same logic used by createWithdrawalRequest for determining eligibility."
+        "In frontend/src/components/crypto/sheets/SendToBankSheet.tsx, replace the review-screen info text 'within 1-3 business days' with 'within 5–20 minutes'.",
+        "In frontend/src/pages/withdrawals/WithdrawalsPage.tsx, replace 'Typical processing time: ~10 minutes' with 'Typical processing time: 5–20 minutes'.",
+        "In frontend/src/pages/withdrawals/WithdrawalsPage.tsx, update the pending status helper so it no longer assumes a fixed 10-minute countdown; it should reflect the 5–20 minute window (e.g., show queued/estimated before 5 minutes and show time remaining until 20 minutes, then 'Processing...' after 20 minutes).",
+        "All updated text is in English and matches the 5–20 minute window consistently across these screens."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Update the Withdrawals UI to block withdrawal requests unless the user is KYC-verified, and provide a clear call-to-action to complete KYC verification.",
+      "text": "Surface the backend 5–20 minute processing-window error to admins when approving a withdrawal so the admin UI shows a helpful toast message instead of a generic failure.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Build KYC verification for users so they can verify the account before withdraw money"
+          "Allow the withdrawal to be made between five minutes to 20 minutes"
         ]
       },
       "acceptanceCriteria": [
-        "On the Withdrawals page, if the user is not KYC-verified, the Request Withdrawal form cannot be submitted (submit button disabled and/or form replaced by an explanatory panel).",
-        "The Withdrawals page displays an English message explaining that KYC verification is required before withdrawals and includes a button/link that navigates the user to the existing KYC page.",
-        "If the user is KYC-verified, the Withdrawals page behaves as it did previously (can select payout method, enter amount, and submit).",
-        "If the user attempts to withdraw through any existing UI path and the backend rejects due to KYC gating, the user sees the backend error message surfaced in a toast or inline error in English."
+        "In frontend/src/pages/admin/AdminWithdrawalsPage.tsx, if approval fails due to the backend window rule, the toast displays the backend-provided error message (or a clear fallback) indicating the 5–20 minute window.",
+        "If approval fails for any other reason, existing error handling behavior remains intact.",
+        "Reject action behavior remains unchanged."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo.",
-    "Do not edit any files under frontend/src/components/ui or any other frontend immutable paths listed in SYSTEM_CONTEXT.",
-    "Use English for all user-facing text."
+    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
+    "Do not edit any files under frontend/src/components/ui or other immutablePaths listed in SYSTEM_CONTEXT; compose existing UI components instead.",
+    "Use English for any user-facing text related to this change."
   ],
   "nonGoals": [
-    "Integrating with third-party KYC providers or external identity/document verification services.",
-    "Adding new authentication methods beyond Internet Identity.",
-    "Building real-time notifications for KYC approval/rejection."
+    "Do not add new authentication providers or third-party services.",
+    "Do not implement real-time processing/streaming updates (no websockets/push).",
+    "Do not change withdrawal amount calculations, KYC rules, or payout method ownership checks beyond the requested timing-window behavior."
   ],
   "imageRequirements": {
     "required": [],

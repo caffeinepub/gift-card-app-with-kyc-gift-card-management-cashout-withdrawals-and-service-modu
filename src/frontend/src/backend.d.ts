@@ -19,6 +19,10 @@ export type Time = bigint;
 export type WithdrawalRequestId = bigint;
 export type PayoutMethodId = bigint;
 export type GiftCardRateId = bigint;
+export interface WithdrawalConfig {
+    minTimeToPaidStatus: Time;
+    maxTimeToPaidStatus: Time;
+}
 export interface PayoutMethod {
     id: PayoutMethodId;
     created: Time;
@@ -106,9 +110,14 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCoinPriceIndex(): Promise<bigint>;
+    /**
+     * / ADDED: This should be used for the Crypto Star Indicator Frontend
+     */
+    getCryptoStarIndex(): Promise<bigint>;
     getKycStatus(): Promise<Array<KycRecord>>;
     getUserKycRecords(user: Principal): Promise<Array<KycRecord>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getWithdrawalConfig(): Promise<WithdrawalConfig>;
     isCallerAdmin(): Promise<boolean>;
     isCallerKycVerified(): Promise<boolean>;
     listActiveRates(): Promise<Array<GiftCardRate>>;
@@ -118,6 +127,7 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setCoinPriceIndex(priceIndex: bigint): Promise<void>;
     setGiftCardRateStatus(rateId: GiftCardRateId, status: GiftCardRateStatus): Promise<void>;
+    setWithdrawalConfig(minTime: Time, maxTime: Time): Promise<void>;
     submitKycRecord(documentType: DocumentType, idNumber: string, documentURI: string, signature: ExternalBlob | null): Promise<KycRecordId>;
     updateGiftCardRate(rateId: GiftCardRateId, ratePercentage: bigint): Promise<void>;
     updateKycStatus(recordId: KycRecordId, status: KycStatus): Promise<void>;

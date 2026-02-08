@@ -1,170 +1,145 @@
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Card, CardContent } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { ArrowLeft, User, Loader2 } from 'lucide-react';
+import { ArrowLeft, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { addLocalTransaction } from '../../state/localTransactions';
 
-const AMOUNT_CHIPS = [100, 200, 500, 1000, 2000, 3000, 5000];
-
-const NETWORK_PROVIDERS = [
-  'MTN',
-  'Airtel',
-  'Glo',
-  '9mobile',
-];
+const PROVIDERS = ['MTN', 'Airtel', 'Glo', '9mobile'];
+const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 export default function AirtimePage() {
+  const navigate = useNavigate();
   const [provider, setProvider] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  const isValid = provider && phoneNumber.trim() && amount && parseFloat(amount) > 0;
-
-  const handleAmountChipClick = (chipAmount: number) => {
-    setAmount(chipAmount.toString());
+  const handleQuickAmount = (value: number) => {
+    setAmount(value.toString());
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isValid) {
+    if (!provider || !phoneNumber || !amount) {
       toast.error('Please fill in all fields');
       return;
     }
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    addLocalTransaction({
-      type: 'airtime',
+    const transaction = {
+      id: `airtime-${Date.now()}`,
+      type: 'airtime' as const,
+      description: `${provider} Airtime - ${phoneNumber}`,
       amount: parseFloat(amount),
-      currency: 'NGN',
-      description: `${provider} airtime for +234${phoneNumber}`,
-      status: 'pending',
-    });
+      currency: 'ngn' as const,
+      status: 'pending' as const,
+      timestamp: BigInt(Date.now() * 1000000),
+      metadata: {
+        provider,
+        phoneNumber,
+      },
+    };
 
-    toast.success('Airtime purchase logged successfully');
-    setProvider('');
-    setPhoneNumber('');
-    setAmount('');
-    setIsProcessing(false);
+    addLocalTransaction(transaction);
+    toast.success('Airtime purchase successful');
+    navigate({ to: '/' });
   };
 
   return (
-    <div className="min-h-screen bg-background pb-safe">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b">
-        <div className="flex items-center justify-between px-4 py-4">
+    <div className="min-h-screen bg-gradient-to-b from-[oklch(0.35_0.08_280)] to-[oklch(0.25_0.08_280)] pb-24">
+      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+        <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => window.history.back()}
-            className="h-10 w-10"
+            onClick={() => navigate({ to: '/services/bills' })}
+            className="text-white hover:bg-white/10"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold absolute left-1/2 -translate-x-1/2">
-            Purchase Airtime
-          </h1>
-          <div className="w-10" /> {/* Spacer for centering */}
+          <div className="text-center flex-1">
+            <h1 className="text-2xl font-bold text-white">Buy Airtime</h1>
+          </div>
         </div>
+
+        <Card>
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="provider">Network Provider</Label>
+                <Select value={provider} onValueChange={setProvider}>
+                  <SelectTrigger id="provider">
+                    <SelectValue placeholder="Select provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROVIDERS.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    +234
+                  </span>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="8012345678"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="pl-14 pr-10"
+                    required
+                  />
+                  <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount (₦)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Quick Select</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {QUICK_AMOUNTS.map((value) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleQuickAmount(value)}
+                      className="h-12"
+                    >
+                      ₦{value}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full h-12 text-base">
+                Continue
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Form Content */}
-      <form onSubmit={handleSubmit} className="px-4 py-6 space-y-6">
-        {/* Network Provider Selector */}
-        <div className="space-y-2">
-          <Select value={provider} onValueChange={setProvider} disabled={isProcessing}>
-            <SelectTrigger className="w-full h-14 bg-muted/50 border-0 text-base">
-              <SelectValue placeholder="Select network provider" />
-            </SelectTrigger>
-            <SelectContent>
-              {NETWORK_PROVIDERS.map((net) => (
-                <SelectItem key={net} value={net}>
-                  {net}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Phone Number Input with +234 prefix */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center h-14 px-4 bg-muted/50 rounded-lg">
-            <span className="text-base font-medium text-muted-foreground">+234</span>
-          </div>
-          <div className="relative flex-1">
-            <Input
-              type="tel"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-              placeholder="Phone number"
-              disabled={isProcessing}
-              className="h-14 bg-muted/50 border-0 text-base pr-12"
-            />
-            <User className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          </div>
-        </div>
-
-        {/* Wallet Balance */}
-        <div className="text-sm text-muted-foreground">
-          Wallet Bal: <span className="text-primary">₦0.00</span>
-        </div>
-
-        {/* Amount Input with NGN currency */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Input
-              type="number"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount"
-              disabled={isProcessing}
-              className="h-14 bg-muted/50 border-0 text-base"
-            />
-          </div>
-          <div className="flex items-center justify-center h-14 px-4 bg-muted/50 rounded-lg">
-            <span className="text-base font-medium text-muted-foreground">NGN</span>
-          </div>
-        </div>
-
-        {/* Amount Quick-Pick Chips */}
-        <div className="flex flex-wrap gap-2">
-          {AMOUNT_CHIPS.map((chipAmount) => (
-            <button
-              key={chipAmount}
-              type="button"
-              onClick={() => handleAmountChipClick(chipAmount)}
-              disabled={isProcessing}
-              className="px-4 py-2.5 bg-muted/50 hover:bg-muted rounded-full text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              ₦{chipAmount.toLocaleString()}
-            </button>
-          ))}
-        </div>
-
-        {/* Continue Button */}
-        <div className="pt-8">
-          <Button
-            type="submit"
-            disabled={!isValid || isProcessing}
-            className="w-full h-14 text-base rounded-full bg-primary/20 hover:bg-primary/30 text-primary disabled:opacity-50"
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              'Continue'
-            )}
-          </Button>
-        </div>
-      </form>
     </div>
   );
 }

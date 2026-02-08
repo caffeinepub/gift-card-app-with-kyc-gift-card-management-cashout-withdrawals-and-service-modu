@@ -3,7 +3,6 @@ import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import Time "mo:core/Time";
-import Array "mo:core/Array";
 import Nat "mo:core/Nat";
 import Int "mo:core/Int";
 
@@ -12,6 +11,8 @@ import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
 import AccessControl "authorization/access-control";
 
+import Migration "migration";
+(with migration = Migration.run)
 actor {
   public type UserProfile = {
     name : Text;
@@ -98,6 +99,11 @@ actor {
     createdAt : Time.Time;
   };
 
+  public type WithdrawalConfig = {
+    minTimeToPaidStatus : Time.Time;
+    maxTimeToPaidStatus : Time.Time;
+  };
+
   var _nextKycRecordId : KycRecordId = 0;
   var _nextPayoutMethodId : PayoutMethodId = 0;
   var _nextWithdrawalRequestId : WithdrawalRequestId = 0;
@@ -105,6 +111,11 @@ actor {
   var _nextRateQuoteId : Nat = 0;
 
   var _coinPriceIndex : Int = 100;
+
+  var _withdrawalConfig : WithdrawalConfig = {
+    minTimeToPaidStatus = 300_000_000_000;
+    maxTimeToPaidStatus = 1_200_000_000_000;
+  };
 
   let rateQuotes = Map.empty<Nat, RateQuote>();
   let userProfiles = Map.empty<Principal, UserProfile>();
@@ -345,7 +356,16 @@ actor {
         if (oldRequest.status != #pending) {
           Runtime.trap("Invalid withdrawal request: request is not pending");
         };
-
+        if (status == #paid) {
+          let currentTime = Time.now();
+          let elapsedNanoSeconds = currentTime - oldRequest.created;
+          if (elapsedNanoSeconds < _withdrawalConfig.minTimeToPaidStatus) {
+            Runtime.trap("Invalid withdrawal request: Pending state too short. Can only be set to paid after " # _withdrawalConfig.minTimeToPaidStatus.toText() # " nanoseconds");
+          };
+          if (elapsedNanoSeconds > _withdrawalConfig.maxTimeToPaidStatus) {
+            Runtime.trap("Invalid withdrawal request: Pending state too long. Can only be set to paid within " # _withdrawalConfig.maxTimeToPaidStatus.toText() # " nanoseconds after request creation");
+          };
+        };
         { oldRequest with
           status;
           processedAt = ?Time.now();
@@ -356,6 +376,23 @@ actor {
     };
 
     withdrawalRequests.add(requestId, updatedRequest);
+  };
+
+  public shared ({ caller }) func setWithdrawalConfig(minTime : Time.Time, maxTime : Time.Time) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can update withdrawal config");
+    };
+    _withdrawalConfig := {
+      minTimeToPaidStatus = minTime;
+      maxTimeToPaidStatus = maxTime;
+    };
+  };
+
+  public query ({ caller }) func getWithdrawalConfig() : async WithdrawalConfig {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view withdrawal config");
+    };
+    _withdrawalConfig;
   };
 
   // GIFT CARD RATES CRUD
@@ -429,6 +466,11 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view coin price index");
     };
+    _coinPriceIndex;
+  };
+
+  /// ADDED: This should be used for the Crypto Star Indicator Frontend
+  public query ({ caller }) func getCryptoStarIndex() : async Int {
     _coinPriceIndex;
   };
 

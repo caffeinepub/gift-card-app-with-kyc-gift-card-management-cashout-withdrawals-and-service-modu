@@ -26,6 +26,9 @@ import CryptoWalletPage from './pages/services/CryptoWalletPage';
 import ElectricityPage from './pages/services/ElectricityPage';
 import WifiInternetPage from './pages/services/WifiInternetPage';
 import CableTvBillsPage from './pages/services/CableTvBillsPage';
+import EsimPage from './pages/services/EsimPage';
+import RateAlertsPage from './pages/RateAlertsPage';
+import RateCalendarPage from './pages/RateCalendarPage';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -204,6 +207,18 @@ const historyRoute = createRoute({
   component: HistoryPage,
 });
 
+const rateAlertsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/rate-alerts',
+  component: RateAlertsPage,
+});
+
+const rateCalendarRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/rate-calendar',
+  component: RateCalendarPage,
+});
+
 const adminKycRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/kyc',
@@ -270,6 +285,12 @@ const cableTvBillsRoute = createRoute({
   component: CableTvBillsPage,
 });
 
+const esimRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/services/esim',
+  component: EsimPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   kycRoute,
@@ -281,6 +302,8 @@ const routeTree = rootRoute.addChildren([
   withdrawalsRoute,
   settingsRoute,
   historyRoute,
+  rateAlertsRoute,
+  rateCalendarRoute,
   adminKycRoute,
   adminWithdrawalsRoute,
   adminGiftCardRatesRoute,
@@ -292,6 +315,7 @@ const routeTree = rootRoute.addChildren([
   electricityRoute,
   wifiInternetRoute,
   cableTvBillsRoute,
+  esimRoute,
 ]);
 
 const router = createRouter({ routeTree });

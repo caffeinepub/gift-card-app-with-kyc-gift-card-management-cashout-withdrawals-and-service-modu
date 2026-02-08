@@ -106,13 +106,15 @@ export type KycStatus =
   | { __kind__: 'expired' };
 
 export interface KycRecord {
+  id: string;
   documentType: string;
   documentUri: string;
   idNumber: string;
   uploadedBy: Principal;
   status: KycStatus;
+  submittedAt: bigint;
+  verifiedAt: bigint | null;
   externalId: ExternalId | null;
-  recordId?: string; // Optional field for admin operations
   signatureUri?: string | null; // Optional signature display URL
 }
 
@@ -143,4 +145,30 @@ export interface WithdrawalRequest {
   createdAt: bigint;
   processedAt: bigint | null;
   processedBy: Principal | null;
+}
+
+// Local Transaction types (for client-side transaction logging)
+export interface LocalTransaction {
+  id: string;
+  type: 'airtime' | 'data' | 'betting' | 'electricity' | 'wifi' | 'cable' | 'crypto' | 'esim' | 'withdrawal' | 'giftcard';
+  description: string;
+  amount: number;
+  currency: 'ngn' | 'usd';
+  status: 'pending' | 'completed' | 'failed';
+  timestamp: bigint;
+  metadata?: {
+    provider?: string;
+    phoneNumber?: string;
+    accountId?: string;
+    asset?: string;
+    network?: string;
+    direction?: 'send' | 'receive';
+    fromAsset?: string;
+    toAsset?: string;
+    region?: string;
+    data?: string;
+    duration?: string;
+    payoutMethodId?: string;
+    bankName?: string;
+  };
 }

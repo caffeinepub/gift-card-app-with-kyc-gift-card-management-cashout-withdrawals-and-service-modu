@@ -75,6 +75,10 @@ export const KycRecord = IDL.Record({
   'idNumber' : IDL.Text,
   'verifiedAt' : IDL.Opt(Time),
 });
+export const WithdrawalConfig = IDL.Record({
+  'minTimeToPaidStatus' : Time,
+  'maxTimeToPaidStatus' : Time,
+});
 export const WithdrawalStatus = IDL.Variant({
   'pending' : IDL.Null,
   'paid' : IDL.Null,
@@ -146,6 +150,7 @@ export const idlService = IDL.Service({
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getCoinPriceIndex' : IDL.Func([], [IDL.Int], ['query']),
+  'getCryptoStarIndex' : IDL.Func([], [IDL.Int], ['query']),
   'getKycStatus' : IDL.Func([], [IDL.Vec(KycRecord)], ['query']),
   'getUserKycRecords' : IDL.Func(
       [IDL.Principal],
@@ -157,6 +162,7 @@ export const idlService = IDL.Service({
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'getWithdrawalConfig' : IDL.Func([], [WithdrawalConfig], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isCallerKycVerified' : IDL.Func([], [IDL.Bool], ['query']),
   'listActiveRates' : IDL.Func([], [IDL.Vec(GiftCardRate)], ['query']),
@@ -173,6 +179,7 @@ export const idlService = IDL.Service({
       [],
       [],
     ),
+  'setWithdrawalConfig' : IDL.Func([Time, Time], [], []),
   'submitKycRecord' : IDL.Func(
       [DocumentType, IDL.Text, IDL.Text, IDL.Opt(ExternalBlob)],
       [KycRecordId],
@@ -257,6 +264,10 @@ export const idlFactory = ({ IDL }) => {
     'idNumber' : IDL.Text,
     'verifiedAt' : IDL.Opt(Time),
   });
+  const WithdrawalConfig = IDL.Record({
+    'minTimeToPaidStatus' : Time,
+    'maxTimeToPaidStatus' : Time,
+  });
   const WithdrawalStatus = IDL.Variant({
     'pending' : IDL.Null,
     'paid' : IDL.Null,
@@ -332,6 +343,7 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getCoinPriceIndex' : IDL.Func([], [IDL.Int], ['query']),
+    'getCryptoStarIndex' : IDL.Func([], [IDL.Int], ['query']),
     'getKycStatus' : IDL.Func([], [IDL.Vec(KycRecord)], ['query']),
     'getUserKycRecords' : IDL.Func(
         [IDL.Principal],
@@ -343,6 +355,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'getWithdrawalConfig' : IDL.Func([], [WithdrawalConfig], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isCallerKycVerified' : IDL.Func([], [IDL.Bool], ['query']),
     'listActiveRates' : IDL.Func([], [IDL.Vec(GiftCardRate)], ['query']),
@@ -363,6 +376,7 @@ export const idlFactory = ({ IDL }) => {
         [],
         [],
       ),
+    'setWithdrawalConfig' : IDL.Func([Time, Time], [], []),
     'submitKycRecord' : IDL.Func(
         [DocumentType, IDL.Text, IDL.Text, IDL.Opt(ExternalBlob)],
         [KycRecordId],

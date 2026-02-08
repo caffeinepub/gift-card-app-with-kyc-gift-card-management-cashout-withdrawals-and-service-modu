@@ -8,13 +8,13 @@ interface HistoryTransactionRowProps {
 
 export default function HistoryTransactionRow({ transaction }: HistoryTransactionRowProps) {
   const getIcon = () => {
-    if (transaction.direction === 'sent') {
+    if (transaction.metadata?.direction === 'send') {
       return <ArrowUpRight className="h-5 w-5 text-red-500" />;
     }
-    if (transaction.direction === 'received') {
+    if (transaction.metadata?.direction === 'receive') {
       return <ArrowDownLeft className="h-5 w-5 text-green-500" />;
     }
-    if (transaction.direction === 'swap') {
+    if (transaction.metadata?.fromAsset && transaction.metadata?.toAsset) {
       return <ArrowLeftRight className="h-5 w-5 text-blue-500" />;
     }
     return <Wallet className="h-5 w-5 text-muted-foreground" />;
@@ -33,8 +33,9 @@ export default function HistoryTransactionRow({ transaction }: HistoryTransactio
     }
   };
 
-  const formatTimestamp = (timestamp: number) => {
-    const date = new Date(timestamp);
+  const formatTimestamp = (timestamp: bigint | number) => {
+    const timestampMs = typeof timestamp === 'bigint' ? Number(timestamp) / 1000000 : timestamp;
+    const date = new Date(timestampMs);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -49,11 +50,11 @@ export default function HistoryTransactionRow({ transaction }: HistoryTransactio
   };
 
   const formatAmount = () => {
-    const displayCurrency = transaction.asset || transaction.currency;
-    const prefix = transaction.direction === 'received' ? '+' : '';
+    const displayCurrency = transaction.metadata?.asset || transaction.currency.toUpperCase();
+    const prefix = transaction.metadata?.direction === 'receive' ? '+' : '';
     
-    if (transaction.direction === 'swap' && transaction.fromAsset && transaction.toAsset) {
-      return `${transaction.fromAsset} → ${transaction.toAsset}`;
+    if (transaction.metadata?.fromAsset && transaction.metadata?.toAsset) {
+      return `${transaction.metadata.fromAsset} → ${transaction.metadata.toAsset}`;
     }
     
     return `${prefix}${transaction.amount} ${displayCurrency}`;

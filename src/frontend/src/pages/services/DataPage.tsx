@@ -1,82 +1,78 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { Badge } from '../../components/ui/badge';
-import { Alert, AlertDescription } from '../../components/ui/alert';
-import { Wifi, Loader2, Info } from 'lucide-react';
+import { Card, CardContent } from '../../components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { addLocalTransaction } from '../../state/localTransactions';
 
 export default function DataPage() {
+  const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!phoneNumber || !amount) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    addLocalTransaction({
-      type: 'data',
+    const transaction = {
+      id: `data-${Date.now()}`,
+      type: 'data' as const,
+      description: `Data Bundle - ${phoneNumber}`,
       amount: parseFloat(amount),
-      currency: 'USD',
-      description: `Data bundle for ${phoneNumber}`,
-      status: 'pending',
-    });
+      currency: 'usd' as const,
+      status: 'pending' as const,
+      timestamp: BigInt(Date.now() * 1000000),
+      metadata: {
+        phoneNumber,
+      },
+    };
 
-    toast.success('Data purchase logged (placeholder)');
-    setPhoneNumber('');
-    setAmount('');
-    setIsProcessing(false);
+    addLocalTransaction(transaction);
+    toast.success('Data purchase successful');
+    navigate({ to: '/' });
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Wifi className="h-8 w-8" />
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate({ to: '/services/bills' })}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
         <div>
-          <h1 className="text-3xl font-bold">Mobile Data</h1>
-          <p className="text-muted-foreground mt-1">
-            Purchase mobile data bundles
+          <h1 className="text-2xl font-bold">Data Bundle</h1>
+          <p className="text-sm text-muted-foreground">
+            Purchase mobile data
           </p>
         </div>
       </div>
 
       <Alert>
-        <Info className="h-4 w-4" />
+        <AlertCircle className="h-5 w-5" />
+        <AlertTitle>Coming Soon</AlertTitle>
         <AlertDescription>
-          <Badge variant="secondary" className="mr-2">Coming Soon</Badge>
-          This is a placeholder. Real data provider integration will be added in a future update.
+          Data bundle purchase is currently under development. Check back soon!
         </AlertDescription>
       </Alert>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Buy Data</CardTitle>
-          <CardDescription>
-            Top up your mobile data
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
               <Input
                 id="phone"
                 type="tel"
+                placeholder="+234 800 000 0000"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="+1234567890"
-                disabled={isProcessing}
+                required
               />
             </div>
 
@@ -86,26 +82,15 @@ export default function DataPage() {
                 id="amount"
                 type="number"
                 step="0.01"
+                placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="15.00"
-                disabled={isProcessing}
+                required
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                'Purchase Data'
-              )}
+            <Button type="submit" className="w-full">
+              Purchase Data
             </Button>
           </form>
         </CardContent>

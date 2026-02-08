@@ -1,42 +1,8 @@
-interface LocalTransaction {
-  id: string;
-  type: string;
-  amount: number;
-  currency: string;
-  description: string;
-  timestamp: number;
-  status: string;
-  // Optional crypto-specific metadata
-  asset?: string;
-  network?: string;
-  direction?: 'sent' | 'received' | 'swap';
-  fromAsset?: string;
-  toAsset?: string;
-}
+import type { LocalTransaction } from '../types/app-types';
 
 const STORAGE_KEY = 'local_transactions';
 
-export function addLocalTransaction(transaction: Omit<LocalTransaction, 'id' | 'timestamp'>) {
-  const transactions = getLocalTransactions();
-  const newTransaction: LocalTransaction = {
-    ...transaction,
-    id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    timestamp: Date.now(),
-  };
-  
-  transactions.unshift(newTransaction);
-  
-  // Keep only last 50 transactions
-  const trimmed = transactions.slice(0, 50);
-  
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
-  } catch (error) {
-    console.warn('Failed to save local transaction:', error);
-  }
-  
-  return newTransaction;
-}
+export type { LocalTransaction };
 
 export function getLocalTransactions(): LocalTransaction[] {
   try {
@@ -44,17 +10,29 @@ export function getLocalTransactions(): LocalTransaction[] {
     if (!stored) return [];
     return JSON.parse(stored);
   } catch (error) {
-    console.warn('Failed to load local transactions:', error);
+    console.error('Failed to load local transactions:', error);
     return [];
   }
 }
 
-export function clearLocalTransactions() {
+export function addLocalTransaction(transaction: LocalTransaction): void {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    const transactions = getLocalTransactions();
+    transactions.push(transaction);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+    
+    // Dispatch custom event for same-tab updates
+    window.dispatchEvent(new CustomEvent('localTransactionAdded', { detail: transaction }));
   } catch (error) {
-    console.warn('Failed to clear local transactions:', error);
+    console.error('Failed to save local transaction:', error);
   }
 }
 
-export type { LocalTransaction };
+export function clearLocalTransactions(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    window.dispatchEvent(new CustomEvent('localTransactionAdded'));
+  } catch (error) {
+    console.error('Failed to clear local transactions:', error);
+  }
+}
